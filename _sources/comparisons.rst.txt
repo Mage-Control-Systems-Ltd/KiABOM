@@ -1,0 +1,38 @@
+Comparisons
+===========
+On this page you will find some comparisons between other popular BOM generators and KiABOM. This is meant to fully inform you of what KiABOM does differently.
+
+KiABOM
+------
+- KiCad only.
+- Simple unformatted BOM generation, which also retrieves part data from suppliers.
+- Supported output formats are CSV, HTML, and TXT.
+- Uses the ``kicad_netlist_reader`` module that ships with KiCad and does not do its own XML parsing.
+- Config file for cache lifetime and API keys, and uses command line options for configurating the BOM.
+- Implements presets to simplify commands and to promote user customisation.
+- Handles schematic property fields like 'DNP', 'Exclude from Board', and 'Exclude from BOM', as they appear on the schematic.
+- Ignores MPNs like 'Generic','TBD','Manufacturer's Stock', and '' (blank).
+- Auto-detects the output file extension and sets the format.
+- Currently supports Mouser and DigiKey.
+
+KiCost
+------
+- Supports Altium, Proteus, Eagle, Upverter and hand made CSVs.
+- Outputs a fully formatted XLSX spreadsheet file with supplier parts data.
+- Only supports XLSX as the output format.
+- Uses BeautifulSoup4 for reading the input XML and then does its own parsing for the part data.
+- Config file for cache lifetime and API keys, and uses command line options for configurating the BOM.
+- Does not handle schematic property fields like 'DNP', 'Exclude from Board', and 'Exclude from BOM', without adding extra fields to the symbol.
+- Can ignore MPNs but they need to be specified with an option.
+- Supports multiple suppliers.
+
+KiBoM
+-----
+- KiCad only.
+- Simple unformatted BOM generation with no supplier parts data.
+- Supported output formats are CSV, HTML, TXT, TSV, XML, XLSX.
+- Uses its own method with modified KiCad netlist reader source code to minimise dependencies.
+- Mostly configured through a config file with many options.
+- Does not handle schematic property fields like 'DNP', 'Exclude from Board', and 'Exclude from BOM', without adding extra fields to the symbol.
+- Auto-detects the output file extension and sets the format.
+- Repository is archived.
