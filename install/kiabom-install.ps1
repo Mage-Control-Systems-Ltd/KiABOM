@@ -1,6 +1,6 @@
 $KiABOM_install_path = $env:USERPROFILE + '\AppData\Local\kiabom\'
 $KiABOM_exe_link = "https://github.com/Mage-Control-Systems-Ltd/KiABOM/releases/latest/download/kiabom.exe"
-$KiABOM_config_link = "https://github.com/Mage-Control-Systems-Ltd/KiABOM/releases/latest/download/config.yml"
+$KiABOM_config_link = "https://github.com/Mage-Control-Systems-Ltd/KiABOM/releases/latest/download/config.yaml"
 
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 
@@ -15,8 +15,8 @@ Move-Item kiabom.exe $KiABOM_install_path # mv command
 Write-Output "Downloaded KiABOM executable." # echo command
 
 curl -fsSLO $KiABOM_config_link
-Move-Item config.yml $KiABOM_install_path # mv command
-Write-Output "Downloaded blank KiABOM API config.yml." # echo command
+Move-Item config.yaml $KiABOM_install_path # mv command
+Write-Output "Downloaded blank KiABOM API config.yaml." # echo command
 
 $User_Env_Path_Value = Get-ItemProperty -Path 'HKCU:\Environment' -Name Path
 
