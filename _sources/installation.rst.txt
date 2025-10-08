@@ -55,6 +55,8 @@ Linux
 
 3. Place this executable somewhere where your system can find it so that it is accessible in every directory.
 
+4. Place your `config.yml` next to the executable.
+
 macOS
 ^^^^^
 KiABOM has not been tested on macOS but it believed that the Linux instructions should be very similar and familiar to macOS users.
@@ -63,7 +65,7 @@ KiABOM has not been tested on macOS but it believed that the Linux instructions 
 
 Python Installation
 --------------------
-If you don't want to use an executable, the sections below describe how it would be used via executing the script with Python.
+If you don't want to use an executable, the sections below describe how it would be used via executing the script with Python. Make sure your `config.yml` file is next to `kiabom.py` if using this method.
 
 In this process it is assumed you have Python 3 and ``pip`` installed. For Linux you also need ``python3-env``. Follow the steps below to do this installation,
 
