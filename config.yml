@@ -1,0 +1,33 @@
+# KiCost configuration file for KiABOM
+kicost:
+  version: 1
+  # Cache Time To Live in days, -1 is forever
+  # Default is 7
+  cache_ttl: -1
+  # Base directory for the APIs caches
+  # cache_path: ~/.cache/kicost
+
+
+APIs:
+  Digi-Key:
+    # Digi-Key Client ID for a registered APP
+    # client_id: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    # Digi-Key Client Secret for a registered APP
+    # client_secret: XXXXXXXXXXXXXXXX
+    # Version of the Digi-Key API, use 4 unless you have old credentials for the V3 API
+    # version: 4
+    # Use the sandbox server, doesn't count the usage, but returns old data
+    # sandbox: false
+    # Only enabled if the client_id and client_secret are defined
+    # enable: true
+    # Directory for the APIs caches
+    # cache_path: ~/.cache/kicost/Digi-Key
+    # Exclude products offered by 3rd party associates (marketplace)
+    # exclude_market_place_products: false
+  Mouser:
+    # Mouser Part API key
+    # key: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    # Only enabled if the key is defined
+    # enable: false
+    # Directory for the APIs caches
+    # cache_path: ~/.cache/kicost/Mouser

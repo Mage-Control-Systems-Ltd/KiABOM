@@ -1,0 +1,2 @@
+kicost >= 1.1.20 # See the KiCost repo requirements.txt for all of the dependencies
+kicad-netlist-reader == 7.0.1

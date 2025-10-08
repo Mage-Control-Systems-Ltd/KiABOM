@@ -1,0 +1,4 @@
+﻿"Group ID","Quantity","Schematic Ref","DNP","Description","Datasheet","Footprint","Value","Manufacturer","MPN","Preferred Supplier","Order Code","Alt. Supplier","Alt. Order Code","Rating"
+"1","2","BT1","","Single-cell battery","~","BatteryHolder_MYOUNG_BS-07-A1BJ001_CR2032","Battery_Cell","","","","","","",""
+"2","2","D1","","Light emitting diode","https://docs.broadcom.com/doc/HSMW-C170-U0000-DS100","LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder","White","Broadcom / Avago","HSMW-C170-U0000 ","Mouser","630-HSMW-C170-U0000","DigiKey","516-3993-1-ND",""
+"3","2","R1","","Resistor","test data for datasheet","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","R","","Generic","","","","","0.25W"

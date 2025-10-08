@@ -1,0 +1,9 @@
+templates/
+old-outputs/
+src/config.yaml
+__pycache__/
+.pytest_cache/
+.coverage
+kiabom-cov/
+.ruff_cache
+
