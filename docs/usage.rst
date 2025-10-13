@@ -79,9 +79,9 @@ Some suppliers offer BOM tools that assist with ordering parts if you already ha
 .. _Mouser's BOM Tool: https://www.mouser.co.uk/bom/
 .. _DigiKey myLists: https://www.digikey.co.uk/en/mylists/
 
-Go to the Mouser BOM tool and upload your BOM CSV file. In the next page you will set the column types. Assuming you are using the `default` column preset, set the `Quantity` column as `Quantity 1`, `Description` as `Description`, `Manufacturer` as `Mfr Name`, `MPN` as `Mfr Part Number`, and the `Order Code` as the `Mouser Part Number`. In the next page set the appropriate settings and one done proceed to the next page. From here you can add the parts listed to your basket and submit an order. Multiples of the same BOM can be added to basket for multiple boards using the same BOM for a single board.
+Go to the Mouser BOM tool and upload your BOM CSV file. In the next page you will set the column types. Assuming you are using the `default` column preset, set the `Quantity` column as `Quantity 1`, `Description` as `Description`, `Manufacturer` as `Mfr Name`, `MPN` as `Mfr Part Number`, and the `Order Code` as the `Mouser Part Number`. In the next page set the appropriate settings and once done proceed to the next page. From here you can add the parts listed to your basket and submit an order. Multiples of the same BOM can be added to basket for multiple boards using the same BOM for a single board.
 
-Some tips for this process is that the ``--no-headers`` column might need to be used to get rid of the column headers before inputting to a BOM tool. Also using ``--remove-ignore-mpn-parts`` will remove parts with the ignore MPN values from the BOM.
+Some tips for this process is that the ``--no-headers`` column might need to be used to get rid of the column headers before inputting to a BOM tool. Also using ``--remove-ignore-mpn-parts`` will remove parts with the ignore MPN values from the BOM, thus saving you time removing these from the result list.
 
 .. _advanced customisations:
 
