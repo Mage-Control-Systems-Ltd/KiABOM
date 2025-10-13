@@ -22,7 +22,7 @@ Automatic Installation
 
     irm "https://raw.githubusercontent.com/Mage-Control-Systems-Ltd/KiABOM/refs/heads/main/install/kiabom-install.ps1" | iex
 
-The install script downloads and moves the ``kiabom.exe`` and ``config.yaml`` files to ``C:\Users\USERNAME\AppData\Local\kiabom`` and then sets the correct environment variable.
+The install script downloads and moves the ``kiabom.exe`` and ``config.yml`` files to ``C:\Users\USERNAME\AppData\Local\kiabom`` and then sets the correct environment variable.
 
 2. If any issues with permissions arise, try running the script in a PowerShell with admin rights or execute the command below to make sure the correct permissions are used in the current PowerShell window,
 
@@ -33,7 +33,7 @@ The install script downloads and moves the ``kiabom.exe`` and ``config.yaml`` fi
 Manual Installation
 ...................
 1. First clone the repo, to get the executable, config file, and the Python source files.
-2. The ``config.yaml`` file contains the configuration for KiCost and the API keys, and it just needs to be next to where you have the executable. This is different from the usual KiCost installation where it is placed in another folder in the user directory.  
+2. The ``config.yml`` file contains the configuration for KiCost and the API keys, and it just needs to be next to where you have the executable. This is different from the usual KiCost installation where it is placed in another folder in the user directory.  
 3. Copy the repo path or place the executable in any folder and make note of its path.
 4. Edit your environment variables by searching ``Edit environment variables for your account`` in the start menu search, and clicking on the first result.
 5. Find the Path variable under User and add the path of the folder containing the executable.
@@ -55,8 +55,6 @@ Linux
 
 3. Place this executable somewhere where your system can find it so that it is accessible in every directory.
 
-4. Place your `config.yaml` next to the executable.
-
 macOS
 ^^^^^
 KiABOM has not been tested on macOS but it believed that the Linux instructions should be very similar and familiar to macOS users.
@@ -65,14 +63,14 @@ KiABOM has not been tested on macOS but it believed that the Linux instructions 
 
 Python Installation
 --------------------
-If you don't want to use an executable, the sections below describe how it would be used via executing the script with Python. Make sure your `config.yaml` file is next to `kiabom.py` if using this method.
+If you don't want to use an executable, the sections below describe how it would be used via executing the script with Python.
 
 In this process it is assumed you have Python 3 and ``pip`` installed. For Linux you also need ``python3-env``. Follow the steps below to do this installation,
 
 Windows
 ^^^^^^^
 1. Clone the repo to a known location.
-2. An optional step would be to move or copy ``kiabom.py`` and ``config.yaml`` files to ``C:\Users\USERNAME\AppData\Local\Programs\KiCad\9.0\bin\scripting\plugins``, which is where the rest of the shipped generator scripts are.
+2. An optional step would be to move or copy ``kiabom.py`` and ``config.yml`` files to ``C:\Users\USERNAME\AppData\Local\Programs\KiCad\9.0\bin\scripting\plugins``, which is where the rest of the shipped generator scripts are.
 3. Open the KiCad Command Prompt by searching for it in the start menu.
 4. Navigate to the repo location and go to the ``src/`` directory, and execute the command below to install KiABOM dependencies,
 
@@ -83,7 +81,7 @@ Windows
 Linux
 ^^^^^
 1. Clone the repo to a known location.
-2. An optional step would be to move or copy ``kiabom.py`` and ``config.yaml`` files to ``/usr/share/kicad/plugins/``, which is where the rest of the shipped generator scripts are.
+2. An optional step would be to move or copy ``kiabom.py`` and ``config.yml`` files to ``/usr/share/kicad/plugins/``, which is where the rest of the shipped generator scripts are.
 3. It is recommended that you create a Python virtual environment, although you could install to your system's Python and change the following steps accordingly. After creating and activating a Python virtual environment (See Python Packaging User Guide `here`_ for details on how to do that). Navigate to the repo location and go to the ``src/`` directory, and execute the command below to install the dependencies,
 
 .. code-block:: text
