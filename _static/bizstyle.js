@@ -1,41 +1,24 @@
-//
-// bizstyle.js
-// ~~~~~~~~~~~
-//
-// Sphinx javascript -- for bizstyle theme.
-//
-// This theme was created by referring to 'sphinxdoc'
-//
-// :copyright: Copyright 2012-2014 by Sphinx team, see AUTHORS.
-// :license: BSD, see LICENSE for details.
-//
-$(document).ready(function(){
-    if (navigator.userAgent.indexOf('iPhone') > 0 ||
-        navigator.userAgent.indexOf('Android') > 0) {
-        $("li.nav-item-0 a").text("Top");
+/*
+ * Sphinx javascript -- for bizstyle theme.
+ *
+ * This theme was created by referring to 'sphinxdoc'
+ */
+const initialiseBizStyle = () => {
+    if (navigator.userAgent.indexOf("iPhone") > 0 || navigator.userAgent.indexOf("Android") > 0) {
+        document.querySelector("li.nav-item-0 a").innerText = "Top"
     }
+    const truncator = item => {if (item.textContent.length > 20) {
+        item.title = item.innerText
+        item.innerText = item.innerText.substr(0, 17) + "..."
+      }
+    }
+    document.querySelectorAll("div.related:first ul li:not(.right) a").slice(1).forEach(truncator);
+    document.querySelectorAll("div.related:last ul li:not(.right) a").slice(1).forEach(truncator);
+}
 
-    $("div.related:first ul li:not(.right) a").slice(1).each(function(i, item){
-        if (item.text.length > 20) {
-            var tmpstr = item.text
-            $(item).attr("title", tmpstr);
-            $(item).text(tmpstr.substr(0, 17) + "...");
-        }
-    });
-    $("div.related:last ul li:not(.right) a").slice(1).each(function(i, item){
-        if (item.text.length > 20) {
-            var tmpstr = item.text
-            $(item).attr("title", tmpstr);
-            $(item).text(tmpstr.substr(0, 17) + "...");
-        }
-    });
-});
+window.addEventListener("resize",
+  () => (document.querySelector("li.nav-item-0 a").innerText = (window.innerWidth <= 776) ? "Top" : "KiABOM v1.8.0 documentation")
+)
 
-$(window).resize(function(){
-    if ($(window).width() <= 776) {
-        $("li.nav-item-0 a").text("Top");
-    }
-    else {
-        $("li.nav-item-0 a").text("KiABOM v1.8.0 documentation");
-    }
-});
+if (document.readyState !== "loading") initialiseBizStyle()
+else document.addEventListener("DOMContentLoaded", initialiseBizStyle)
