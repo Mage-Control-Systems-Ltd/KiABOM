@@ -1,18 +1,19 @@
 
-<!DOCTYPE html>
 
-<html lang="en" data-content_root="./">
+<!doctype html>
+
+<html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>API &#8212; KiABOM v1.8.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
-    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=c3ca4b69" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
     
-    <script src="_static/documentation_options.js?v=4eaa865d"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
     <script src="_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -23,7 +24,7 @@
     <script src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
   </head><body>
-    <div class="related" role="navigation" aria-label="Related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -45,964 +46,48 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="api">
-<h1>API<a class="headerlink" href="#api" title="Link to this heading">¶</a></h1>
+  <div class="section" id="api">
+<h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
 <p>KiABOM utilises KiCost to retrieve part data from suppliers, and to use the cache functionalities it provides. The KiCad netlist reader module is used to read the schematic, and the KiCost data is matched to what was read so that it is outputed in the correct order. To retrieve more data, the KiCost query functions are overwritten but made sure to achieve the same functionality for compatibility.</p>
-<section id="summary">
-<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">¶</a></h2>
+<div class="section" id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
 <p class="rubric">Functions</p>
 <table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.check_args" title="kiabom.check_args"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_args</span></code></a>(args)</p></td>
-<td><p>Check the input arguments are valid.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.check_empty_dnp" title="kiabom.check_empty_dnp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_empty_dnp</span></code></a>(component)</p></td>
-<td><p>Fixes issue of outputting an empty DNP component list, which is what happens when</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.digikey_new_query_part_info" title="kiabom.digikey_new_query_part_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">digikey_new_query_part_info</span></code></a>(parts, ...)</p></td>
-<td><p>Used to override the api_digikey._query_part_info function to return additional part details like the manufacturer.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.download_datasheets" title="kiabom.download_datasheets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download_datasheets</span></code></a>(grouped[, ...])</p></td>
-<td><p>Download the datasheets from the 'Datasheets' symbol field</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.fill_primary_list_gaps_with_secondary" title="kiabom.fill_primary_list_gaps_with_secondary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fill_primary_list_gaps_with_secondary</span></code></a>(...)</p></td>
-<td><p>Fills the gaps in the primary list with the data from the secondary list.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.get_columns" title="kiabom.get_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_columns</span></code></a>(columns, preset)</p></td>
-<td><p>Get the specified columns for use during BOM generation.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.get_equ" title="kiabom.get_equ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_equ</span></code></a>(group_fields, group_preset, ...)</p></td>
-<td><p>Return the selected equivalence function to be used in grouping</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.get_footprint_name" title="kiabom.get_footprint_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_footprint_name</span></code></a>(text)</p></td>
-<td><p>Get the footprint name from the Lib:Name string in the footprint symbol field.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.get_html_td_string" title="kiabom.get_html_td_string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_html_td_string</span></code></a>(string)</p></td>
-<td><p>Get a string as a table data cell HTML element.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.get_return_empty" title="kiabom.get_return_empty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_return_empty</span></code></a>(no_kicost, primary_only)</p></td>
-<td><p>Get if any parts need to not be searched and returned empty lists</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.get_total_price_sum" title="kiabom.get_total_price_sum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_total_price_sum</span></code></a>(parts_prices, ...)</p></td>
-<td><p>Get the total price sum to add to the end of the BOM table</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.has_internet" title="kiabom.has_internet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_internet</span></code></a>([test_address, timeout])</p></td>
-<td><p>Check if there is a valid internet connection.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.init_kicost" title="kiabom.init_kicost"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_kicost</span></code></a>()</p></td>
-<td><p>Initialise KiCost by initialising the logger and the APIs.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.main" title="kiabom.main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">main</span></code></a>(argv)</p></td>
-<td><p>Main function executed when __name__ is &quot;__main__&quot;.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.match_netlist_refs_with_api_refs" title="kiabom.match_netlist_refs_with_api_refs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_netlist_refs_with_api_refs</span></code></a>(lst1, lst2)</p></td>
-<td><p>Matches the group number and location of a reference in lst1 to what group and location it is in lst2, and uses counters to store the indexes.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.mouser_new_query_part_info" title="kiabom.mouser_new_query_part_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mouser_new_query_part_info</span></code></a>(parts, ...)</p></td>
-<td><p>Used to override the api_digikey._query_part_info function to return additional part details like the manufacturer.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.open_output_file" title="kiabom.open_output_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open_output_file</span></code></a>(output_file)</p></td>
-<td><p>Open the file to be used for outputing the BOM data.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.output_general_info_csv" title="kiabom.output_general_info_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">output_general_info_csv</span></code></a>(out, net, board_quantity)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.output_general_info_html" title="kiabom.output_general_info_html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">output_general_info_html</span></code></a>(html, net, ...)</p></td>
-<td><p>Output some general info afte the HTML BOM table.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.print_title_screen" title="kiabom.print_title_screen"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_title_screen</span></code></a>()</p></td>
-<td><p>Print the title splash.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.refs_sort" title="kiabom.refs_sort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refs_sort</span></code></a>(ref)</p></td>
-<td><p>Used as a sort key in get_refs_from_kicost().</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.remove_ignore_mpn_parts" title="kiabom.remove_ignore_mpn_parts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_ignore_mpn_parts</span></code></a>(grouped, ignore_mpns)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.set_format_from_output_file_extension" title="kiabom.set_format_from_output_file_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_format_from_output_file_extension</span></code></a>(...)</p></td>
-<td><p>Automatically set the output format based on the output file extension</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.set_html_table" title="kiabom.set_html_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_html_table</span></code></a>(html_text, board_quantity, ...)</p></td>
-<td><p>Set the table in the HTML string.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.write_parts_to_csv" title="kiabom.write_parts_to_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_parts_to_csv</span></code></a>(out, board_quantity, ...)</p></td>
-<td><p>Write grouped parts into the opened CSV file</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.write_to_file" title="kiabom.write_to_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_to_file</span></code></a>(f, output_format, ...)</p></td>
-<td><p>Write to the corresponding file the collated data.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.writerow" title="kiabom.writerow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">writerow</span></code></a>(acsvwriter, columns)</p></td>
-<td><p>Override csv.writer's writerow() to support encoding conversion (initial encoding is utf8)</p></td>
-</tr>
 </tbody>
 </table>
 <p class="rubric">Classes</p>
 <table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.BaseNet" title="kiabom.BaseNet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseNet</span></code></a>(input_xml, excludeBOM, excludeBoard)</p></td>
-<td><p>Base Net class where Net and NetDNP inherit their shared members</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.BaseParts" title="kiabom.BaseParts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseParts</span></code></a>(supplier, net_obj, return_empty, ...)</p></td>
-<td><p>Base class for the Parts and PartsDNP classes containing KiCost part details as lists.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.BasePartsFileData" title="kiabom.BasePartsFileData"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BasePartsFileData</span></code></a>(primary_parts_obj, ...)</p></td>
-<td><p>Class containing the file data that is common between DNP and non-DNP parts.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.Net" title="kiabom.Net"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Net</span></code></a>(input_xml, excludeBOM, excludeBoard)</p></td>
-<td><p>Contains data read by the netlist reader.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.NetDNP" title="kiabom.NetDNP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NetDNP</span></code></a>(input_xml, excludeBOM, excludeBoard)</p></td>
-<td><p>Contains data read by the netlist reader for DNP components.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.Parts" title="kiabom.Parts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Parts</span></code></a>(supplier, net_obj, return_empty, ...)</p></td>
-<td><p>Contains non-DNP parts data retrieved by KiCost for a specific supplier.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.PartsDNP" title="kiabom.PartsDNP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PartsDNP</span></code></a>(supplier, net_obj, return_empty, ...)</p></td>
-<td><p>Contains DNP parts data retrieved by KiCost for a specific supplier</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.PartsFileData" title="kiabom.PartsFileData"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PartsFileData</span></code></a>(primary_parts_obj, ...)</p></td>
-<td><p>Contains data of the parts as simple lists for outputting.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.PartsFileDataDNP" title="kiabom.PartsFileDataDNP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PartsFileDataDNP</span></code></a>(primary_parts_obj, ...)</p></td>
-<td><p>Contains DNP CSV data of the DNP parts</p></td>
-</tr>
 </tbody>
 </table>
-</section>
-<section id="definitions">
-<h2>Definitions<a class="headerlink" href="#definitions" title="Link to this heading">¶</a></h2>
+</div>
+<div class="section" id="definitions">
+<h2>Definitions<a class="headerlink" href="#definitions" title="Permalink to this headline">¶</a></h2>
 <p>Definitions for the above summary tables.</p>
-<section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h3>
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.check_args">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">check_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Namespace</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.check_args" title="Link to this definition">¶</a></dt>
-<dd><p>Check the input arguments are valid.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>args</strong> – Input arguments.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.check_empty_dnp">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">check_empty_dnp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">comp</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#kiabom.check_empty_dnp" title="Link to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Fixes issue of outputting an empty DNP component list, which is what happens when</dt><dd><p>no DNP components exist in the XML. The empty DNP value is set by extract_dnp().</p>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>component</strong> – Component to check.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>True or False.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.digikey_new_query_part_info">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">digikey_new_query_part_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">OrderedDict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distributors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">currency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.digikey_new_query_part_info" title="Link to this definition">¶</a></dt>
-<dd><p>Used to override the api_digikey._query_part_info function to return additional part details
-like the manufacturer.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parts</strong> – Parts read by KiCost.</p></li>
-<li><p><strong>distributors</strong> – The chosen distributor which in this case will be digikey.</p></li>
-<li><p><strong>currency</strong> – Chosen currency of returned prices.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.download_datasheets">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">download_datasheets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grouped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downloads_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'datasheets'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.download_datasheets" title="Link to this definition">¶</a></dt>
-<dd><p>Download the datasheets from the ‘Datasheets’ symbol field</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>grouped</strong> – A list containing lists of grouped parts</p></li>
-<li><p><strong>downloads_folder</strong> – Downloads folder name</p></li>
-<li><p><strong>timeout</strong> – Time in seconds where the internet connection will time out.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.fill_primary_list_gaps_with_secondary">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">fill_primary_list_gaps_with_secondary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">primary_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondary_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.fill_primary_list_gaps_with_secondary" title="Link to this definition">¶</a></dt>
-<dd><p>Fills the gaps in the primary list with the data from the secondary list.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>primary_list</strong> – A list containining blank or filled string data.</p></li>
-<li><p><strong>secondary_list</strong> – A list containining blank or filled string data.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Primary list with its blanks filled by the secondary list.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.get_columns">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">get_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.get_columns" title="Link to this definition">¶</a></dt>
-<dd><p>Get the specified columns for use during BOM generation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>columns</strong> – Comma separated string of the columns names.</p></li>
-<li><p><strong>preset</strong> – Specified column list preset.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A column string list.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.get_equ">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">get_equ</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_preset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.get_equ" title="Link to this definition">¶</a></dt>
-<dd><p>Return the selected equivalence function to be used in grouping</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>group_fields</strong> – String of comma separated group values.</p></li>
-<li><p><strong>group_preset</strong> – Specified group preset.</p></li>
-<li><p><strong>append_groups</strong> – String of comma separated values to append to a preset.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Equivalence (__equ__) function.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Function returning True or False.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.get_footprint_name">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">get_footprint_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#kiabom.get_footprint_name" title="Link to this definition">¶</a></dt>
-<dd><p>Get the footprint name from the Lib:Name string in the footprint symbol field.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>text</strong> – Footprint field string.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Footprint name or blank.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.get_html_td_string">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">get_html_td_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#kiabom.get_html_td_string" title="Link to this definition">¶</a></dt>
-<dd><p>Get a string as a table data cell HTML element.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>string</strong> – Text to be placed between the &lt;td&gt; and &lt;/td&gt;.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>String encloded by &lt;td&gt; and &lt;/td&gt;.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.get_return_empty">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">get_return_empty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_kicost</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span></span></span><a class="headerlink" href="#kiabom.get_return_empty" title="Link to this definition">¶</a></dt>
-<dd><p>Get if any parts need to not be searched and returned empty lists</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>no_kicost</strong> – Flag if no KiCost should be used</p></li>
-<li><p><strong>primary_only</strong> – Flag if only the primary supplier should be used</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tuple of boolean values. Used to decide if the suppliers objects should be empty lists.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.get_total_price_sum">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">get_total_price_sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts_prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts_prices_dnp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board_quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#kiabom.get_total_price_sum" title="Link to this definition">¶</a></dt>
-<dd><p>Get the total price sum to add to the end of the BOM table</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parts_prices</strong> – List of part prices.</p></li>
-<li><p><strong>parts_price_dnp</strong> – List of DNP part prices.</p></li>
-<li><p><strong>board_quantity</strong> – Specified board quantity.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Total price sum.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.has_internet">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">has_internet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">test_address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'8.8.8.8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#kiabom.has_internet" title="Link to this definition">¶</a></dt>
-<dd><p>Check if there is a valid internet connection.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>test_address</strong> – Address used to test for internet connection.</p></li>
-<li><p><strong>timeout</strong> – Time to wait until a valid internet connection is established.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>True or False on whether there is an internet connection.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.init_kicost">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">init_kicost</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#kiabom.init_kicost" title="Link to this definition">¶</a></dt>
-<dd><p>Initialise KiCost by initialising the logger and the APIs.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>True or Fasle (Success or Failure).</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.main">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.main" title="Link to this definition">¶</a></dt>
-<dd><p>Main function executed when __name__ is “__main__”.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> – Argument vector containing command line options.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.match_netlist_refs_with_api_refs">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">match_netlist_refs_with_api_refs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lst1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lst2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.match_netlist_refs_with_api_refs" title="Link to this definition">¶</a></dt>
-<dd><p>Matches the group number and location of a reference in lst1
-to what group and location it is in lst2, and uses counters to store the indexes.
-In this software’s case, lst1 = Net list reader reference groups
-and lst2 = API reference groups.</p>
-<p>This function used to be used for extracting from the KiCost result only the
-components present in the net list. Now it is used to sort the KiCost result
-exactly how the net list reader does it so that the results can simply be indexed.</p>
-<p>Format of returned list is [lst1_group_index, lst1_ref_index, lst2_group_index, lst2_ref_index].</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lst1</strong> – List with nested lists of strings.</p></li>
-<li><p><strong>lst2</strong> – List with nested lists of strings.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List with nested lists of indexes where lst1 nested items match lst2 nested items. Goupred based on the location in lst1.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.mouser_new_query_part_info">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">mouser_new_query_part_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">OrderedDict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distributors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">currency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.mouser_new_query_part_info" title="Link to this definition">¶</a></dt>
-<dd><p>Used to override the api_digikey._query_part_info function to return additional part details
-like the manufacturer.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parts</strong> – Parts read by KiCost.</p></li>
-<li><p><strong>distributors</strong> – The chosen distributor which in this case will be digikey.</p></li>
-<li><p><strong>currency</strong> – Chosen currency of returned prices.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.open_output_file">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">open_output_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TextIOWrapper</span></span></span><a class="headerlink" href="#kiabom.open_output_file" title="Link to this definition">¶</a></dt>
-<dd><p>Open the file to be used for outputing the BOM data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>output_file</strong> – Output file name.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A file object.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.output_general_info_csv">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">output_general_info_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">netlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board_quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.output_general_info_csv" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>out</strong> (<em>csv.writer.</em>) – A csv.writer object created with csv.writer().</p></li>
-<li><p><strong>net</strong> – The netlist object created by opening the XML with kicad_netlist_reader.</p></li>
-<li><p><strong>board_quantity</strong> – Board quantity.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.output_general_info_html">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">output_general_info_html</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">html</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">netlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board_quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#kiabom.output_general_info_html" title="Link to this definition">¶</a></dt>
-<dd><p>Output some general info afte the HTML BOM table.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>html</strong> – HTML string.</p></li>
-<li><p><strong>net</strong> – Netlist object opened using kicad_netlist_reader.</p></li>
-<li><p><strong>board_quantity</strong> – Board quantity.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>HTML string.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.print_title_screen">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">print_title_screen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.print_title_screen" title="Link to this definition">¶</a></dt>
-<dd><p>Print the title splash.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.refs_sort">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">refs_sort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.refs_sort" title="Link to this definition">¶</a></dt>
-<dd><p>Used as a sort key in get_refs_from_kicost().</p>
-<p>For example, KiCost sorts a reference like so [‘R2’, ‘R9’, ‘R13’, ‘R14’, ‘R10’]
-whereas kicad_netlist_reader sorts it like so [‘R2’, ‘R9’, ‘R10’, ‘R13’, ‘R14’].
-Therefore for optimum matching between the two outputs, they need to be sorted the same
-way.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ref</strong> – Reference designator string.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.remove_ignore_mpn_parts">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">remove_ignore_mpn_parts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grouped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_mpns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.remove_ignore_mpn_parts" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.set_format_from_output_file_extension">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">set_format_from_output_file_extension</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#kiabom.set_format_from_output_file_extension" title="Link to this definition">¶</a></dt>
-<dd><p>Automatically set the output format based on the output file extension</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>output_file</strong> – Output file name.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Output file format.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.set_html_table">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">set_html_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">html_text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board_quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grouped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.PartsFileData" title="kiabom.PartsFileData"><span class="pre">PartsFileData</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#kiabom.PartsFileDataDNP" title="kiabom.PartsFileDataDNP"><span class="pre">PartsFileDataDNP</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#kiabom.set_html_table" title="Link to this definition">¶</a></dt>
-<dd><p>Set the table in the HTML string.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>html_text</strong> – HTML string.</p></li>
-<li><p><strong>board_quantity</strong> – Board quantity.</p></li>
-<li><p><strong>columns</strong> – Columns list for what data to output.</p></li>
-<li><p><strong>grouped</strong> – List of lists of components from the kicad_netlist_reader.</p></li>
-<li><p><strong>output_data</strong> – Parts data that will be used to populate the table.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>HTML table string containing all the parts data.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.write_parts_to_csv">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">write_parts_to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board_quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grouped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.PartsFileData" title="kiabom.PartsFileData"><span class="pre">PartsFileData</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#kiabom.PartsFileDataDNP" title="kiabom.PartsFileDataDNP"><span class="pre">PartsFileDataDNP</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.write_parts_to_csv" title="Link to this definition">¶</a></dt>
-<dd><p>Write grouped parts into the opened CSV file</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>out</strong> (<em>csv.writer</em>) – A csv.writer object to use for writing to the CSV.</p></li>
-<li><p><strong>board_quantity</strong> – Board quantity.</p></li>
-<li><p><strong>columns</strong> – Columns list for what data to output.</p></li>
-<li><p><strong>grouped</strong> – List of lists of components from the kicad_netlist_reader.</p></li>
-<li><p><strong>output_data</strong> – Parts data that will be used to populate the table.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.write_to_file">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">write_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TextIOWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers_flag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info_flag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sum_flag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board_quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.Net" title="kiabom.Net"><span class="pre">Net</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts_file_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.PartsFileData" title="kiabom.PartsFileData"><span class="pre">PartsFileData</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.write_to_file" title="Link to this definition">¶</a></dt>
-<dd><p>Write to the corresponding file the collated data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> – File object</p></li>
-<li><p><strong>output_format</strong> – Selected output format.</p></li>
-<li><p><strong>headers_flag</strong> – Flag to output headers to the BOM table.</p></li>
-<li><p><strong>info_flag</strong> – Flag to output extra info to the end of the file.</p></li>
-<li><p><strong>sum_flag</strong> – Flag to output the total price sum after the BOM table.</p></li>
-<li><p><strong>board_quantity</strong> – Specify board quantity.</p></li>
-<li><p><strong>columns</strong> – Columns to be used when outputting BOM.</p></li>
-<li><p><strong>net_obj</strong> – A Net object.</p></li>
-<li><p><strong>parts_file_data</strong> – A PartsFileData object.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.writerow">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">writerow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acsvwriter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.writerow" title="Link to this definition">¶</a></dt>
-<dd><p>Override csv.writer’s writerow() to support encoding conversion (initial encoding is utf8)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>acsvwriter</strong> (<em>csv.writer</em>) – A csv.writer object used to write the columns list.</p></li>
-<li><p><strong>columns</strong> – A list of string values to write as a row.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="kiabom.BaseNet">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">BaseNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_xml</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excludeBOM</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excludeBoard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.BaseNet" title="Link to this definition">¶</a></dt>
-<dd><p>Base Net class where Net and NetDNP inherit their shared members</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_xml</strong> – Input XML file name.</p></li>
-<li><p><strong>net</strong> – Netlist reader object.</p></li>
-<li><p><strong>components</strong> – List of components from the schematic.</p></li>
-<li><p><strong>grouped</strong> – List of grouped compoentns.</p></li>
-<li><p><strong>group_count</strong> – Number of groups.</p></li>
-<li><p><strong>refdes_groups</strong> – List of reference designators from the netlist.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseNet.get_components">
-<span class="sig-name descname"><span class="pre">get_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excludeBOM</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excludeBoard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.BaseNet.get_components" title="Link to this definition">¶</a></dt>
-<dd><p>Get the grouped components. Implemented in BaseNet to force implementation in children.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>excludeBOM</strong> – Boolean value of whether to include symbols with the exclude from BOM property set.</p></li>
-<li><p><strong>excludeBoard</strong> – Boolean value of whether to include symbols with the exclude from Board property set.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>NotImplementedError</strong> – Error raised when function not implemented in children.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseNet.get_refdes_from_net">
-<span class="sig-name descname"><span class="pre">get_refdes_from_net</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grouped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseNet.get_refdes_from_net" title="Link to this definition">¶</a></dt>
-<dd><p>Get reference designators from KiCAD netlist reader</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>grouped</strong> – List of kicad_netlist_reader component groups.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list of reference designator groups.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="kiabom.BaseParts">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">BaseParts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">supplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.Net" title="kiabom.Net"><span class="pre">Net</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#kiabom.NetDNP" title="kiabom.NetDNP"><span class="pre">NetDNP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_empty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">currency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_mpns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board_quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.BaseParts" title="Link to this definition">¶</a></dt>
-<dd><p>Base class for the Parts and PartsDNP classes containing KiCost part details as lists.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.get_currency_symbol_list">
-<span class="sig-name descname"><span class="pre">get_currency_symbol_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">currency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_codes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.get_currency_symbol_list" title="Link to this definition">¶</a></dt>
-<dd><p>Get a list with all the currency values for the parts.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>currency</strong> – Currency string, e.g. GBP, USD, or EUR.</p></li>
-<li><p><strong>order_codes</strong> – Order codes list.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list with the currency symbols where a valid order code was found.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.get_manufacturer_from_kicost">
-<span class="sig-name descname"><span class="pre">get_manufacturer_from_kicost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">PartGroup</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.get_manufacturer_from_kicost" title="Link to this definition">¶</a></dt>
-<dd><p>Get the manufacturer from the returned KiCost parts list.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parts</strong> – List of parts returned from KiCost.</p></li>
-<li><p><strong>supplier</strong> – Supplier name.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of the manufacturers with blanks when none was found.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.get_order_code_from_kicost">
-<span class="sig-name descname"><span class="pre">get_order_code_from_kicost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">PartGroup</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.get_order_code_from_kicost" title="Link to this definition">¶</a></dt>
-<dd><p>Get the order code from the returned KiCost parts list.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parts</strong> – List of parts returned from KiCost.</p></li>
-<li><p><strong>supplier</strong> – Supplier name.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of the order codes with blanks when none was found.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.get_price_from_kicost">
-<span class="sig-name descname"><span class="pre">get_price_from_kicost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_tiers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.get_price_from_kicost" title="Link to this definition">¶</a></dt>
-<dd><p>Get the price from the price tiers based on the quantity.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>quantity</strong> – Quantity from the number of parts in the group.</p></li>
-<li><p><strong>price_tiers</strong> – Price tiers returned from the API.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of the prices in string format.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.get_price_tiers_from_kicost">
-<span class="sig-name descname"><span class="pre">get_price_tiers_from_kicost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">PartGroup</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.get_price_tiers_from_kicost" title="Link to this definition">¶</a></dt>
-<dd><p>Get the price tiers from the returned parts list.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parts</strong> – List of parts returned from KiCost.</p></li>
-<li><p><strong>supplier</strong> – Supplier string.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of price tiers.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.get_quantity_from_kicost">
-<span class="sig-name descname"><span class="pre">get_quantity_from_kicost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">PartGroup</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board_quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.get_quantity_from_kicost" title="Link to this definition">¶</a></dt>
-<dd><p>Get the quantity from the returned KiCost parts.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parts</strong> – List of parts returned from KiCost.</p></li>
-<li><p><strong>board_quantity</strong> – Specified board quantity from the options.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of all the quantities detected by KiCost.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.get_refs_from_kicost">
-<span class="sig-name descname"><span class="pre">get_refs_from_kicost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">PartGroup</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.get_refs_from_kicost" title="Link to this definition">¶</a></dt>
-<dd><p>Get reference designators from KiCost API.
-Also sorting them so that the output is a bit more similar
-to the netlist reader when debugging.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>parts</strong> – List of PartGroup objects.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of reference groups.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.get_stock_from_kicost">
-<span class="sig-name descname"><span class="pre">get_stock_from_kicost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">PartGroup</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.get_stock_from_kicost" title="Link to this definition">¶</a></dt>
-<dd><p>Get the stock from the returned KiCost parts list.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parts</strong> – List of parts returned from KiCost.</p></li>
-<li><p><strong>supplier</strong> – Supplier name.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of the stock with blanks when none was found.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.get_supplier_list">
-<span class="sig-name descname"><span class="pre">get_supplier_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">supplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_codes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.get_supplier_list" title="Link to this definition">¶</a></dt>
-<dd><p>Get the supplier list for all parts returned from KiCost.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>supplier</strong> – Supplier text.</p></li>
-<li><p><strong>order_codes</strong> – List of the order codes.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of the suppliers for all the returned parts.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.keep_only_components_in_netlist">
-<span class="sig-name descname"><span class="pre">keep_only_components_in_netlist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">components</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">OrderedDict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net_refs_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">OrderedDict</span></span></span><a class="headerlink" href="#kiabom.BaseParts.keep_only_components_in_netlist" title="Link to this definition">¶</a></dt>
-<dd><p>Reads all the components KiCost found from the XML and
-keeps only those that were read initially from net.getInterestingComponents().</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>components</strong> – OrderedDict of components and their information.</p></li>
-<li><p><strong>net_refs_groups</strong> – List of the reference groups from the netlist reader.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>OrderedDict of components and their information but only those that match the ones from the netlist reader.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.match_api_parts_list_with_reader_list">
-<span class="sig-name descname"><span class="pre">match_api_parts_list_with_reader_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_refs_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net_refs_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_parts_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">PartGroup</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">PartGroup</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.match_api_parts_list_with_reader_list" title="Link to this definition">¶</a></dt>
-<dd><p>Match the KiCost API result with the KiCAD net list reader</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>api_refs_groups</strong> – List of the reference designator groups from KiCost.</p></li>
-<li><p><strong>net_refs_groups</strong> – List of the reference designator groups from KiCAD.</p></li>
-<li><p><strong>api_parts_list</strong> – List of the parts returned from KiCost.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A PartsGroup list where all parts match the KiCAD netlist reader sequence.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.search_parts_kicost">
-<span class="sig-name descname"><span class="pre">search_parts_kicost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.Net" title="kiabom.Net"><span class="pre">Net</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#kiabom.NetDNP" title="kiabom.NetDNP"><span class="pre">NetDNP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">currency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_mpns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">PartGroup</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.BaseParts.search_parts_kicost" title="Link to this definition">¶</a></dt>
-<dd><p>Search the distributor for the parts given by the input XML file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>net_obj</strong> – Net object containing relevant information from the kicad_netlist_reader.</p></li>
-<li><p><strong>supplier</strong> – Supplier text.</p></li>
-<li><p><strong>currency</strong> – Currency code.</p></li>
-<li><p><strong>ignore_mpns</strong> – List of strings to ignore if found in the MPN field.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Parts data as an OrderedDict.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.BaseParts.set_blank_val_to_ignore_mpns">
-<span class="sig-name descname"><span class="pre">set_blank_val_to_ignore_mpns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">components</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">OrderedDict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_mpns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">OrderedDict</span></span></span><a class="headerlink" href="#kiabom.BaseParts.set_blank_val_to_ignore_mpns" title="Link to this definition">¶</a></dt>
-<dd><p>Set the ‘manf#’ value in the components dict to blank
-so that the ignore_mpns parts are skipped by the KiCost API.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>components</strong> – OrderedDict of components and their information.</p></li>
-<li><p><strong>ignore_mpns</strong> – List of the MPN strings to not search for.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list with the MPN values that should be ignored set to blank.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="kiabom.BasePartsFileData">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">BasePartsFileData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">primary_parts_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.Parts" title="kiabom.Parts"><span class="pre">Parts</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#kiabom.PartsDNP" title="kiabom.PartsDNP"><span class="pre">PartsDNP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondary_parts_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.Parts" title="kiabom.Parts"><span class="pre">Parts</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#kiabom.PartsDNP" title="kiabom.PartsDNP"><span class="pre">PartsDNP</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.BasePartsFileData" title="Link to this definition">¶</a></dt>
-<dd><p>Class containing the file data that is common between DNP and non-DNP parts.
-Has data from both primary and secondary suppliers.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>manufacturer</strong> – Manufacturer list.</p></li>
-<li><p><strong>primary_order_codes</strong> – Primary order codes list.</p></li>
-<li><p><strong>primary_supplier</strong> – Primary supplier list containing the primary supplier string.</p></li>
-<li><p><strong>secondary_order_codes</strong> – Secondary order codes list.</p></li>
-<li><p><strong>secondary_supplier</strong> – Secondary supplier list containing the secondary supplier string.</p></li>
-<li><p><strong>price</strong> – List containing the prices for each part.</p></li>
-<li><p><strong>currency_symbol</strong> – Currency symbol for each part.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="kiabom.Net">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">Net</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_xml</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excludeBOM</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excludeBoard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.Net" title="Link to this definition">¶</a></dt>
-<dd><p>Contains data read by the netlist reader.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>dnp</strong> – NetDNP object containing information about DNP components.</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.Net.get_components">
-<span class="sig-name descname"><span class="pre">get_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excludeBOM</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excludeBoard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.Net.get_components" title="Link to this definition">¶</a></dt>
-<dd><p>Get the grouped components</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>excludeBOM</strong> – Boolean value of whether to include symbols with the exclude from BOM property set.</p></li>
-<li><p><strong>excludeBoard</strong> – Boolean value of whether to include symbols with the exclude from Board property set.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of grouped kicad_netlist_reader components.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="kiabom.NetDNP">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">NetDNP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_xml</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excludeBOM</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excludeBoard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.NetDNP" title="Link to this definition">¶</a></dt>
-<dd><p>Contains data read by the netlist reader for DNP components.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.NetDNP.extract_dnp">
-<span class="sig-name descname"><span class="pre">extract_dnp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.NetDNP.extract_dnp" title="Link to this definition">¶</a></dt>
-<dd><p>Extract the DNP components from a comp list.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>component_list</strong> – List of components from the kicad_netlist_reader.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list of the DNP components.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="kiabom.NetDNP.get_components">
-<span class="sig-name descname"><span class="pre">get_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excludeBOM</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excludeBoard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#kiabom.NetDNP.get_components" title="Link to this definition">¶</a></dt>
-<dd><p>Get the grouped components and extract the DNP components.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>excludeBOM</strong> – Boolean value of whether to include symbols with the exclude from BOM property set.</p></li>
-<li><p><strong>excludeBoard</strong> – Boolean value of whether to include symbols with the exclude from Board property set.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of grouped DNP kicad_netlist_reader components.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="kiabom.Parts">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">Parts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">supplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.Net" title="kiabom.Net"><span class="pre">Net</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_empty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">currency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_mpns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board_quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.Parts" title="Link to this definition">¶</a></dt>
-<dd><p>Contains non-DNP parts data retrieved by KiCost for a specific supplier.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>dnp</strong> – A PartsFileDataDNP object instance.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="kiabom.PartsDNP">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">PartsDNP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">supplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.NetDNP" title="kiabom.NetDNP"><span class="pre">NetDNP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_empty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">currency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_mpns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">board_quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.PartsDNP" title="Link to this definition">¶</a></dt>
-<dd><p>Contains DNP parts data retrieved by KiCost for a specific supplier</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="kiabom.PartsFileData">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">PartsFileData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">primary_parts_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.Parts" title="kiabom.Parts"><span class="pre">Parts</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondary_parts_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.Parts" title="kiabom.Parts"><span class="pre">Parts</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.PartsFileData" title="Link to this definition">¶</a></dt>
-<dd><p>Contains data of the parts as simple lists for outputting.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>dnp</strong> – A PartsFileDataDNP object instance.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="kiabom.PartsFileDataDNP">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">PartsFileDataDNP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">primary_parts_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.PartsDNP" title="kiabom.PartsDNP"><span class="pre">PartsDNP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondary_parts_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.PartsDNP" title="kiabom.PartsDNP"><span class="pre">PartsDNP</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.PartsFileDataDNP" title="Link to this definition">¶</a></dt>
-<dd><p>Contains DNP CSV data of the DNP parts</p>
-</dd></dl>
-
-</section>
-</section>
-</section>
+<div class="section" id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
 
 
             <div class="clearer"></div>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <div>
     <h3><a href="index.html">Table of Contents</a></h3>
@@ -1010,74 +95,8 @@ Has data from both primary and secondary suppliers.</p>
 <li><a class="reference internal" href="#">API</a><ul>
 <li><a class="reference internal" href="#summary">Summary</a></li>
 <li><a class="reference internal" href="#definitions">Definitions</a><ul>
-<li><a class="reference internal" href="#functions">Functions</a><ul>
-<li><a class="reference internal" href="#kiabom.check_args"><code class="docutils literal notranslate"><span class="pre">check_args()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.check_empty_dnp"><code class="docutils literal notranslate"><span class="pre">check_empty_dnp()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.digikey_new_query_part_info"><code class="docutils literal notranslate"><span class="pre">digikey_new_query_part_info()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.download_datasheets"><code class="docutils literal notranslate"><span class="pre">download_datasheets()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.fill_primary_list_gaps_with_secondary"><code class="docutils literal notranslate"><span class="pre">fill_primary_list_gaps_with_secondary()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.get_columns"><code class="docutils literal notranslate"><span class="pre">get_columns()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.get_equ"><code class="docutils literal notranslate"><span class="pre">get_equ()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.get_footprint_name"><code class="docutils literal notranslate"><span class="pre">get_footprint_name()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.get_html_td_string"><code class="docutils literal notranslate"><span class="pre">get_html_td_string()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.get_return_empty"><code class="docutils literal notranslate"><span class="pre">get_return_empty()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.get_total_price_sum"><code class="docutils literal notranslate"><span class="pre">get_total_price_sum()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.has_internet"><code class="docutils literal notranslate"><span class="pre">has_internet()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.init_kicost"><code class="docutils literal notranslate"><span class="pre">init_kicost()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.match_netlist_refs_with_api_refs"><code class="docutils literal notranslate"><span class="pre">match_netlist_refs_with_api_refs()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.mouser_new_query_part_info"><code class="docutils literal notranslate"><span class="pre">mouser_new_query_part_info()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.open_output_file"><code class="docutils literal notranslate"><span class="pre">open_output_file()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.output_general_info_csv"><code class="docutils literal notranslate"><span class="pre">output_general_info_csv()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.output_general_info_html"><code class="docutils literal notranslate"><span class="pre">output_general_info_html()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.print_title_screen"><code class="docutils literal notranslate"><span class="pre">print_title_screen()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.refs_sort"><code class="docutils literal notranslate"><span class="pre">refs_sort()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.remove_ignore_mpn_parts"><code class="docutils literal notranslate"><span class="pre">remove_ignore_mpn_parts()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.set_format_from_output_file_extension"><code class="docutils literal notranslate"><span class="pre">set_format_from_output_file_extension()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.set_html_table"><code class="docutils literal notranslate"><span class="pre">set_html_table()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.write_parts_to_csv"><code class="docutils literal notranslate"><span class="pre">write_parts_to_csv()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.write_to_file"><code class="docutils literal notranslate"><span class="pre">write_to_file()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.writerow"><code class="docutils literal notranslate"><span class="pre">writerow()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#classes">Classes</a><ul>
-<li><a class="reference internal" href="#kiabom.BaseNet"><code class="docutils literal notranslate"><span class="pre">BaseNet</span></code></a><ul>
-<li><a class="reference internal" href="#kiabom.BaseNet.get_components"><code class="docutils literal notranslate"><span class="pre">BaseNet.get_components()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseNet.get_refdes_from_net"><code class="docutils literal notranslate"><span class="pre">BaseNet.get_refdes_from_net()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#kiabom.BaseParts"><code class="docutils literal notranslate"><span class="pre">BaseParts</span></code></a><ul>
-<li><a class="reference internal" href="#kiabom.BaseParts.get_currency_symbol_list"><code class="docutils literal notranslate"><span class="pre">BaseParts.get_currency_symbol_list()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.get_manufacturer_from_kicost"><code class="docutils literal notranslate"><span class="pre">BaseParts.get_manufacturer_from_kicost()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.get_order_code_from_kicost"><code class="docutils literal notranslate"><span class="pre">BaseParts.get_order_code_from_kicost()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.get_price_from_kicost"><code class="docutils literal notranslate"><span class="pre">BaseParts.get_price_from_kicost()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.get_price_tiers_from_kicost"><code class="docutils literal notranslate"><span class="pre">BaseParts.get_price_tiers_from_kicost()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.get_quantity_from_kicost"><code class="docutils literal notranslate"><span class="pre">BaseParts.get_quantity_from_kicost()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.get_refs_from_kicost"><code class="docutils literal notranslate"><span class="pre">BaseParts.get_refs_from_kicost()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.get_stock_from_kicost"><code class="docutils literal notranslate"><span class="pre">BaseParts.get_stock_from_kicost()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.get_supplier_list"><code class="docutils literal notranslate"><span class="pre">BaseParts.get_supplier_list()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.keep_only_components_in_netlist"><code class="docutils literal notranslate"><span class="pre">BaseParts.keep_only_components_in_netlist()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.match_api_parts_list_with_reader_list"><code class="docutils literal notranslate"><span class="pre">BaseParts.match_api_parts_list_with_reader_list()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.search_parts_kicost"><code class="docutils literal notranslate"><span class="pre">BaseParts.search_parts_kicost()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.BaseParts.set_blank_val_to_ignore_mpns"><code class="docutils literal notranslate"><span class="pre">BaseParts.set_blank_val_to_ignore_mpns()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#kiabom.BasePartsFileData"><code class="docutils literal notranslate"><span class="pre">BasePartsFileData</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.Net"><code class="docutils literal notranslate"><span class="pre">Net</span></code></a><ul>
-<li><a class="reference internal" href="#kiabom.Net.get_components"><code class="docutils literal notranslate"><span class="pre">Net.get_components()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#kiabom.NetDNP"><code class="docutils literal notranslate"><span class="pre">NetDNP</span></code></a><ul>
-<li><a class="reference internal" href="#kiabom.NetDNP.extract_dnp"><code class="docutils literal notranslate"><span class="pre">NetDNP.extract_dnp()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.NetDNP.get_components"><code class="docutils literal notranslate"><span class="pre">NetDNP.get_components()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#kiabom.Parts"><code class="docutils literal notranslate"><span class="pre">Parts</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.PartsDNP"><code class="docutils literal notranslate"><span class="pre">PartsDNP</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.PartsFileData"><code class="docutils literal notranslate"><span class="pre">PartsFileData</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.PartsFileDataDNP"><code class="docutils literal notranslate"><span class="pre">PartsFileDataDNP</span></code></a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+<li><a class="reference internal" href="#classes">Classes</a></li>
 </ul>
 </li>
 </ul>
@@ -1102,7 +121,7 @@ Has data from both primary and secondary suppliers.</p>
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
-<search id="searchbox" style="display: none" role="search">
+<div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
@@ -1110,13 +129,13 @@ Has data from both primary and secondary suppliers.</p>
       <input type="submit" value="Go" />
     </form>
     </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related" role="navigation" aria-label="Related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -1133,8 +152,8 @@ Has data from both primary and secondary suppliers.</p>
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-    &#169; Copyright 2025, Yiannis Michael.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+        &#169; Copyright 2025, Yiannis Michael.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
     </div>
   </body>
 </html>
