@@ -1,0 +1,349 @@
+
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Usage &#8212; KiABOM v1.8.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=c3ca4b69" />
+    
+    <script src="_static/documentation_options.js?v=4eaa865d"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API" href="api.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v1.8.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h1>
+<p>KiABOM detects the use of an ‘MPN’ field in the schematic symbols. The field name is <strong>very specific</strong> and <strong>case sensitive</strong>. It also ignores searching for part numbers with the values ‘Generic’, ‘TBD’, and ‘Manufacturer’s Stock’ in the MPN field. Therefore, to use KiABOM, create an MPN field in each symbol and add the MPN in that field description.</p>
+<p>You can use the generator either through the terminal or through KiCad itself. See the relevant sections below for more information and the <a class="reference internal" href="#example-uses"><span class="std std-ref">Example Uses</span></a> section for some example command options. Supports all modern KiCad versions using Python v3.9+.</p>
+<section id="using-through-a-terminal">
+<h2>Using Through a Terminal<a class="headerlink" href="#using-through-a-terminal" title="Link to this heading">¶</a></h2>
+<p>KiABOM can be treated (depending on your installation) as an executable application or a Python script. In both cases options would be passed to it the same way. See the <a class="reference internal" href="#options"><span class="std std-ref">Options</span></a> section for the list of options and example commands you can use with the tool.</p>
+</section>
+<section id="using-through-kicad">
+<h2>Using Through KiCad<a class="headerlink" href="#using-through-kicad" title="Link to this heading">¶</a></h2>
+<p>There are three ways of using KiABOM through KiCad. One is via the Legacy BOM generator menu, the second one is the netlist exporter, and the third one is with a jobset file. All methods use the Generator command line format as specified in the <a class="reference external" href="https://docs.kicad.org/9.0/en/eeschema/eeschema.html#generator-command-line-format">KiCad documentation</a>. The options used with each method also get saved by KiCad, so you only need to set your configuration once.</p>
+<p id="commands">Depending on how KiABOM was installed, you may want to use different commands. If using the executable you would use,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom &quot;%I&quot; &quot;%B&quot;.csv [options]
+</pre></div>
+</div>
+<p>If using a Python installation you would use,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>python path/to/kiabom.py &quot;%I&quot; &quot;%B&quot;.csv [options]
+</pre></div>
+</div>
+<p>And if using a Python virtual environment you would use,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>path/to/python/venv/bin/python /path/to/kiabom.py &quot;%I&quot; &quot;%B&quot;.csv [options]
+</pre></div>
+</div>
+<p>These commands use the current schematic as input to KiABOM and the project name as the CSV name. The <cite>.csv</cite> extension can be changed to <cite>.html</cite> or <cite>.txt</cite> and the output format will be detected and changed by the generator.</p>
+<section id="via-legacy-bom-generator">
+<h3>Via Legacy BOM Generator<a class="headerlink" href="#via-legacy-bom-generator" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>In any schematic go to <cite>Tools -&gt; Generate Legacy Bill of Materials…</cite> and click the <cite>+</cite> sign under the ‘BOM generator scripts’.</p></li>
+<li><p>Find either the KiABOM executable or Python file, select it, and add an appropriate generator name.</p></li>
+<li><p>Depending on your installation the command in the text box will change. See the  <a class="reference internal" href="#commands"><span class="std std-ref">commands</span></a> listed above for which commands to use.</p></li>
+<li><p>Clicking <cite>Generate</cite> should then output the auto-generated BOM in the project root directory.</p></li>
+</ol>
+<p>This method is the recommended method as you can see the output of KiABOM in the dialogue box if anything fails.</p>
+</section>
+<section id="via-netlist-exporter">
+<h3>Via Netlist Exporter<a class="headerlink" href="#via-netlist-exporter" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>First open the schematic editor in any project and go to <cite>File -&gt; Export -&gt; Netlist…</cite>.</p></li>
+<li><p>Click Add Exporter, add the title KiABOM and depending on your installation the command in the text box will change. See the  <a class="reference internal" href="#commands"><span class="std std-ref">commands</span></a> listed above for which commands to use.</p></li>
+<li><p>Clicking <cite>Export Netlist</cite> should then output the auto-generated BOM in the project root directory.</p></li>
+</ol>
+<p>This method is only listed to show that it is possible and it is definitely viable even if it’s not the recommended way. The only quirks with this method is that there is no feedback to the user of what happened, and it is done through the Netlist generator.</p>
+</section>
+<section id="via-a-jobsets-file">
+<h3>Via a Jobsets File<a class="headerlink" href="#via-a-jobsets-file" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>To use KiABOM with a jobsets file, the schematic XML must also be generated. To accomplish this, in a jobsets file create a <code class="docutils literal notranslate"><span class="pre">Special:</span> <span class="pre">Execute</span> <span class="pre">Command</span></code> job type and in the <code class="docutils literal notranslate"><span class="pre">Command:</span></code> text box, enter the following to generate the schematic XML file,</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kicad-cli sch export netlist --format kicadxml &quot;${PROJECTNAME}.kicad_sch&quot;
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Then create another job of the same type and input your KiABOM command with your options, as given in the previous two sections. Depending on your installation the command in the text box will change. See the  <a class="reference internal" href="#commands"><span class="std std-ref">commands</span></a> listed above for which commands to use.</p></li>
+</ol>
+<p><strong>Note:</strong> Due to jobsets not using format specifiers, instead of <code class="docutils literal notranslate"><span class="pre">%I</span></code> and <code class="docutils literal notranslate"><span class="pre">%B</span></code> you would use <code class="docutils literal notranslate"><span class="pre">${PROJECTNAME}</span></code> as used in step 1 above.</p>
+<ol class="arabic simple" start="3">
+<li><p>Make sure to save this jobsets file.</p></li>
+</ol>
+</section>
+</section>
+<section id="using-with-supplier-bom-tools">
+<h2>Using With Supplier BOM Tools<a class="headerlink" href="#using-with-supplier-bom-tools" title="Link to this heading">¶</a></h2>
+<p>Some suppliers offer BOM tools that assist with ordering parts if you already have the MPNs or the Supplier Order Codes. Using KiABOM’s CSV output format, the BOM can be uploaded to these tools, and by specifying the correct column types, the parts can be automatically detected and then ordered. See below for example instructions for how to do that with <a class="reference external" href="https://www.mouser.co.uk/bom/">Mouser’s BOM Tool</a>. <a class="reference external" href="https://www.digikey.co.uk/en/mylists/">DigiKey myLists</a> is their version of a BOM tool and has a very similar process.</p>
+<p>Go to the Mouser BOM tool and upload your BOM CSV file. In the next page you will set the column types. Assuming you are using the <cite>default</cite> column preset, set the <cite>Quantity</cite> column as <cite>Quantity 1</cite>, <cite>Description</cite> as <cite>Description</cite>, <cite>Manufacturer</cite> as <cite>Mfr Name</cite>, <cite>MPN</cite> as <cite>Mfr Part Number</cite>, and the <cite>Order Code</cite> as the <cite>Mouser Part Number</cite>. In the next page set the appropriate settings and once done proceed to the next page. From here you can add the parts listed to your basket and submit an order. Multiples of the same BOM can be added to basket for multiple boards using the same BOM for a single board.</p>
+<p>Some tips for this process is that the <code class="docutils literal notranslate"><span class="pre">--no-headers</span></code> column might need to be used to get rid of the column headers before inputting to a BOM tool. Also using <code class="docutils literal notranslate"><span class="pre">--remove-ignore-mpn-parts</span></code> will remove parts with the ignore MPN values from the BOM, thus saving you time removing these from the result list.</p>
+</section>
+<section id="advanced-customisations">
+<span id="id1"></span><h2>Advanced Customisations<a class="headerlink" href="#advanced-customisations" title="Link to this heading">¶</a></h2>
+<p>KiABOM is written such that it is as portable and as easy to understand as possible. For this reason, advanced users are encouraged to edit the source code for having their custom column and group presets. After modifying the source <cite>pyinstaller</cite> can then be used to generate an executable if desired by doing,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pyinstaller .\kiabom.py -F --add-data ../LICENSE:. --icon ..\images\kiabom-icon.ico
+</pre></div>
+</div>
+<section id="adding-user-custom-presets">
+<h3>Adding User Custom Presets<a class="headerlink" href="#adding-user-custom-presets" title="Link to this heading">¶</a></h3>
+<p>To add custom column presets add a dictionary entry to the <code class="docutils literal notranslate"><span class="pre">column_preset_dict</span></code> defined after the import statements. Any of the listed supported column values (shown by using the <code class="docutils literal notranslate"><span class="pre">--list-supported-columns</span></code> option) can be entered and then your preset can then be used by using the <code class="docutils literal notranslate"><span class="pre">--column-preset</span> <span class="pre">PRESET</span></code> option.</p>
+<p>For custom grouping presets it is the same process but by using the <code class="docutils literal notranslate"><span class="pre">group_preset_dict</span></code> and by specifying yourcustom preset with <code class="docutils literal notranslate"><span class="pre">--group-preset</span> <span class="pre">PRESET</span></code>. A limitation placed for the group presets is that they should contain at least the <code class="docutils literal notranslate"><span class="pre">Value</span></code> and <code class="docutils literal notranslate"><span class="pre">Footprint</span></code> group values. This is in place to promote a good standard of BOM generation.</p>
+<p>Both of these preset groups can be used together by specifying <code class="docutils literal notranslate"><span class="pre">--preset</span> <span class="pre">PRESET</span></code> which uses <code class="docutils literal notranslate"><span class="pre">preset_dict</span></code> to specify both the group and column presets. The presets in this variable are in a <code class="docutils literal notranslate"><span class="pre">COLUMNS</span> <span class="pre">PRESER,</span> <span class="pre">GROUP</span> <span class="pre">PRESET</span></code> format. See below for an example on how to use these variables for customisation (dots imply ommission of the other entries),</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">column_preset_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="o">.</span>
+    <span class="o">.</span>
+    <span class="o">.</span>
+    <span class="s2">&quot;custom-columns&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;Value&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Footprint&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;MPN&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Custom Field&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+
+<span class="n">group_preset_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="o">.</span>
+    <span class="o">.</span>
+    <span class="o">.</span>
+    <span class="s2">&quot;custom-group&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;Value&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Footprint&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Custom Field&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+
+<span class="n">preset_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="o">.</span>
+    <span class="o">.</span>
+    <span class="o">.</span>
+    <span class="s2">&quot;custom&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;custom-columns&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;custom-groups&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Then your custom preset can be used with,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --preset custom
+</pre></div>
+</div>
+</section>
+</section>
+<section id="options">
+<span id="id2"></span><h2>Options<a class="headerlink" href="#options" title="Link to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">--help</span></code> page for KiABOM is shown below along with some examples,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: kiabom.py input_xml output_file [options]
+
+Automatic BOM tool for KiCAD.
+
+positional arguments:
+  input_xml             input the path to the XML file generated from the KiCAD schematic.
+  output_file           name of the output CSV or HTML file. It will be outputed in the same directory where the script is run from.
+options:
+  -h, --help            show this help message and exit
+  --version             output the KiABOM version.
+  --info                append to the output some general info about the generated BOM like, board quantity, schematic name, component count, date, and generator used.
+  --no-headers          don&#39;t output BOM column headers.
+  -k, --no-kicost       disable the KiCost integration.
+  --preset PRESET       specify both the columns and group presets at the same time with this option. Both &#39;--columns-preset&#39; and &#39;--group-preset&#39; overwrite this option.
+  --columns-preset COLUMNS_PRESET
+                        set a BOM preset for what part data should be outputed. Overwrites &#39;--columns&#39; if it comes after. Use &#39;--append-columns&#39; to append columns to a preset. Choose between &#39;Default&#39;, &#39;Minimal&#39;, &#39;No-KiCost&#39;, and &#39;Mage&#39;.
+  --group-preset GROUP_PRESET
+                        choose a group preset. Available ones are &#39;Default&#39;, &#39;Minimal&#39;, and &#39;Mage&#39;. Append to a preset with &#39;--append-groups&#39;.
+  -g, --group-by GROUP_BY
+                        choose what symbol fields to group by, Grouping by &#39;Value&#39; and &#39;Footprint&#39; is mandatory. Choose up to 5 additional fields to group by. Use values separated by commas and place values in quotes in they contain spaces
+  -c, --columns COLUMNS
+                        set the columns to be outputed. Use values separated by commas and place values in quotes in they contain spaces. Overwrites &#39;--preset&#39; if it comes after. Use &#39;--    append-columns&#39; to append columns to a preset and `--list-supported-columns&#39; to list valid column values.
+  -a, --append-columns APPEND_COLUMNS
+                        append columns to the selected preset. Use values separated by commas and place values in quotes in they contain spaces.
+  --append-groups APPEND_GROUPS
+                        append to a group preset.
+  --ignore-mpns IGNORE_MPNS
+                        add more MPN field values to ignore. This option appends the default option of &#39;Generic&#39;,&#39;TBD&#39;,&#39;Manufacturer&#39;s Stock&#39;, and &#39;&#39; (blank). Use values separated by commas and place values in quotes in they contain spaces.
+  -p, --primary-supplier PRIMARY_SUPPLIER
+                        select primary supplier from supplier list. View by executing KiABOM with &#39;--list-suppliers&#39; option.
+  -s, --secondary-supplier SECONDARY_SUPPLIER
+                        select secondary supplier. View by executing KiABOM with &#39;--list-suppliers&#39; option.
+  -d, --download-datasheets
+                        optionally donwload the datasheets for the parts with valid URLs in a &#39;Datasheet&#39; field. Files get downloaded to a &#39;datasheets&#39; folder in the current working directory.
+  -u, --primary-only    only use the primary supplier.
+  -q, --quiet           silence warnings
+  --kefbom, --keep-exclude-from-bom
+                        include the components with the &#39;Exclude from BOM&#39; property set.
+  --kefboard, --keep-exclude-from-board
+                        include the components with the &#39;Exclude from Board&#39; property set.
+  -b, --board-quantity BOARD_QUANTITY
+                        select board quantity, default is 1.
+  --sum                 add a summation of the total price to the end of the table.
+  --currency CURRENCY   select the currency, currently supports &#39;GBP&#39;, &#39;EUR&#39;, and &#39;USD&#39; options.
+  --remove-ignore-mpn-parts
+                        remove parts from the BOM that contain the ignore MPN values. This options was implemented specifically for supplier BOM tools.
+  --list-suppliers      list supported suppliers.
+  --list-presets        list built-in presets.
+  --list-column-presets
+                        list built-in column presets.
+  --list-group-presets  list built-in group presets.
+  --list-supported-columns
+                        list supported column values. Any symbol field can also be a column value.
+</pre></div>
+</div>
+<section id="example-uses">
+<span id="id3"></span><h3>Example Uses<a class="headerlink" href="#example-uses" title="Link to this heading">¶</a></h3>
+<p>The examples listed here will assume the executable is installed on your system but they could easily be replaced with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">kiabom.py</span> <span class="pre">input_xml</span> <span class="pre">output_file</span> <span class="pre">[options]</span></code>.</p>
+<p>Default behaviour for the tool is to generate a CSV in the default column and grouping presets. The auto-generated name of the output is ‘kiabom-output-HHMMSSddmmyy.csv’ which also contains the date and time of generation. The output will contain headers, will be for 1 board of your schematic, use GBP as the currency, and will retrieve the parts data from the suppliers.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml
+</pre></div>
+</div>
+<p>You can fully customise the outputted columns based on the list shown from the <code class="docutils literal notranslate"><span class="pre">--list-supported-columns</span></code> option. For example you can create a BOM with no headers, in HTML format, without parts data, that only has the Designator, DNP, Unit/Reel Price, Footprint, and Value,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.html --no-headers --columns &quot;Designator,DNP.Unit/Reel Price, Footprint,Value&quot; --no-kicost
+</pre></div>
+</div>
+<p>Adding a symbol field to the BOM can be done by using the appropriate preset and appending columns to that. Grouping can also be done on that field. You can even only output one supplier instead of two,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --append-columns Rating --append-groups Rating --primary-only
+</pre></div>
+</div>
+<p>More information can be outputted than just the parts data like generator info and board quantity by specifying <code class="docutils literal notranslate"><span class="pre">--info</span></code> and to get a total price sum by using <code class="docutils literal notranslate"><span class="pre">--sum</span></code>.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --sum --info
+</pre></div>
+</div>
+<p>Datasheets can be downloaded by specifying <code class="docutils literal notranslate"><span class="pre">--download-datasheets</span></code>, which downloads the files located at the links in the ‘Datasheet’ symbol field in a ‘datasheets’ folder in the current directory. The symbols with the ‘Exclude From BOM’ and ‘Exclude From Board’ properties can also be used in the BOM with <code class="docutils literal notranslate"><span class="pre">--kefbom</span></code> and <code class="docutils literal notranslate"><span class="pre">--kefboard</span></code>.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --download-datasheets --kefbom --kefboard
+</pre></div>
+</div>
+<p>Currently only two suppliers are supported (Mouser and DigiKey), but in the future the suppliers will be specified with the appropriate options.</p>
+<p>Presets can be used to simplify the columns and groupings used in the BOM. For example to output a BOM for JLCPCB, you would execute,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --preset jlcpcb
+</pre></div>
+</div>
+<p>which is the same as,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --columns-preset jlcpcb --group-preset jlcpcb
+</pre></div>
+</div>
+<p>Using the command above you can mix and match columns and group presets,</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --columns-preset default --group-preset minimal
+</pre></div>
+</div>
+<p>Contributions are welcome for any presets or columns you would like the generator to support!</p>
+<p>Lastly, editing the generator file is encouraged to create your own presets. See the  <a class="reference internal" href="#advanced-customisations"><span class="std std-ref">Advanced Customisations</span></a> section for how to customise KiABOM’s source code to get more out of the generator.</p>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Usage</a><ul>
+<li><a class="reference internal" href="#using-through-a-terminal">Using Through a Terminal</a></li>
+<li><a class="reference internal" href="#using-through-kicad">Using Through KiCad</a><ul>
+<li><a class="reference internal" href="#via-legacy-bom-generator">Via Legacy BOM Generator</a></li>
+<li><a class="reference internal" href="#via-netlist-exporter">Via Netlist Exporter</a></li>
+<li><a class="reference internal" href="#via-a-jobsets-file">Via a Jobsets File</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#using-with-supplier-bom-tools">Using With Supplier BOM Tools</a></li>
+<li><a class="reference internal" href="#advanced-customisations">Advanced Customisations</a><ul>
+<li><a class="reference internal" href="#adding-user-custom-presets">Adding User Custom Presets</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#options">Options</a><ul>
+<li><a class="reference internal" href="#example-uses">Example Uses</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="installation.html"
+                          title="previous chapter">Installation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="api.html"
+                          title="next chapter">API</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/usage.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v1.8.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Yiannis Michael.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

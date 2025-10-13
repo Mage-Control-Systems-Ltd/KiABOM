@@ -1,0 +1,234 @@
+
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Installation &#8212; KiABOM v1.8.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=c3ca4b69" />
+    
+    <script src="_static/documentation_options.js?v=4eaa865d"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage" href="usage.html" />
+    <link rel="prev" title="KiABOM documentation" href="index.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="usage.html" title="Usage"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="KiABOM documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v1.8.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
+<p>There are two ways of installing and using KiABOM. One is using the executable (either the provided one or building one) and other is using it through Python. For regular users that aren’t familiar with Python it is recommended to use the executable as that is a much less involved process. In this case, if it is preferred to not edit Path variables or move files, the executable path can be used instead of the plain <code class="docutils literal notranslate"><span class="pre">kiabom</span></code> invocation, i.e. <code class="docutils literal notranslate"><span class="pre">C:\Users\USER\Documents\kiabom.exe</span></code>.</p>
+<p>See the corresponding <a class="reference internal" href="#exec-installation"><span class="std std-ref">Executable Installation</span></a> and <a class="reference internal" href="#python-installation"><span class="std std-ref">Python Installation</span></a> sections for how to install KiABOM.</p>
+<section id="executable-installation">
+<span id="exec-installation"></span><h2>Executable Installation<a class="headerlink" href="#executable-installation" title="Link to this heading">¶</a></h2>
+<p>The currently provided executable and install script are for <strong>Windows only</strong> installations. Some instructions for using KiABOM on Linux and macOS are provided but have not been extensively tested yet.</p>
+<section id="windows">
+<h3>Windows<a class="headerlink" href="#windows" title="Link to this heading">¶</a></h3>
+<p>Choose to automatically install KiABOM by running the command below in PowerShell which executes the install script <code class="docutils literal notranslate"><span class="pre">kiabom-install.ps1</span></code> or manually install it by moving the appropriate files and setting the environment variables. Once installation is done, make sure to restart any terminal and KiCAD instances so that the new Path environment variables are loaded.</p>
+<section id="automatic-installation">
+<h4>Automatic Installation<a class="headerlink" href="#automatic-installation" title="Link to this heading">¶</a></h4>
+<ol class="arabic simple">
+<li><p>To automatically install KiABOM, run the command below in PowerShell,</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>irm &quot;https://raw.githubusercontent.com/Mage-Control-Systems-Ltd/KiABOM/refs/heads/main/install/kiabom-install.ps1&quot; | iex
+</pre></div>
+</div>
+<p>The install script downloads and moves the <code class="docutils literal notranslate"><span class="pre">kiabom.exe</span></code> and <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> files to <code class="docutils literal notranslate"><span class="pre">C:\Users\USERNAME\AppData\Local\kiabom</span></code> and then sets the correct environment variable.</p>
+<ol class="arabic simple" start="2">
+<li><p>If any issues with permissions arise, try running the script in a PowerShell with admin rights or execute the command below to make sure the correct permissions are used in the current PowerShell window,</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+</pre></div>
+</div>
+</section>
+<section id="manual-installation">
+<h4>Manual Installation<a class="headerlink" href="#manual-installation" title="Link to this heading">¶</a></h4>
+<ol class="arabic simple">
+<li><p>First clone the repo, to get the executable, config file, and the Python source files.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> file contains the configuration for KiCost and the API keys, and it just needs to be next to where you have the executable. This is different from the usual KiCost installation where it is placed in another folder in the user directory.</p></li>
+<li><p>Copy the repo path or place the executable in any folder and make note of its path.</p></li>
+<li><p>Edit your environment variables by searching <code class="docutils literal notranslate"><span class="pre">Edit</span> <span class="pre">environment</span> <span class="pre">variables</span> <span class="pre">for</span> <span class="pre">your</span> <span class="pre">account</span></code> in the start menu search, and clicking on the first result.</p></li>
+<li><p>Find the Path variable under User and add the path of the folder containing the executable.</p></li>
+<li><p>To test if it was done correctly, you may open a terminal window and type the command <code class="docutils literal notranslate"><span class="pre">kiabom</span></code>, and you should be given the usage of the command, along with some nice ASCII art.</p></li>
+</ol>
+</section>
+</section>
+<section id="linux">
+<h3>Linux<a class="headerlink" href="#linux" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>It is recommended that you create a Python virtual environment, although you could install to your system’s Python and change the following steps accordingly. After creating and activating a Python virtual environment (See Python Packaging User Guide <a class="reference external" href="https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/">here</a> for details on how to do that). Navigate to the repo location and go to the <code class="docutils literal notranslate"><span class="pre">src/</span></code> directory, and execute the following command to install KiABOM dependencies,</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pip install -r requirements.txt
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Install <cite>pyinstaller</cite> (on a virtual environment) and execute the following command in the repo <cite>src/</cite> directory to create the executable,</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pyinstaller .\kiabom.py -F --add-data ../LICENSE:. --icon ..\images\kiabom-icon.ico
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Place this executable somewhere where your system can find it so that it is accessible in every directory.</p></li>
+<li><p>Place your <cite>config.yaml</cite> next to the executable.</p></li>
+</ol>
+</section>
+<section id="macos">
+<h3>macOS<a class="headerlink" href="#macos" title="Link to this heading">¶</a></h3>
+<p>KiABOM has not been tested on macOS but it believed that the Linux instructions should be very similar and familiar to macOS users.</p>
+</section>
+</section>
+<section id="python-installation">
+<span id="id1"></span><h2>Python Installation<a class="headerlink" href="#python-installation" title="Link to this heading">¶</a></h2>
+<p>If you don’t want to use an executable, the sections below describe how it would be used via executing the script with Python. Make sure your <cite>config.yaml</cite> file is next to <cite>kiabom.py</cite> if using this method.</p>
+<p>In this process it is assumed you have Python 3 and <code class="docutils literal notranslate"><span class="pre">pip</span></code> installed. For Linux you also need <code class="docutils literal notranslate"><span class="pre">python3-env</span></code>. Follow the steps below to do this installation,</p>
+<section id="id2">
+<h3>Windows<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Clone the repo to a known location.</p></li>
+<li><p>An optional step would be to move or copy <code class="docutils literal notranslate"><span class="pre">kiabom.py</span></code> and <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> files to <code class="docutils literal notranslate"><span class="pre">C:\Users\USERNAME\AppData\Local\Programs\KiCad\9.0\bin\scripting\plugins</span></code>, which is where the rest of the shipped generator scripts are.</p></li>
+<li><p>Open the KiCad Command Prompt by searching for it in the start menu.</p></li>
+<li><p>Navigate to the repo location and go to the <code class="docutils literal notranslate"><span class="pre">src/</span></code> directory, and execute the command below to install KiABOM dependencies,</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pip install -r requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>Linux<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Clone the repo to a known location.</p></li>
+<li><p>An optional step would be to move or copy <code class="docutils literal notranslate"><span class="pre">kiabom.py</span></code> and <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> files to <code class="docutils literal notranslate"><span class="pre">/usr/share/kicad/plugins/</span></code>, which is where the rest of the shipped generator scripts are.</p></li>
+<li><p>It is recommended that you create a Python virtual environment, although you could install to your system’s Python and change the following steps accordingly. After creating and activating a Python virtual environment (See Python Packaging User Guide <a class="reference external" href="https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/">here</a> for details on how to do that). Navigate to the repo location and go to the <code class="docutils literal notranslate"><span class="pre">src/</span></code> directory, and execute the command below to install the dependencies,</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pip install -r requirements.txt
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>If it fails on <cite>wxPython</cite> you may need an external dependency, so install this below,</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sudo apt-get install libwebkit2gtk-4.1-dev
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h3>macOS<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<p>KiABOM has not been tested on macOS but it believed that the Linux instructions should be very similar and familiar to macOS users.</p>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#executable-installation">Executable Installation</a><ul>
+<li><a class="reference internal" href="#windows">Windows</a><ul>
+<li><a class="reference internal" href="#automatic-installation">Automatic Installation</a></li>
+<li><a class="reference internal" href="#manual-installation">Manual Installation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#linux">Linux</a></li>
+<li><a class="reference internal" href="#macos">macOS</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#python-installation">Python Installation</a><ul>
+<li><a class="reference internal" href="#id2">Windows</a></li>
+<li><a class="reference internal" href="#id3">Linux</a></li>
+<li><a class="reference internal" href="#id4">macOS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">KiABOM documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="usage.html"
+                          title="next chapter">Usage</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/installation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="usage.html" title="Usage"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="KiABOM documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v1.8.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Yiannis Michael.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>
