@@ -12,8 +12,6 @@ and also by using pyintaller (confirmed tested version is v6.12.0) to make it in
 
     pyinstaller .\kiabom.py -F --add-data ../LICENSE:. --icon ..\images\kiabom-icon.ico
 
-Lastly, a `config.yaml` file with your API keys would need to be placed next to `kiabom.py`.
-
 Using `Ruff`_ as the linter and formatter, pytest for testing and coverage, and pyright as the static type checker.
 
 .. _Ruff: https://github.com/astral-sh/ruff
