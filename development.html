@@ -1,19 +1,18 @@
 
+<!DOCTYPE html>
 
-<!doctype html>
-
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title>Development &#8212; KiABOM v1.8.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=c3ca4b69" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=4eaa865d"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -23,7 +22,7 @@
     <script src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
   </head><body>
-    <div class="related" role="navigation" aria-label="related navigation">
+    <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -42,8 +41,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="development">
-<h1>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h1>
+  <section id="development">
+<h1>Development<a class="headerlink" href="#development" title="Link to this heading">¶</a></h1>
 <p>To continue development, make sure to install the requirements in <cite>requirements.txt</cite>,</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pip install -r requirements.txt
 </pre></div>
@@ -52,10 +51,9 @@
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pyinstaller .\kiabom.py -F --add-data ../LICENSE:. --icon ..\images\kiabom-icon.ico
 </pre></div>
 </div>
-<p>Lastly, a <cite>config.yaml</cite> file with your API keys would need to be placed next to <cite>kiabom.py</cite>.</p>
 <p>Using <a class="reference external" href="https://github.com/astral-sh/ruff">Ruff</a> as the linter and formatter, pytest for testing and coverage, and pyright as the static type checker.</p>
-<div class="section" id="philosophy">
-<h2>Philosophy<a class="headerlink" href="#philosophy" title="Permalink to this headline">¶</a></h2>
+<section id="philosophy">
+<h2>Philosophy<a class="headerlink" href="#philosophy" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>KiABOM should minimise the effort needed to create a Bill Of Materials in KiCad as much as possible, while also minimising complexity.</p></li>
 <li><p>Should always be thought of as a Bill Of Materials generator script written in Python, and not as a Python application.</p></li>
@@ -63,15 +61,15 @@
 <li><p>The schematic should always be the source of truth, and it should always base the component information and groups from the schematic using the KiCad netlist reader.</p></li>
 <li><p>Very little (if any) formatting should be done of the final output, leaving all formatting for the user to do after generation.</p></li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
   <div>
     <h3><a href="index.html">Table of Contents</a></h3>
@@ -95,7 +93,7 @@
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
@@ -103,13 +101,13 @@
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
-<script>$('#searchbox').show(0);</script>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related" role="navigation" aria-label="related navigation">
+    <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -123,8 +121,8 @@
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2025, Yiannis Michael.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
+    &#169; Copyright 2025, Yiannis Michael.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
     </div>
   </body>
 </html>
