@@ -56,11 +56,13 @@
 <li><p>Supported output formats are CSV, HTML, and TXT.</p></li>
 <li><p>Uses the <code class="docutils literal notranslate"><span class="pre">kicad_netlist_reader</span></code> module that ships with KiCad and does not do its own XML parsing.</p></li>
 <li><p>Config file for cache lifetime and API keys, and uses command line options for configurating the BOM.</p></li>
-<li><p>Implements presets to simplify commands and to promote user customisation.</p></li>
+<li><p>Implements presets to simplify commands and to promote user customisation by editing the source code.</p></li>
 <li><p>Handles schematic property fields like ‘DNP’, ‘Exclude from Board’, and ‘Exclude from BOM’, as they appear on the schematic.</p></li>
 <li><p>Ignores MPNs like ‘Generic’,’TBD’,’Manufacturer’s Stock’, and ‘’ (blank).</p></li>
 <li><p>Auto-detects the output file extension and sets the format.</p></li>
 <li><p>Currently supports Mouser and DigiKey.</p></li>
+<li><p>CLI only, with method to use through KiCad.</p></li>
+<li><p>Small code base (1 source files, ~2400 lines).</p></li>
 </ul>
 </section>
 <section id="kicost">
@@ -74,6 +76,8 @@
 <li><p>Does not handle schematic property fields like ‘DNP’, ‘Exclude from Board’, and ‘Exclude from BOM’, without adding extra fields to the symbol.</p></li>
 <li><p>Can ignore MPNs but they need to be specified with an option.</p></li>
 <li><p>Supports multiple suppliers.</p></li>
+<li><p>GUI and method to use through KiCad.</p></li>
+<li><p>Larger code base (&gt;30 source files).</p></li>
 </ul>
 </section>
 <section id="kibom">
@@ -87,6 +91,8 @@
 <li><p>Does not handle schematic property fields like ‘DNP’, ‘Exclude from Board’, and ‘Exclude from BOM’, without adding extra fields to the symbol.</p></li>
 <li><p>Auto-detects the output file extension and sets the format.</p></li>
 <li><p>Repository is archived.</p></li>
+<li><p>CLI only, with method to use through KiCad.</p></li>
+<li><p>Small code base (15 source files).</p></li>
 </ul>
 </section>
 </section>
