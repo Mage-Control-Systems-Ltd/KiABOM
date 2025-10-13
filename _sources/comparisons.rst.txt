@@ -9,13 +9,11 @@ KiABOM
 - Supported output formats are CSV, HTML, and TXT.
 - Uses the ``kicad_netlist_reader`` module that ships with KiCad and does not do its own XML parsing.
 - Config file for cache lifetime and API keys, and uses command line options for configurating the BOM.
-- Implements presets to simplify commands and to promote user customisation by editing the source code.
+- Implements presets to simplify commands and to promote user customisation.
 - Handles schematic property fields like 'DNP', 'Exclude from Board', and 'Exclude from BOM', as they appear on the schematic.
 - Ignores MPNs like 'Generic','TBD','Manufacturer's Stock', and '' (blank).
 - Auto-detects the output file extension and sets the format.
 - Currently supports Mouser and DigiKey.
-- CLI only, with method to use through KiCad.
-- Small code base (1 source files, ~2400 lines).
 
 KiCost
 ------
@@ -27,8 +25,6 @@ KiCost
 - Does not handle schematic property fields like 'DNP', 'Exclude from Board', and 'Exclude from BOM', without adding extra fields to the symbol.
 - Can ignore MPNs but they need to be specified with an option.
 - Supports multiple suppliers.
-- GUI and method to use through KiCad.
-- Larger code base (>30 source files).
 
 KiBoM
 -----
@@ -40,5 +36,3 @@ KiBoM
 - Does not handle schematic property fields like 'DNP', 'Exclude from Board', and 'Exclude from BOM', without adding extra fields to the symbol.
 - Auto-detects the output file extension and sets the format.
 - Repository is archived.
-- CLI only, with method to use through KiCad.
-- Small code base (15 source files).
