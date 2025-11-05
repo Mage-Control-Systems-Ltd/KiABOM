@@ -2,7 +2,7 @@ Installation
 ============
 There are two ways of installing and using KiABOM. One is using the executable (either the provided one or building one) and other is using it through Python. For regular users that aren't familiar with Python it is recommended to use the executable as that is a much less involved process. In this case, if it is preferred to not edit Path variables or move files, the executable path can be used instead of the plain ``kiabom`` invocation, i.e. ``C:\Users\USER\Documents\kiabom.exe``.
 
-See the corresponding :ref:`Executable Installation <exec installation>` and :ref:`Python Installation <python installation>` sections for how to install KiABOM.
+See the corresponding :ref:`Executable Installation <exec installation>` and :ref:`Python Installation <python installation>` sections for how to install KiABOM. Make sure you also :ref:`Setup KiCost <setup kicost>` with your API keys. 
 
 .. _exec installation:
 
@@ -102,3 +102,11 @@ macOS
 ^^^^^
 KiABOM has not been tested on macOS but it believed that the Linux instructions should be very similar and familiar to macOS users.
 
+.. _setup kicost:
+
+Setup KiCost
+-----------------------
+To setup KiCost you only need to configure the `config.yaml` file by pasting your API keys in the correct sections. Instructions in this section are based on the current state of the supplier APIs in November of 2025. To get parts data from Mouser you need to sign up for their `Search API`_. For DigiKey you need to go in their developer portal, create an Organisation, then create a Production app using `ProductInformation V4`_.
+
+.. _Search API: https://www.mouser.co.uk/api-search/
+.. _ProductInformation V4: https://developer.digikey.com/products/product-information-v4

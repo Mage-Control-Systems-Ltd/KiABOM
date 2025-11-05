@@ -79,9 +79,9 @@ Some suppliers offer BOM tools that assist with ordering parts if you already ha
 .. _Mouser's BOM Tool: https://www.mouser.co.uk/bom/
 .. _DigiKey myLists: https://www.digikey.co.uk/en/mylists/
 
-Go to the Mouser BOM tool and upload your BOM CSV file. In the next page you will set the column types. Assuming you are using the `default` column preset, set the `Quantity` column as `Quantity 1`, `Description` as `Description`, `Manufacturer` as `Mfr Name`, `MPN` as `Mfr Part Number`, and the `Order Code` as the `Mouser Part Number`. In the next page set the appropriate settings and one done proceed to the next page. From here you can add the parts listed to your basket and submit an order. Multiples of the same BOM can be added to basket for multiple boards using the same BOM for a single board.
+Go to the Mouser BOM tool and upload your BOM CSV file. In the next page you will set the column types. Assuming you are using the `default` column preset, set the `Quantity` column as `Quantity 1`, `Description` as `Description`, `Manufacturer` as `Mfr Name`, `MPN` as `Mfr Part Number`, and the `Order Code` as the `Mouser Part Number`. In the next page set the appropriate settings and once done proceed to the next page. From here you can add the parts listed to your basket and submit an order. Multiples of the same BOM can be added to basket for multiple boards using the same BOM for a single board.
 
-Some tips for this process is that the ``--no-headers`` column might need to be used to get rid of the column headers before inputting to a BOM tool. Also using ``--remove-ignore-mpn-parts`` will remove parts with the ignore MPN values from the BOM.
+Some tips for this process is that the ``--no-headers`` column might need to be used to get rid of the column headers before inputting to a BOM tool. Also using ``--remove-ignore-mpn-parts`` will remove parts with the ignore MPN values from the BOM, thus saving you time removing these from the result list.
 
 .. _advanced customisations:
 
@@ -99,7 +99,7 @@ To add custom column presets add a dictionary entry to the ``column_preset_dict`
 
 For custom grouping presets it is the same process but by using the ``group_preset_dict`` and by specifying yourcustom preset with ``--group-preset PRESET``. A limitation placed for the group presets is that they should contain at least the ``Value`` and ``Footprint`` group values. This is in place to promote a good standard of BOM generation.
 
-Both of these preset groups can be used together by specifying ``--preset PRESET`` which uses ``preset_dict`` to specify both the group and column presets. The presets in this variable are in a ``COLUMNS PRESER, GROUP PRESET`` format. See below for an example on how to use these variables for customisation (dots imply ommission of the other entries),
+Both of these preset groups can be used together by specifying ``--preset PRESET`` which uses ``preset_dict`` to specify both the group and column presets. The presets in this variable are in a ``COLUMNS PRESET, GROUP PRESET`` format. See below for an example on how to use these variables for customisation (dots imply ommission of the other entries),
 
 .. code-block:: python
    
@@ -220,7 +220,7 @@ You can fully customise the outputted columns based on the list shown from the `
 
 .. code-block:: text
 
-    kiabom input_xml output.html --no-headers --columns "Designator,DNP.Unit/Reel Price, Footprint,Value" --no-kicost
+    kiabom input_xml output.html --no-headers --columns "Designator,DNP,Unit/Reel Price,Footprint,Value" --no-kicost
 
 Adding a symbol field to the BOM can be done by using the appropriate preset and appending columns to that. Grouping can also be done on that field. You can even only output one supplier instead of two,
 
