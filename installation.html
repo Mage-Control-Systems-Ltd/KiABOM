@@ -48,7 +48,7 @@
   <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
 <p>There are two ways of installing and using KiABOM. One is using the executable (either the provided one or building one) and other is using it through Python. For regular users that aren’t familiar with Python it is recommended to use the executable as that is a much less involved process. In this case, if it is preferred to not edit Path variables or move files, the executable path can be used instead of the plain <code class="docutils literal notranslate"><span class="pre">kiabom</span></code> invocation, i.e. <code class="docutils literal notranslate"><span class="pre">C:\Users\USER\Documents\kiabom.exe</span></code>.</p>
-<p>See the corresponding <a class="reference internal" href="#exec-installation"><span class="std std-ref">Executable Installation</span></a> and <a class="reference internal" href="#python-installation"><span class="std std-ref">Python Installation</span></a> sections for how to install KiABOM.</p>
+<p>See the corresponding <a class="reference internal" href="#exec-installation"><span class="std std-ref">Executable Installation</span></a> and <a class="reference internal" href="#python-installation"><span class="std std-ref">Python Installation</span></a> sections for how to install KiABOM. Make sure you also <a class="reference internal" href="#setup-kicost"><span class="std std-ref">Setup KiCost</span></a> with your API keys.</p>
 <section id="executable-installation">
 <span id="exec-installation"></span><h2>Executable Installation<a class="headerlink" href="#executable-installation" title="Link to this heading">¶</a></h2>
 <p>The currently provided executable and install script are for <strong>Windows only</strong> installations. Some instructions for using KiABOM on Linux and macOS are provided but have not been extensively tested yet.</p>
@@ -145,6 +145,10 @@
 <p>KiABOM has not been tested on macOS but it believed that the Linux instructions should be very similar and familiar to macOS users.</p>
 </section>
 </section>
+<section id="setup-kicost">
+<span id="id5"></span><h2>Setup KiCost<a class="headerlink" href="#setup-kicost" title="Link to this heading">¶</a></h2>
+<p>To setup KiCost you only need to configure the <cite>config.yaml</cite> file by pasting your API keys in the correct sections. Instructions in this section are based on the current state of the supplier APIs in November of 2025. To get parts data from Mouser you need to sign up for their <a class="reference external" href="https://www.mouser.co.uk/api-search/">Search API</a>. For DigiKey you need to go in their developer portal, create an Organisation, then create a Production app using <a class="reference external" href="https://developer.digikey.com/products/product-information-v4">ProductInformation V4</a>.</p>
+</section>
 </section>
 
 
@@ -174,6 +178,7 @@
 <li><a class="reference internal" href="#id4">macOS</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#setup-kicost">Setup KiCost</a></li>
 </ul>
 </li>
 </ul>
