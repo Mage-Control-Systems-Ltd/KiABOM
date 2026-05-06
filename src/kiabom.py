@@ -27,7 +27,7 @@ Command line:
 """
 
 __version__ = "1.8.1"
-__author__ = "Yiannis Michael (ymich9963)"
+__author__ = "Yiannis Michael (ymic9963)"
 __license__ = "GNU General Public License v3.0 only"
 
 import csv
