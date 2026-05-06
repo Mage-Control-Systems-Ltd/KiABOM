@@ -169,9 +169,9 @@ The ``--help`` page for KiABOM is shown below along with some examples,
       --group-preset GROUP_PRESET
                             choose a group preset. Available ones are 'Default', 'Minimal', and 'Mage'. Append to a preset with '--append-groups'.
       -g, --group-by GROUP_BY
-                            choose what symbol fields to group by, Grouping by 'Value' and 'Footprint' is mandatory. Choose up to 5 additional fields to group by. Use values separated by commas and place values in quotes in they contain spaces
+                            choose what symbol fields to group by, Grouping by 'Value' and 'Footprint' is mandatory. Choose up to 5 additional fields to group by. Use values separated by commas and place values in quotes in they contain spaces.
       -c, --columns COLUMNS
-                            set the columns to be outputed. Use values separated by commas and place values in quotes in they contain spaces. Overwrites '--preset' if it comes after. Use '--    append-columns' to append columns to a preset and `--list-supported-columns' to list valid column values.
+                            set the columns to be outputed. Place column names inside quotes and separate them using a comma. Quotes are not required if column names don't contain spaces. Overwrites '--preset' if it comes after. Use '--append-columns' to append columns to a preset and `--list-supported-columns' to list valid column values.
       -a, --append-columns APPEND_COLUMNS
                             append columns to the selected preset. Use values separated by commas and place values in quotes in they contain spaces.
       --append-groups APPEND_GROUPS
