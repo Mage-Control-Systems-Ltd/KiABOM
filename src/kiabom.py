@@ -26,7 +26,7 @@ Command line:
     python "pathToFile/kiabom.py" "%I" "%O.csv" [options]
 """
 
-__version__ = "1.8.0"
+__version__ = "1.8.1"
 __author__ = "Yiannis Michael (ymich9963)"
 __license__ = "GNU General Public License v3.0 only"
 
