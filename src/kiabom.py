@@ -1612,6 +1612,7 @@ def get_columns(columns: str, preset: str) -> list[str]:
         preset = preset.lower()
         columns_ret = column_preset_dict.get(preset, [""])
 
+    columns_ret = [col.strip() for col in columns_ret] 
     return columns_ret
 
 
@@ -2125,13 +2126,13 @@ def main(argv: list[str]):
     parser.add_argument(
         "-g",
         "--group-by",
-        help="choose what symbol fields to group by, Grouping by 'Value' and 'Footprint' is mandatory. Choose up to 5 additional fields to group by. Use values separated by commas and place values in quotes in they contain spaces",
+        help="choose what symbol fields to group by, Grouping by 'Value' and 'Footprint' is mandatory. Choose up to 5 additional fields to group by. Use values separated by commas and place values in quotes if they contain spaces.",
         default="",
     )
     parser.add_argument(
         "-c",
         "--columns",
-        help="set the columns to be outputed. Use values separated by commas and place values in quotes in they contain spaces. Overwrites '--preset' if it comes after. Use '--append-columns' to append columns to a preset and `--list-supported-columns' to list valid column values.",
+        help="set the columns to be outputed. Place column names inside quotes and separate them using a comma. Quotes are not required if column names don't contain spaces. Overwrites '--preset' if it comes after. Use '--append-columns' to append columns to a preset and `--list-supported-columns' to list valid column values.",
         default="",
     )
     parser.add_argument(
