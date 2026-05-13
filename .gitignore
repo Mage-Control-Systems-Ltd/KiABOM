@@ -6,4 +6,6 @@ __pycache__/
 .coverage
 kiabom-cov/
 .ruff_cache
-
+build/
+dist/
+*.spec
