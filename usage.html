@@ -57,15 +57,15 @@
 <h2>Using Through KiCad<a class="headerlink" href="#using-through-kicad" title="Link to this heading">¶</a></h2>
 <p>There are three ways of using KiABOM through KiCad. One is via the Legacy BOM generator menu, the second one is the netlist exporter, and the third one is with a jobset file. All methods use the Generator command line format as specified in the <a class="reference external" href="https://docs.kicad.org/9.0/en/eeschema/eeschema.html#generator-command-line-format">KiCad documentation</a>. The options used with each method also get saved by KiCad, so you only need to set your configuration once.</p>
 <p id="commands">Depending on how KiABOM was installed, you may want to use different commands. If using the executable you would use,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom &quot;%I&quot; &quot;%B&quot;.csv [options]
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom &quot;%I&quot; [options]
 </pre></div>
 </div>
 <p>If using a Python installation you would use,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>python path/to/kiabom.py &quot;%I&quot; &quot;%B&quot;.csv [options]
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>python path/to/kiabom.py &quot;%I&quot; [options]
 </pre></div>
 </div>
 <p>And if using a Python virtual environment you would use,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>path/to/python/venv/bin/python /path/to/kiabom.py &quot;%I&quot; &quot;%B&quot;.csv [options]
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>path/to/python/venv/bin/python /path/to/kiabom.py &quot;%I&quot; [options]
 </pre></div>
 </div>
 <p>These commands use the current schematic as input to KiABOM and the project name as the CSV name. The <cite>.csv</cite> extension can be changed to <cite>.html</cite> or <cite>.txt</cite> and the output format will be detected and changed by the generator.</p>
@@ -99,7 +99,7 @@
 <ol class="arabic simple" start="2">
 <li><p>Then create another job of the same type and input your KiABOM command with your options, as given in the previous two sections. Depending on your installation the command in the text box will change. See the  <a class="reference internal" href="#commands"><span class="std std-ref">commands</span></a> listed above for which commands to use.</p></li>
 </ol>
-<p><strong>Note:</strong> Due to jobsets not using format specifiers, instead of <code class="docutils literal notranslate"><span class="pre">%I</span></code> and <code class="docutils literal notranslate"><span class="pre">%B</span></code> you would use <code class="docutils literal notranslate"><span class="pre">${PROJECTNAME}</span></code> as used in step 1 above.</p>
+<p><strong>Note:</strong> Due to jobsets not using format specifiers, instead of <code class="docutils literal notranslate"><span class="pre">%I</span></code> you would use <code class="docutils literal notranslate"><span class="pre">${PROJECTNAME}</span></code> as used in step 1 above.</p>
 <ol class="arabic simple" start="3">
 <li><p>Make sure to save this jobsets file.</p></li>
 </ol>
@@ -165,15 +165,18 @@
 <section id="options">
 <span id="id2"></span><h2>Options<a class="headerlink" href="#options" title="Link to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">--help</span></code> page for KiABOM is shown below along with some examples,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: kiabom.py input_xml output_file [options]
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: kiabom.py input_xml [options]
 
 Automatic BOM tool for KiCAD.
 
 positional arguments:
   input_xml             input the path to the XML file generated from the KiCAD schematic.
-  output_file           name of the output CSV or HTML file. It will be outputed in the same directory where the script is run from.
+
 options:
   -h, --help            show this help message and exit
+  -o, --output OUTPUT   file path to output the BOM file, e.g. &#39;BOM.csv&#39; or &#39;exports/BOM.csv&#39;
+  -f, --output-format OUTPUT_FORMAT
+                        specify the output format. If an output file name is provided this argument is ignored
   --version             output the KiABOM version.
   --info                append to the output some general info about the generated BOM like, board quantity, schematic name, component count, date, and generator used.
   --no-headers          don&#39;t output BOM column headers.
@@ -223,37 +226,38 @@ options:
 <section id="example-uses">
 <span id="id3"></span><h3>Example Uses<a class="headerlink" href="#example-uses" title="Link to this heading">¶</a></h3>
 <p>The examples listed here will assume the executable is installed on your system but they could easily be replaced with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">kiabom.py</span> <span class="pre">input_xml</span> <span class="pre">output_file</span> <span class="pre">[options]</span></code>.</p>
-<p>Default behaviour for the tool is to generate a CSV in the default column and grouping presets. The auto-generated name of the output is ‘kiabom-output-HHMMSSddmmyy.csv’ which also contains the date and time of generation. The output will contain headers, will be for 1 board of your schematic, use GBP as the currency, and will retrieve the parts data from the suppliers.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml
+<p>Default behaviour for the tool is to generate a CSV in the default column and grouping presets. The auto-generated name of the output is ‘input.csv’ and will contain headers, will be for 1 board of your schematic, use GBP as the currency, and will retrieve the parts data from the suppliers.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml
 </pre></div>
 </div>
+<p>If you do not specify the output with <code class="docutils literal notranslate"><span class="pre">-o/--output</span></code> the format of the generated file can be specified with <code class="docutils literal notranslate"><span class="pre">-f/--output-format</span></code>. If the output is provided then its extension is used and the output format argument is ignored.</p>
 <p>You can fully customise the outputted columns based on the list shown from the <code class="docutils literal notranslate"><span class="pre">--list-supported-columns</span></code> option. For example you can create a BOM with no headers, in HTML format, without parts data, that only has the Designator, DNP, Unit/Reel Price, Footprint, and Value,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.html --no-headers --columns &quot;Designator,DNP,Unit/Reel Price,Footprint,Value&quot; --no-kicost
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.html --no-headers --columns &quot;Designator,DNP,Unit/Reel Price,Footprint,Value&quot; --no-kicost
 </pre></div>
 </div>
 <p>Adding a symbol field to the BOM can be done by using the appropriate preset and appending columns to that. Grouping can also be done on that field. You can even only output one supplier instead of two,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --append-columns Rating --append-groups Rating --primary-only
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.csv --append-columns Rating --append-groups Rating --primary-only
 </pre></div>
 </div>
 <p>More information can be outputted than just the parts data like generator info and board quantity by specifying <code class="docutils literal notranslate"><span class="pre">--info</span></code> and to get a total price sum by using <code class="docutils literal notranslate"><span class="pre">--sum</span></code>.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --sum --info
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.csv --sum --info
 </pre></div>
 </div>
 <p>Datasheets can be downloaded by specifying <code class="docutils literal notranslate"><span class="pre">--download-datasheets</span></code>, which downloads the files located at the links in the ‘Datasheet’ symbol field in a ‘datasheets’ folder in the current directory. The symbols with the ‘Exclude From BOM’ and ‘Exclude From Board’ properties can also be used in the BOM with <code class="docutils literal notranslate"><span class="pre">--kefbom</span></code> and <code class="docutils literal notranslate"><span class="pre">--kefboard</span></code>.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --download-datasheets --kefbom --kefboard
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.csv --download-datasheets --kefbom --kefboard
 </pre></div>
 </div>
 <p>Currently only two suppliers are supported (Mouser and DigiKey), but in the future the suppliers will be specified with the appropriate options.</p>
 <p>Presets can be used to simplify the columns and groupings used in the BOM. For example to output a BOM for JLCPCB, you would execute,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --preset jlcpcb
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.csv --preset jlcpcb
 </pre></div>
 </div>
 <p>which is the same as,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --columns-preset jlcpcb --group-preset jlcpcb
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.csv --columns-preset jlcpcb --group-preset jlcpcb
 </pre></div>
 </div>
 <p>Using the command above you can mix and match columns and group presets,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input_xml output.csv --columns-preset default --group-preset minimal
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.csv --columns-preset default --group-preset minimal
 </pre></div>
 </div>
 <p>Contributions are welcome for any presets or columns you would like the generator to support!</p>

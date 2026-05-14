@@ -20,19 +20,19 @@ Depending on how KiABOM was installed, you may want to use different commands. I
 
 .. code-block:: text
 
-    kiabom "%I" "%B".csv [options]
+    kiabom "%I" [options]
 
 If using a Python installation you would use,
 
 .. code-block:: text
 
-    python path/to/kiabom.py "%I" "%B".csv [options]
+    python path/to/kiabom.py "%I" [options]
 
 And if using a Python virtual environment you would use,
 
 .. code-block:: text
 
-    path/to/python/venv/bin/python /path/to/kiabom.py "%I" "%B".csv [options]
+    path/to/python/venv/bin/python /path/to/kiabom.py "%I" [options]
 
 These commands use the current schematic as input to KiABOM and the project name as the CSV name. The `.csv` extension can be changed to `.html` or `.txt` and the output format will be detected and changed by the generator.
 
@@ -68,7 +68,7 @@ Via a Jobsets File
 
 2. Then create another job of the same type and input your KiABOM command with your options, as given in the previous two sections. Depending on your installation the command in the text box will change. See the  :ref:`commands <commands>` listed above for which commands to use. 
 
-**Note:** Due to jobsets not using format specifiers, instead of ``%I`` and ``%B`` you would use ``${PROJECTNAME}`` as used in step 1 above.
+**Note:** Due to jobsets not using format specifiers, instead of ``%I`` you would use ``${PROJECTNAME}`` as used in step 1 above.
 
 3. Make sure to save this jobsets file.
 
@@ -150,15 +150,18 @@ The ``--help`` page for KiABOM is shown below along with some examples,
 
 .. code-block:: text
 
-    usage: kiabom.py input_xml output_file [options]
+    usage: kiabom.py input_xml [options]
 
     Automatic BOM tool for KiCAD.
 
     positional arguments:
       input_xml             input the path to the XML file generated from the KiCAD schematic.
-      output_file           name of the output CSV or HTML file. It will be outputed in the same directory where the script is run from.
+
     options:
       -h, --help            show this help message and exit
+      -o, --output OUTPUT   file path to output the BOM file, e.g. 'BOM.csv' or 'exports/BOM.csv'
+      -f, --output-format OUTPUT_FORMAT
+                            specify the output format. If an output file name is provided this argument is ignored
       --version             output the KiABOM version.
       --info                append to the output some general info about the generated BOM like, board quantity, schematic name, component count, date, and generator used.
       --no-headers          don't output BOM column headers.
@@ -210,35 +213,37 @@ Example Uses
 ^^^^^^^^^^^^
 The examples listed here will assume the executable is installed on your system but they could easily be replaced with ``python kiabom.py input_xml output_file [options]``.
 
-Default behaviour for the tool is to generate a CSV in the default column and grouping presets. The auto-generated name of the output is 'kiabom-output-HHMMSSddmmyy.csv' which also contains the date and time of generation. The output will contain headers, will be for 1 board of your schematic, use GBP as the currency, and will retrieve the parts data from the suppliers.
+Default behaviour for the tool is to generate a CSV in the default column and grouping presets. The auto-generated name of the output is 'input.csv' and will contain headers, will be for 1 board of your schematic, use GBP as the currency, and will retrieve the parts data from the suppliers.
 
 .. code-block:: text
 
-    kiabom input_xml
+    kiabom input.xml
+
+If you do not specify the output with ``-o/--output`` the format of the generated file can be specified with ``-f/--output-format``. If the output is provided then its extension is used and the output format argument is ignored.
 
 You can fully customise the outputted columns based on the list shown from the ``--list-supported-columns`` option. For example you can create a BOM with no headers, in HTML format, without parts data, that only has the Designator, DNP, Unit/Reel Price, Footprint, and Value,
 
 .. code-block:: text
 
-    kiabom input_xml output.html --no-headers --columns "Designator,DNP,Unit/Reel Price,Footprint,Value" --no-kicost
+    kiabom input.xml -o output.html --no-headers --columns "Designator,DNP,Unit/Reel Price,Footprint,Value" --no-kicost
 
 Adding a symbol field to the BOM can be done by using the appropriate preset and appending columns to that. Grouping can also be done on that field. You can even only output one supplier instead of two,
 
 .. code-block:: text
 
-    kiabom input_xml output.csv --append-columns Rating --append-groups Rating --primary-only
+    kiabom input.xml -o output.csv --append-columns Rating --append-groups Rating --primary-only
 
 More information can be outputted than just the parts data like generator info and board quantity by specifying ``--info`` and to get a total price sum by using ``--sum``.
 
 .. code-block:: text
 
-    kiabom input_xml output.csv --sum --info
+    kiabom input.xml -o output.csv --sum --info
 
 Datasheets can be downloaded by specifying ``--download-datasheets``, which downloads the files located at the links in the 'Datasheet' symbol field in a 'datasheets' folder in the current directory. The symbols with the 'Exclude From BOM' and 'Exclude From Board' properties can also be used in the BOM with ``--kefbom`` and ``--kefboard``. 
 
 .. code-block:: text
 
-    kiabom input_xml output.csv --download-datasheets --kefbom --kefboard
+    kiabom input.xml -o output.csv --download-datasheets --kefbom --kefboard
 
 Currently only two suppliers are supported (Mouser and DigiKey), but in the future the suppliers will be specified with the appropriate options.
 
@@ -246,19 +251,19 @@ Presets can be used to simplify the columns and groupings used in the BOM. For e
 
 .. code-block:: text
 
-    kiabom input_xml output.csv --preset jlcpcb
+    kiabom input.xml -o output.csv --preset jlcpcb
 
 which is the same as,
 
 .. code-block:: text
 
-    kiabom input_xml output.csv --columns-preset jlcpcb --group-preset jlcpcb
+    kiabom input.xml -o output.csv --columns-preset jlcpcb --group-preset jlcpcb
 
 Using the command above you can mix and match columns and group presets,
 
 .. code-block:: text
 
-    kiabom input_xml output.csv --columns-preset default --group-preset minimal
+    kiabom input.xml -o output.csv --columns-preset default --group-preset minimal
 
 Contributions are welcome for any presets or columns you would like the generator to support!
 
