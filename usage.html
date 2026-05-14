@@ -93,12 +93,15 @@
 <ol class="arabic simple">
 <li><p>To use KiABOM with a jobsets file, the schematic XML must also be generated. To accomplish this, in a jobsets file create a <code class="docutils literal notranslate"><span class="pre">Special:</span> <span class="pre">Execute</span> <span class="pre">Command</span></code> job type and in the <code class="docutils literal notranslate"><span class="pre">Command:</span></code> text box, enter the following to generate the schematic XML file,</p></li>
 </ol>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kicad-cli sch export netlist --format kicadxml &quot;${PROJECTNAME}.kicad_sch&quot;
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kicad-cli sch export netlist -o &quot;${JOBSET_OUTPUT_WORK_PATH}/${PROJECTNAME}-bom.xml&quot; --format kicadxml &quot;${PROJECTNAME}.kicad_sch&quot;
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
-<li><p>Then create another job of the same type and input your KiABOM command with your options, as given in the previous two sections. Depending on your installation the command in the text box will change. See the  <a class="reference internal" href="#commands"><span class="std std-ref">commands</span></a> listed above for which commands to use.</p></li>
+<li><p>Then create another job of the same type and input your KiABOM command with your options, as given in the previous two sections. Depending on your installation the command in the text box will change. See the  <a class="reference internal" href="#commands"><span class="std std-ref">commands</span></a> listed above for which commands to use. Shown below is an example command,</p></li>
 </ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom &quot;${JOBSET_OUTPUT_WORK_PATH}${PROJECTNAME}-bom.xml&quot; -o &quot;${JOBSET_OUTPUT_WORK_PATH}${PROJECTNAME}-bom.csv&quot;
+</pre></div>
+</div>
 <p><strong>Note:</strong> Due to jobsets not using format specifiers, instead of <code class="docutils literal notranslate"><span class="pre">%I</span></code> you would use <code class="docutils literal notranslate"><span class="pre">${PROJECTNAME}</span></code> as used in step 1 above.</p>
 <ol class="arabic simple" start="3">
 <li><p>Make sure to save this jobsets file.</p></li>

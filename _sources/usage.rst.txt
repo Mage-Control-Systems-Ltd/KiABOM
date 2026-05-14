@@ -64,9 +64,13 @@ Via a Jobsets File
 
 .. code-block:: text
 
-    kicad-cli sch export netlist --format kicadxml "${PROJECTNAME}.kicad_sch"
+    kicad-cli sch export netlist -o "${JOBSET_OUTPUT_WORK_PATH}/${PROJECTNAME}-bom.xml" --format kicadxml "${PROJECTNAME}.kicad_sch"
 
-2. Then create another job of the same type and input your KiABOM command with your options, as given in the previous two sections. Depending on your installation the command in the text box will change. See the  :ref:`commands <commands>` listed above for which commands to use. 
+2. Then create another job of the same type and input your KiABOM command with your options, as given in the previous two sections. Depending on your installation the command in the text box will change. See the  :ref:`commands <commands>` listed above for which commands to use. Shown below is an example command,
+
+.. code-block:: text
+
+   kiabom "${JOBSET_OUTPUT_WORK_PATH}${PROJECTNAME}-bom.xml" -o "${JOBSET_OUTPUT_WORK_PATH}${PROJECTNAME}-bom.csv"
 
 **Note:** Due to jobsets not using format specifiers, instead of ``%I`` you would use ``${PROJECTNAME}`` as used in step 1 above.
 
