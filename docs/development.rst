@@ -12,7 +12,7 @@ and also by using pyintaller (confirmed tested version is v6.12.0) to make it in
 
     pyinstaller .\kiabom.py -F --add-data ../LICENSE:. --icon ..\images\kiabom-icon.ico
 
-Lastly, a `config.yaml` file with your API keys would need to be placed next to `kiabom.py`.
+Lastly, a `config.yaml` file with your API keys would need to be placed next to `kiabom.py` to succesfully run the tests. In the future there may be changes in the supplier's API data structures or part numbers could mean different things. This will affect the 'expected' results from the testing, and therefore would have to be updated accordingly.
 
 Using `Ruff`_ as the linter and formatter, pytest for testing and coverage, and pyright as the static type checker.
 

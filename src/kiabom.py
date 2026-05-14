@@ -26,7 +26,7 @@ Command line:
     python "pathToFile/kiabom.py" "%I" "%O.csv" [options]
 """
 
-__version__ = "1.8.1"
+__version__ = "1.9.0"
 __author__ = "Yiannis Michael (ymic9963)"
 __license__ = "GNU General Public License v3.0 only"
 
@@ -38,7 +38,6 @@ import re
 import os
 import http.client
 import ast
-from datetime import datetime
 from collections import OrderedDict
 import colorama
 import requests
@@ -627,18 +626,9 @@ class BaseParts:
             if supplier == "mouser":
                 manufacturer.append(info.get("manufacturer", ""))
             elif supplier == "digikey":
-                # KiCost returns a dict in string form for some reason
-                manf_dict = info.get("manufacturer", "")
-                # Check if the dict string exists
-                if manf_dict:
-                    # Convert the dict string to an actual dict
-                    # Put in try-catch in case literal_eval() fails since
-                    # the dict is actually a KiCost class (again)
-                    try:
-                        manf_dict = ast.literal_eval(str(manf_dict))
-                    except Exception:
-                        manf_dict = {}
-                    manufacturer.append(manf_dict.get("value", ""))
+                manf = info.get("manufacturer", "")
+                if manf:
+                    manufacturer.append(manf)
                 else:
                     manufacturer.append("")
         return manufacturer
@@ -1522,15 +1512,14 @@ def open_output_file(output_file: str) -> io.TextIOWrapper:
     :param output_file: Output file name.
     :return: A file object.
     """
-    # Output should be at the current working directory
-    output_path = os.path.join(os.getcwd(), output_file)
+    output_file = os.path.normpath(output_file)
 
     # Open the output file to write to, if the file cannot be opened output an error
     try:
-        f = open(output_path, "w", encoding="utf-8-sig", newline="")
+        f = open(output_file, "w", encoding="utf-8-sig", newline="")
     except IOError:
         print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Can't open output file {output_path} for writing. Make sure the file is closed, or you have permission to write to the location, and try again.",
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Can't open output file '{output_file}' for writing. Make sure the file is closed, folder exists, or you have permission to write to the location, and try again.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -1612,11 +1601,11 @@ def get_columns(columns: str, preset: str) -> list[str]:
         preset = preset.lower()
         columns_ret = column_preset_dict.get(preset, [""])
 
-    columns_ret = [col.strip() for col in columns_ret] 
+    columns_ret = [col.strip() for col in columns_ret]
     return columns_ret
 
 
-def has_internet(test_address: str = "8.8.8.8", timeout: int = 5) -> bool:
+def has_internet(test_address: str = "8.8.8.8", timeout: int = 3) -> bool:
     """Check if there is a valid internet connection.
 
     :param test_address: Address used to test for internet connection.
@@ -1669,7 +1658,7 @@ def download_datasheets(
     :param downloads_folder: Downloads folder name
     :param timeout: Time in seconds where the internet connection will time out.
     """
-    downloads_path = os.path.join(os.getcwd(), downloads_folder)
+    downloads_path = os.path.normpath(downloads_folder)
 
     # Create the directory
     try:
@@ -1741,6 +1730,7 @@ def check_args(args: argparse.Namespace):
     """
     supported_suppliers = ["Mouser", "DigiKey"]
     supported_currencies = ["GBP", "USD", "EUR"]
+    supported_formats = ["csv", "html", "txt"]
 
     if args.preset.lower() in preset_dict:
         if args.columns_preset == "":
@@ -1865,6 +1855,13 @@ def check_args(args: argparse.Namespace):
     if args.group_preset not in group_preset_dict:
         print(
             f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Selected group preset '{args.columns_preset}' not supported. Please do '--list-group-presets' to show the valid inputs.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    if args.output_format.lower() not in supported_formats:
+        print(
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Selected output format '{args.output_format}' not supported.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -2034,7 +2031,7 @@ def set_format_from_output_file_extension(output_file: str) -> str:
 
     if output_format == "":
         print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Output format '{output_format}' not supported. Supported ones are CSV, HTML, and TXT.",
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Output format '{output_format}' not supported. Supported ones are 'CSV', 'HTML', and 'TXT'.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -2065,10 +2062,8 @@ def main(argv: list[str]):
     # Print some nice ASCII art
     print_title_screen()
 
-    datetime_text = datetime.now().strftime("%H%M%S%d%m%y")
-
     parser = argparse.ArgumentParser(
-        usage="%(prog)s input_xml output_file [options]",
+        usage="%(prog)s input_xml [options]",
         description="Automatic BOM tool for KiCAD.",
     )
     parser.add_argument(
@@ -2078,10 +2073,16 @@ def main(argv: list[str]):
         default="",
     )
     parser.add_argument(
-        "output_file",
-        help="name of the output CSV or HTML file. It will be outputed in the same directory where the script is run from.",
-        nargs="?",
-        default=f"kiabom-output-{datetime_text}.csv",
+        "-o",
+        "--output",
+        help="file path to output the BOM file, e.g. 'BOM.csv' or 'exports/BOM.csv'",
+        default="",
+    )
+    parser.add_argument(
+        "-f",
+        "--output-format",
+        help="specify the output format. If an output file name is provided this argument is ignored",
+        default="csv",
     )
     parser.add_argument(
         "--version",
@@ -2252,13 +2253,21 @@ def main(argv: list[str]):
 
     check_args(args)
 
-    # Autodetect output format if not given
-    output_format = set_format_from_output_file_extension(args.output_file)
+    # If no output file name create it from the input file name
+    if args.output == "":
+        args.output = (
+            os.path.splitext(os.path.basename(args.input_xml))[0]
+            + "."
+            + args.output_format
+        )
+    else:
+        # If it is given use its file extension to set the format
+        args.output_format = set_format_from_output_file_extension(args.output)
 
     QUIET = args.quiet
 
     # Open the output file for writing. Do that at the start to check if the file is open.
-    f = open_output_file(args.output_file)
+    f = open_output_file(args.output)
 
     # Override the component equivalence operator for grouping
     kicad_netlist_reader.comp.__eq__ = get_equ(
@@ -2345,7 +2354,7 @@ def main(argv: list[str]):
     # Finally write the data to file
     write_to_file(
         f,
-        output_format,
+        args.output_format,
         args.no_headers,
         args.info,
         args.sum,
@@ -2355,7 +2364,7 @@ def main(argv: list[str]):
         parts_file_data,
     )
     print(
-        f"Wrote results to '{colorama.Fore.LIGHTYELLOW_EX}{args.output_file}{colorama.Style.RESET_ALL}'.",
+        f"Wrote results to '{colorama.Fore.LIGHTYELLOW_EX}{args.output}{colorama.Style.RESET_ALL}'.",
         flush=True,
     )
 

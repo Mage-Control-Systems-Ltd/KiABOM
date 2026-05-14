@@ -18,7 +18,7 @@ def test_open_output_file():
         f = open_output_file(output_file)
 
     # Assert open was used with 'w', encoding="utf-8-sig", newline=""
-    test_path = os.path.join(os.getcwd(), output_file)
+    test_path = os.path.normpath(output_file)
     m.assert_called_once_with(test_path, "w", encoding="utf-8-sig", newline="")
 
     # Check that the returned object is the mocked file handle
@@ -48,6 +48,7 @@ def test_check_args():
         board_quantity = "1"
         currency = "GBP"
         input_xml = "test.xml"
+        output_format = "csv"
 
     args = Args()
 
@@ -143,6 +144,12 @@ def test_check_args():
     args = Args()
 
     args.input_xml = ""
+    with pytest.raises(SystemExit) as exc_info:
+        check_args(args)
+    assert exc_info.value.code == 1
+    args = Args()
+
+    args.output_format = ""
     with pytest.raises(SystemExit) as exc_info:
         check_args(args)
     assert exc_info.value.code == 1
@@ -297,7 +304,7 @@ def test_fill_primary_list_gaps_with_secondary():
 
 def test_net_class():
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = dir_path + "\\test-projects\\test-project2\\test-project2.xml"
+    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
     with pytest.raises(SystemExit) as exc_info:
         net_obj = Net(
@@ -358,7 +365,7 @@ def test_init_kicost():
 
 def test_parts_mouser():
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = dir_path + "\\test-projects\\test-project2\\test-project2.xml"
+    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
     net_obj = Net(test_project_path, excludeBoard=True, excludeBOM=True)
 
@@ -398,7 +405,7 @@ def test_parts_mouser():
 
 def test_parts_digikey():
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = dir_path + "\\test-projects\\test-project2\\test-project2.xml"
+    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
     net_obj = Net(test_project_path, excludeBoard=True, excludeBOM=True)
 
@@ -438,7 +445,7 @@ def test_parts_digikey():
 
 def test_parts_return_empty():
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = dir_path + "\\test-projects\\test-project2\\test-project2.xml"
+    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
     net_obj = Net(test_project_path, excludeBoard=True, excludeBOM=True)
 
@@ -457,47 +464,50 @@ def test_parts_return_empty():
 
 
 def test_write_to_file():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project2_path = dir_path + "\\test-projects\\test-project2\\test-project2.xml"
-    test_csv2_path = dir_path + "\\test-project2.csv"
-    test_html2_path = dir_path + "\\test-project2.html"
-    test_txt2_path = dir_path + "\\test-project2.txt"
     kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    test_project2_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
     net_obj = Net(test_project2_path, excludeBoard=True, excludeBOM=True)
+
     primary_parts = Parts("Mouser", net_obj, False, "GBP", ["Generic"], 1)
     secondary_parts = Parts("DigiKey", net_obj, False, "GBP", ["Generic"], 1)
     file_data = PartsFileData(primary_parts, secondary_parts)
     columns = get_columns("", "default") + ["Rating", "Test"]
 
-    f = open_output_file("test-project2.csv")
+    test_csv2_path = os.path.normpath(os.path.join(dir_path, "test-project2.csv"))
+    f = open_output_file(test_csv2_path)
     write_to_file(f, "csv", True, True, True, 1, columns, net_obj, file_data)
     f.close()
     assert os.path.isfile(test_csv2_path) == True
-    os.remove("test-project2.csv")
+    os.remove(test_csv2_path)
 
-    f = open_output_file("test-project2.html")
+    test_html2_path = os.path.normpath(os.path.join(dir_path, "test-project2.html"))
+    f = open_output_file(test_html2_path)
     write_to_file(f, "html", True, True, True, 1, columns, net_obj, file_data)
     f.close()
     assert os.path.isfile(test_html2_path) == True
-    os.remove("test-project2.html")
+    os.remove(test_html2_path)
 
-    f = open_output_file("test-project2.txt")
+    test_txt2_path = os.path.normpath(os.path.join(dir_path, "test-project2.txt"))
+    f = open_output_file(test_txt2_path)
     write_to_file(f, "txt", True, True, True, 1, columns, net_obj, file_data)
     f.close()
     assert os.path.isfile(test_txt2_path) == True
-    os.remove("test-project2.txt")
+    os.remove(test_txt2_path)
 
     # INFO:
     # Test the file content with test-project1 which is a bigger project
     # If these tests fail maybe something changed in the API results like an order code or price
     # Only way to fully verify the tool works is to manually check that the output is correct
-    test_project1_path = dir_path + "\\test-projects\\test-project1\\test-project1.xml"
+    test_project1_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project1\\test-project1.xml"))
     net_obj = Net(test_project1_path, excludeBoard=True, excludeBOM=True)
     primary_parts = Parts("Mouser", net_obj, False, "GBP", ["Generic"], 1)
     secondary_parts = Parts("DigiKey", net_obj, False, "GBP", ["Generic"], 1)
     file_data = PartsFileData(primary_parts, secondary_parts)
-    columns = get_columns("", "default") + ["Rating"]
+
     # Prices fluctuate so the test can fail
+    columns = get_columns("", "default") + ["Rating"]
     columns.remove("Unit/Reel Price")
     columns.remove("Total Price")
 
@@ -510,7 +520,7 @@ def test_write_to_file():
     f.close()
     actual_contents = open("test-project1.csv", encoding="utf8").read().replace('"', "")
     expected_contents = (
-        open("test-project1-expected.csv", encoding="utf8").read().replace('"', "")
+        open("tests/test-project1-expected.csv", encoding="utf8").read().replace('"', "")
     )
     assert actual_contents == expected_contents
     os.remove("test-project1.csv")
@@ -519,7 +529,7 @@ def test_write_to_file():
     write_to_file(f, "html", True, False, False, 2, columns, net_obj, file_data)
     f.close()
     actual_contents = open("test-project1.html").read()
-    expected_contents = open("test-project1-expected.html").read()
+    expected_contents = open("tests/test-project1-expected.html").read()
     assert actual_contents == expected_contents
     os.remove("test-project1.html")
 
@@ -527,13 +537,13 @@ def test_write_to_file():
     write_to_file(f, "txt", True, False, False, 2, columns, net_obj, file_data)
     f.close()
     actual_contents = open("test-project1.txt").read()
-    expected_contents = open("test-project1-expected.txt").read()
+    expected_contents = open("tests/test-project1-expected.txt").read()
     assert actual_contents == expected_contents
     os.remove("test-project1.txt")
 
     # INFO:
     # Test project 3 contains no DNP components which is important to test
-    test_project3_path = dir_path + "\\test-projects\\test-project3\\test-project3.xml"
+    test_project3_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project3\\test-project3.xml"))
     net_obj = Net(test_project3_path, excludeBoard=True, excludeBOM=True)
     primary_parts = Parts("Mouser", net_obj, False, "GBP", ["Generic"], 1)
     secondary_parts = Parts("DigiKey", net_obj, False, "GBP", ["Generic"], 1)
@@ -548,7 +558,7 @@ def test_write_to_file():
     f.close()
     actual_contents = open("test-project3.csv", encoding="utf8").read().replace('"', "")
     expected_contents = (
-        open("test-project3-expected.csv", encoding="utf8").read().replace('"', "")
+        open("tests/test-project3-expected.csv", encoding="utf8").read().replace('"', "")
     )
     assert actual_contents == expected_contents
     os.remove("test-project3.csv")
@@ -556,7 +566,7 @@ def test_write_to_file():
 
 def test_get_equ():
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = dir_path + "\\test-projects\\test-project2\\test-project2.xml"
+    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
     net_obj = Net(test_project_path, excludeBoard=False, excludeBOM=False)
     group_fields = "Value,Footprint,DNP,MPN,Rating,Test"
@@ -609,7 +619,7 @@ def test_get_equ():
 
 def test_remove_ignore_mpn_parts():
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = dir_path + "\\test-projects\\test-project3\\test-project3.xml"
+    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project3\\test-project3.xml"))
 
     net_obj = Net(test_project_path, excludeBoard=True, excludeBOM=True)
 
@@ -624,13 +634,13 @@ def test_remove_ignore_mpn_parts():
 def test_download_datasheets():
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
-    test_project_path = dir_path + "\\test-projects\\test-project2\\test-project2.xml"
-    test_datasheet_path = dir_path + "\\datasheets\\HSMW-C170-U0000-DS100.pdf"
-    test_datasheet_folder_path = dir_path + "\\datasheets"
+    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
+    test_datasheet_folder_path = os.path.normpath(os.path.join(dir_path, "test-datasheets"))
+    test_datasheet_path = os.path.normpath(os.path.join(test_datasheet_folder_path, "HSMW-C170-U0000-DS100.pdf"))
 
     net_obj = Net(test_project_path, excludeBoard=False, excludeBOM=False)
 
-    download_datasheets(net_obj.grouped, downloads_folder="datasheets")
+    download_datasheets(net_obj.grouped, downloads_folder=test_datasheet_folder_path)
 
     assert os.path.isfile(test_datasheet_path) == True
 
@@ -640,32 +650,32 @@ def test_download_datasheets():
 
 def test_main():
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = dir_path + "\\test-projects\\test-project2\\test-project2.xml"
+    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
-    argv = [test_project_path, "test-out.csv", "-d", "-q"]
+    argv = [test_project_path, "-o", "test-out.csv", "-q"]
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 
     assert exc_info.value.code == 0
 
-    argv = [test_project_path, "test-out.csv", "-k", "-q"]
+    argv = [test_project_path, "-o", "test-out.csv", "-k", "-q"]
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 
     assert exc_info.value.code == 0
 
-    argv = [test_project_path, "test-out.csv", "--remove-ignore-mpn-parts", "-q"]
+    argv = [test_project_path, "-o", "test-out.csv", "--remove-ignore-mpn-parts", "-q"]
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 
     assert exc_info.value.code == 0
 
     # Testing for no config.yaml
-    config_path = dir_path + "\\..\\src\\config.yaml"
-    rename_path = dir_path + "\\..\\src\\aconfig.yaml"
+    config_path = os.path.normpath(os.path.join(dir_path, "..\\src\\config.yaml"))
+    rename_path = os.path.normpath(os.path.join(dir_path, "..\\src\\aconfig.yaml"))
     os.rename(config_path, rename_path)
 
-    argv = [test_project_path, "test-out.csv", "-q"]
+    argv = [test_project_path, "-o", "test-out.csv", "-q"]
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 
