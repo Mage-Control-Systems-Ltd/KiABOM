@@ -1,0 +1,70 @@
+# name: Test KiABOM
+#
+# on:
+#   push:
+#
+# jobs:
+#   python-test:
+#     permissions:
+#       contents: write
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v5
+#       - name: Create config.yaml
+#         shell: bash
+#         env:
+#           TEST_DIGIKEY_CLIENT_ID: ${{ secrets.TEST_DIGIKEY_CLIENT_ID }}
+#           TEST_DIGIKEY_CLIENT_SECRET: ${{ secrets.TEST_DIGIKEY_CLIENT_SECRET }}
+#           TEST_MOUSER_KEY: ${{ secrets.TEST_MOUSER_KEY }}
+#         run: |
+#             echo "# KiCost configuration file for KiABOM
+#             kicost:
+#               version: 1
+#               cache_ttl: -1
+#
+#             APIs:
+#               Digi-Key:
+#                 client_id: $TEST_DIGIKEY_CLIENT_ID
+#                 client_secret: $TEST_DIGIKEY_CLIENT_SECRET
+#                 version: 4
+#                 enable: true
+#               Mouser:
+#                 key: $TEST_MOUSER_KEY
+#                 enable: true
+#             " > src/config.yaml
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.12'
+#
+#       - name: Pip
+#         run: |
+#           python -m pip install --upgrade pip
+#
+#       - name: Autoformat
+#         run: |
+#           pip install ruff
+#           ruff format src/kiabom.py
+#
+#       - name: Install wxPython deps
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install build-essential libgtk-3-dev
+#
+#       - name: Install deps
+#         run: |
+#           pip install -r src/requirements.txt
+#
+#       - name: Test with pytest and generate coverage report
+#         run: |
+#           pip install pytest pytest-cov
+#           pytest --cov=. --cov-report=xml
+#
+#       - name: Upload coverage report
+#         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+#         uses: actions/upload-code-coverage@v1
+#         with:
+#           report: coverage.xml
+#           language: Python
+#           label: KiABOM
+#
