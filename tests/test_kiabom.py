@@ -3,7 +3,11 @@ from unittest.mock import mock_open, patch
 import pytest
 import os
 from pathlib import Path
+import pickle
 
+# NOTE: If the tests that use pickle require re-writing for new data, they should be
+# run normally with the API keys, and then pickle should be used to cache the new API
+# result. This result should then be loaded for the test
 
 def test_print_title_screen():
     print_title_screen()  # not really sure how to test this but it's good for coverage
@@ -246,12 +250,16 @@ def test_apiparts_mouser():
     api_status = init_apis()
     assert api_status == {"mouser": "success", "digikey": "success"}
 
-    dir_path = Path(__file__).resolve().parent
-    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
 
-    net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
+    with open("test_api_cache/test_apiparts_mouser.pickle", 'rb') as f:
+        parts = pickle.load(f)
+        # This simulates the following code snippet
+        # api_status = init_apis()
+        # dir_path = Path(__file__).resolve().parent
+        # test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
+        # net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
+        # parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
 
-    parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
     assert parts.comp_count == 2
 
     # Order code is based on MPN used for the LED in the test project. Taken from Mouser directly.
@@ -265,15 +273,14 @@ def test_apiparts_mouser():
 
 
 def test_apiparts_digikey():
-    api_status = init_apis()
-    assert api_status == {"mouser": "success", "digikey": "success"}
-
-    dir_path = Path(__file__).resolve().parent
-    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
-
-    net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
-
-    parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
+    with open("test_api_cache/test_apiparts_digikey.pickle", 'rb') as f:
+        parts = pickle.load(f)
+        # This simulates the following code snippet
+        # api_status = init_apis()
+        # dir_path = Path(__file__).resolve().parent
+        # test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
+        # net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
+        # parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
 
     # Order code is based on MPN used for the LED in the test project. Taken from Mouser directly.
     test_part_order_code = "516-3993-1-ND"
@@ -291,7 +298,8 @@ def test_apiparts_return_empty():
 
     net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
-    parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], {"digikey": ""})
+    with open("test_api_cache/test_apiparts_return_empty.pickle", 'rb') as f:
+        parts = pickle.load(f)
 
     empty_list = [{}] * net_obj.group_count
 
@@ -307,27 +315,33 @@ def test_write_to_file():
     test_project2_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
     net_obj = KiCadNetlist(test_project2_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
-    primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
-    secondary_parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
+    # Pickle replaces: primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
+    with open('test_api_cache/test_write_to_file_mouser.pickle', 'rb') as f:
+        primary_parts = pickle.load(f)
+
+    # Pickle replaces secondary_parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
+    with open('test_api_cache/test_write_to_file_digikey.pickle', 'rb') as f:
+        secondary_parts = pickle.load(f)
+
     file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
     columns = get_columns("", "default") + ["Rating", "Test"]
 
-    test_csv2_path = os.path.normpath(os.path.join(dir_path, "test-project2.csv"))
-    f = open_output_file(test_csv2_path)
+    test_csv2_path = dir_path / "test-project2.csv"
+    f = open_output_file(str(test_csv2_path))
     write_to_file(f, "csv", True, True, True, 1, columns, net_obj, file_data)
     f.close()
     assert os.path.isfile(test_csv2_path) == True
     os.remove(test_csv2_path)
 
-    test_html2_path = os.path.normpath(os.path.join(dir_path, "test-project2.html"))
-    f = open_output_file(test_html2_path)
+    test_html2_path = dir_path / "test-project2.html"
+    f = open_output_file(str(test_html2_path))
     write_to_file(f, "html", True, True, True, 1, columns, net_obj, file_data)
     f.close()
     assert os.path.isfile(test_html2_path) == True
     os.remove(test_html2_path)
 
-    test_txt2_path = os.path.normpath(os.path.join(dir_path, "test-project2.txt"))
-    f = open_output_file(test_txt2_path)
+    test_txt2_path = dir_path / "test-project2.txt"
+    f = open_output_file(str(test_txt2_path))
     write_to_file(f, "txt", True, True, True, 1, columns, net_obj, file_data)
     f.close()
     assert os.path.isfile(test_txt2_path) == True
@@ -339,28 +353,24 @@ def test_contents():
     assert api_status == {"mouser": "success", "digikey": "success"}
 
     kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
-
     dir_path = Path(__file__).resolve().parent
-    test_project2_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
-    net_obj = KiCadNetlist(test_project2_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
-    # INFO:
     # Test the file content with test-project1 which is a bigger project
-    # If these tests fail maybe something changed in the API results like an order code or price
-    # Only way to fully verify the tool works is to manually check that the output is correct
     test_project1_path = dir_path / "test-projects" / "test-project1" / "test-project1.xml"
     net_obj = KiCadNetlist(test_project1_path, excludeBoard=True, excludeBOM=True, DNP=False)
-    primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
-    secondary_parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
-    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
 
-    # Prices fluctuate so the test can fail
+    # Load the cache instead of calling the objects
+    with open('test_api_cache/test_contents_project1_mouser.pickle', 'rb') as f:
+        primary_parts = pickle.load(f)
+    with open('test_api_cache/test_contents_project1_digikey.pickle', 'rb') as f:
+        secondary_parts = pickle.load(f)
+
+    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
     columns = get_columns("", "default") + ["Rating"]
     columns.remove("Unit/Reel Price")
     columns.remove("Total Price")
 
-    # INFO:
-    # When viewing and saving the *-expected.csv, Excel reformats it
+    # INFO: When viewing and saving the *-expected.csv, Excel reformats it
     # by removing quotes and shortening numerical strings therefore be
     # careful when opening that file and make sure no edits are made
     f = open_output_file("test-project1.csv")
@@ -389,13 +399,18 @@ def test_contents():
     assert actual_contents == expected_contents
     os.remove("test-project1.txt")
 
-    # INFO:
     # Test project 3 contains no DNP components which is important to test
     test_project3_path = dir_path / "test-projects" / "test-project3" / "test-project3.xml"
     net_obj = KiCadNetlist(test_project3_path, excludeBoard=True, excludeBOM=True, DNP=False)
-    primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
-    secondary_parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
+
+    with open('test_api_cache/test_contents_project3_mouser.pickle', 'rb') as f:
+        primary_parts = pickle.load(f)
+
+    with open('test_api_cache/test_contents_project3_digikey.pickle', 'rb') as f:
+        secondary_parts = pickle.load(f)
+
     file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
+
     columns = get_columns("", "default") + ["Rating"]
     # Prices fluctuate so the test can fail
     columns.remove("Unit/Reel Price")
@@ -420,7 +435,6 @@ def test_get_equ():
     group_fields = "Value,Footprint,DNP,MPN,Rating,Test"
     equ = get_equ(group_fields, "", "")
 
-    # INFO:
     # False means the components are not equal and therefore should not be grouped.
     # True means they are equal and therefore group them
     # Components net_obj.components list  ['BT1', 'BT2', 'D1', 'D2', 'H1', 'H2', 'H3', 'R1', 'R2'] == []
