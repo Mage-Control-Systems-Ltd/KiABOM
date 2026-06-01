@@ -9,3 +9,4 @@ kiabom-cov/
 build/
 dist/
 *.spec
+kiabom_cache/

@@ -167,106 +167,17 @@ def test_set_format_from_output_file_extension():
     assert exc_info.value.code == 1
 
 
-def test_get_return_empty():
-    (p, s) = get_return_empty(True, True)
-    assert (p, s) == (True, True)
-
-    (p, s) = get_return_empty(True, False)
-    assert (p, s) == (True, True)
-
-    (p, s) = get_return_empty(False, True)
-    assert (p, s) == (False, True)
-
-    (p, s) = get_return_empty(False, False)
-    assert (p, s) == (False, False)
-
-
 def test_has_internet():
     assert has_internet() == True
     assert has_internet("", timeout=1) == False
 
 
 def test_get_columns():
-    preset_dict = {
-        "default": [
-            "Group ID",
-            "Quantity",
-            "Schematic Ref",
-            "DNP",
-            "Description",
-            "Datasheet",
-            "Footprint",
-            "Value",
-            "Manufacturer",
-            "MPN",
-            "Preferred Supplier",
-            "Order Code",
-            "Alt. Supplier",
-            "Alt. Order Code",
-            "Unit/Reel Price",
-            "Total Price",
-        ],
-        "minimal": [
-            "Group ID",
-            "Quantity",
-            "Schematic Ref",
-            "DNP",
-            "Description",
-            "Footprint",
-            "Value",
-            "MPN",
-            "Preferred Supplier",
-            "Order Code",
-            "Unit/Reel Price",
-            "Total Price",
-        ],
-        "no-kicost": [
-            "Group ID",
-            "Quantity",
-            "Schematic Ref",
-            "DNP",
-            "Description",
-            "Footprint",
-            "Value",
-        ],
-        "primary-only": [
-            "Group ID",
-            "Quantity",
-            "Schematic Ref",
-            "DNP",
-            "Description",
-            "Datasheet",
-            "Footprint",
-            "Value",
-            "Manufacturer",
-            "MPN",
-            "Preferred Supplier",
-            "Order Code",
-            "Unit/Reel Price",
-            "Total Price",
-        ],
-        "mage": [
-            "Schematic Ref",
-            "DNP",
-            "Description",
-            "Footprint",
-            "Value",
-            "Rating",
-            "Manufacturer",
-            "MPN",
-            "Preferred Supplier",
-            "Order Code",
-            "Alt. Supplier",
-            "Alt. Order Code",
-            "Unit/Reel Price",
-        ],
-    }
-
     columns = ""
     preset = "default"
 
     columns_ret = get_columns(columns, preset)
-    assert columns_ret == preset_dict["default"]
+    assert columns_ret == column_preset_dict["default"]
 
     preset = "test"
     columns_ret = get_columns(columns, preset)
@@ -274,205 +185,130 @@ def test_get_columns():
 
     preset = "Minimal"
     columns_ret = get_columns(columns, preset)
-    assert columns_ret == preset_dict["minimal"]
+    assert columns_ret == column_preset_dict["minimal"]
 
-    preset = "no-kicosT"
+    preset = "no-apI"
     columns_ret = get_columns(columns, preset)
-    assert columns_ret == preset_dict["no-kicost"]
+    assert columns_ret == column_preset_dict["no-api"]
 
     preset = "primary-only"
     columns_ret = get_columns(columns, preset)
-    assert columns_ret == preset_dict["primary-only"]
+    assert columns_ret == column_preset_dict["primary-only"]
 
     preset = "MAGE"
     columns_ret = get_columns(columns, preset)
-    assert columns_ret == preset_dict["mage"]
+    assert columns_ret == column_preset_dict["mage"]
 
     columns = "a,b,c"
     columns_ret = get_columns(columns, preset)
     assert columns_ret == ["a", "b", "c"]
 
 
-def test_fill_primary_list_gaps_with_secondary():
-    a = ["a", "", "c", ""]
-    b = ["", "b", "", "d"]
-
-    fill_primary_list_gaps_with_secondary(a, b)
-
-    assert a == ["a", "b", "c", "d"]
-
-
-def test_net_class():
+def test_kicadnetlist_class():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
     with pytest.raises(SystemExit) as exc_info:
-        net_obj = Net(
-            "\\random\\path\\that\\will\\fail.xml", excludeBoard=True, excludeBOM=True
+        net_obj = KiCadNetlist(
+            "\\random\\path\\that\\will\\fail.xml", excludeBoard=True, excludeBOM=True, DNP=False
         )
     assert exc_info.value.code == 1
 
-    net_obj = Net(test_project_path, excludeBoard=True, excludeBOM=True)
-    expected_refdes_groups = [["BT1"], ["D1"], ["R1"]]
-    expected_refdes_groups_DNP = [["BT2"], ["D2"], ["R2"]]
+    net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
+    expected_refdes_groups = [['BT1'], ['BT2'], ['D1'], ['D2'], ['R1'], ['R2']]
 
     assert expected_refdes_groups == net_obj.refdes_groups
-    assert expected_refdes_groups_DNP == net_obj.dnp.refdes_groups
 
-    net_obj = Net(test_project_path, excludeBoard=False, excludeBOM=True)
+    net_obj = KiCadNetlist(test_project_path, excludeBoard=False, excludeBOM=True, DNP=True)
     expected_refdes_groups = [["BT1"], ["D1"], ["H2"], ["R1"]]
-    expected_refdes_groups_DNP = [["BT2"], ["D2"], ["R2"]]
 
     assert expected_refdes_groups == net_obj.refdes_groups
-    assert expected_refdes_groups_DNP == net_obj.dnp.refdes_groups
 
-    net_obj = Net(test_project_path, excludeBoard=True, excludeBOM=False)
+    net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=False, DNP=True)
     expected_refdes_groups = [["BT1"], ["D1"], ["H1"], ["R1"]]
-    expected_refdes_groups_DNP = [["BT2"], ["D2"], ["R2"]]
 
     assert expected_refdes_groups == net_obj.refdes_groups
-    assert expected_refdes_groups_DNP == net_obj.dnp.refdes_groups
 
-    net_obj = Net(test_project_path, excludeBoard=False, excludeBOM=False)
+    net_obj = KiCadNetlist(test_project_path, excludeBoard=False, excludeBOM=False, DNP=True)
     expected_refdes_groups = [["BT1"], ["D1"], ["H1", "H2", "H3"], ["R1"]]
-    expected_refdes_groups_DNP = [["BT2"], ["D2"], ["R2"]]
 
     assert expected_refdes_groups == net_obj.refdes_groups
-    assert expected_refdes_groups_DNP == net_obj.dnp.refdes_groups
 
-    class TestNet(BaseNet):
-        pass
+    ignore_mpns = ["Generic"]
 
-    try:
-        test_net = TestNet(test_project_path, excludeBoard=False, excludeBOM=False)
-    except NotImplementedError:
-        assert True
+    net_obj.remove_ignore_mpn_parts(ignore_mpns)
 
-    # Test if the behaviour is correct when no DNP components are present
-    # Use the non-DNP components for testing extract_DNP(),
-    # which should return a list with an empty component
-    test_no_DNP = net_obj.dnp.extract_dnp(net_obj.components)
-
-    assert len(test_no_DNP) == 1
-    assert test_no_DNP[0].getRef() == "BOM-EMPTY"
+    assert net_obj.refdes_groups == [["BT1"], ["D1"], ["H1", "H2", "H3"]]
 
 
-def test_init_kicost():
-    # Essential because of the debug messages
-    # ONLY CALL THIS FUNCTION ONCE
-    assert init_kicost() == True
+def test_apiparts_mouser():
+    api_status = init_apis()
+    assert api_status == {"mouser": "success", "digikey": "success"}
 
-
-def test_parts_mouser():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
-    net_obj = Net(test_project_path, excludeBoard=True, excludeBOM=True)
+    net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
-    parts = Parts("Mouser", net_obj, False, "GBP", ["Generic"], 1)
-    parts_refs = parts.get_refs_from_kicost(parts.parts_list)
-    assert net_obj.refdes_groups == parts_refs
-
-    partsdnp = parts.dnp
-    partsdnp_refs = parts.get_refs_from_kicost(partsdnp.parts_list)
-    assert net_obj.dnp.refdes_groups == partsdnp_refs
-
-    comp_count = parts.comp_count + partsdnp.comp_count
-    assert comp_count == 6
+    parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
+    assert parts.comp_count == 2
 
     # Order code is based on MPN used for the LED in the test project. Taken from Mouser directly.
     test_part_order_code = "630-HSMW-C170-U0000"
     test_part_manf = "Broadcom / Avago"
 
-    # Testing it retrieves the correct order code (blank entries removed)
-    non_blank_parts_order_codes = [
-        order_code for order_code in parts.order_codes if order_code != ""
-    ]
-    assert non_blank_parts_order_codes[0] == test_part_order_code
-
-    non_blank_partsdnp_order_codes = [
-        order_code for order_code in partsdnp.order_codes if order_code != ""
-    ]
-    assert non_blank_partsdnp_order_codes[0] == test_part_order_code
-
-    # Testing it retrieves the correct manufacturer (blank entries removed)
-    non_blank_parts_manf = [manf for manf in parts.manufacturers if manf != ""]
-    assert non_blank_parts_manf[0] == test_part_manf
-
-    non_blank_partsdnp_manf = [manf for manf in partsdnp.manufacturers if manf != ""]
-    assert non_blank_partsdnp_manf[0] == test_part_manf
+    # Testing it retrieves the correct order code and manf (blank entries removed)
+    non_blank_parts = [ part for part in parts.parts_list if part.get("Order Code") ]
+    assert non_blank_parts[0].get("Order Code") == test_part_order_code
+    assert non_blank_parts[0].get("Manufacturer") == test_part_manf
 
 
-def test_parts_digikey():
+def test_apiparts_digikey():
+    api_status = init_apis()
+    assert api_status == {"mouser": "success", "digikey": "success"}
+
     dir_path = os.path.dirname(os.path.realpath(__file__))
     test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
-    net_obj = Net(test_project_path, excludeBoard=True, excludeBOM=True)
+    net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
-    parts = Parts("DigiKey", net_obj, False, "GBP", ["Generic"], 1)
-    parts_refs = parts.get_refs_from_kicost(parts.parts_list)
-    assert net_obj.refdes_groups == parts_refs
-
-    partsdnp = parts.dnp
-    partsdnp_refs = parts.get_refs_from_kicost(partsdnp.parts_list)
-    assert net_obj.dnp.refdes_groups == partsdnp_refs
-
-    comp_count = parts.comp_count + partsdnp.comp_count
-    assert comp_count == 6
+    parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
 
     # Order code is based on MPN used for the LED in the test project. Taken from Mouser directly.
     test_part_order_code = "516-3993-1-ND"
     test_part_manf = "Broadcom Limited"
 
-    # Testing it retrieves the correct order code (blank entries removed)
-    non_blank_parts_order_codes = [
-        order_code for order_code in parts.order_codes if order_code != ""
-    ]
-    assert non_blank_parts_order_codes[0] == test_part_order_code
-
-    non_blank_partsdnp_order_codes = [
-        order_code for order_code in partsdnp.order_codes if order_code != ""
-    ]
-    assert non_blank_partsdnp_order_codes[0] == test_part_order_code
-
-    # Testing it retrieves the correct manufacturer (blank entries removed)
-    non_blank_parts_manf = [manf for manf in parts.manufacturers if manf != ""]
-    assert non_blank_parts_manf[0] == test_part_manf
-
-    non_blank_partsdnp_manf = [manf for manf in partsdnp.manufacturers if manf != ""]
-    assert non_blank_partsdnp_manf[0] == test_part_manf
+    # Testing it retrieves the correct order code and manf (blank entries removed)
+    non_blank_parts = [ part for part in parts.parts_list if part.get("Order Code") ]
+    assert non_blank_parts[0].get("Order Code") == test_part_order_code
+    assert non_blank_parts[0].get("Manufacturer") == test_part_manf
 
 
-def test_parts_return_empty():
+def test_apiparts_return_empty():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
-    net_obj = Net(test_project_path, excludeBoard=True, excludeBOM=True)
+    net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
-    parts = Parts("DigiKey", net_obj, True, "GBP", ["Generic"], 1)
+    parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], {"digikey": ""})
 
-    empty_list = [""] * net_obj.group_count
+    empty_list = [{}] * net_obj.group_count
 
-    assert parts.stock == empty_list
-    assert parts.order_codes == empty_list
-    assert parts.manufacturers == empty_list
-    assert parts.supplier == empty_list
-    assert parts.quantity == empty_list
-    assert parts.price_tiers == empty_list
-    assert parts.price == empty_list
-    assert parts.currency == empty_list
-
+    assert parts.parts_list == empty_list
 
 def test_write_to_file():
+    api_status = init_apis()
+    assert api_status == {"mouser": "success", "digikey": "success"}
+
     kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
     test_project2_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
-    net_obj = Net(test_project2_path, excludeBoard=True, excludeBOM=True)
+    net_obj = KiCadNetlist(test_project2_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
-    primary_parts = Parts("Mouser", net_obj, False, "GBP", ["Generic"], 1)
-    secondary_parts = Parts("DigiKey", net_obj, False, "GBP", ["Generic"], 1)
-    file_data = PartsFileData(primary_parts, secondary_parts)
+    primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
+    secondary_parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
+    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
     columns = get_columns("", "default") + ["Rating", "Test"]
 
     test_csv2_path = os.path.normpath(os.path.join(dir_path, "test-project2.csv"))
@@ -496,15 +332,26 @@ def test_write_to_file():
     assert os.path.isfile(test_txt2_path) == True
     os.remove(test_txt2_path)
 
+# Very important test
+def test_contents():
+    api_status = init_apis()
+    assert api_status == {"mouser": "success", "digikey": "success"}
+
+    kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    test_project2_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
+    net_obj = KiCadNetlist(test_project2_path, excludeBoard=True, excludeBOM=True, DNP=False)
+
     # INFO:
     # Test the file content with test-project1 which is a bigger project
     # If these tests fail maybe something changed in the API results like an order code or price
     # Only way to fully verify the tool works is to manually check that the output is correct
     test_project1_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project1\\test-project1.xml"))
-    net_obj = Net(test_project1_path, excludeBoard=True, excludeBOM=True)
-    primary_parts = Parts("Mouser", net_obj, False, "GBP", ["Generic"], 1)
-    secondary_parts = Parts("DigiKey", net_obj, False, "GBP", ["Generic"], 1)
-    file_data = PartsFileData(primary_parts, secondary_parts)
+    net_obj = KiCadNetlist(test_project1_path, excludeBoard=True, excludeBOM=True, DNP=False)
+    primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
+    secondary_parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
+    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
 
     # Prices fluctuate so the test can fail
     columns = get_columns("", "default") + ["Rating"]
@@ -544,10 +391,10 @@ def test_write_to_file():
     # INFO:
     # Test project 3 contains no DNP components which is important to test
     test_project3_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project3\\test-project3.xml"))
-    net_obj = Net(test_project3_path, excludeBoard=True, excludeBOM=True)
-    primary_parts = Parts("Mouser", net_obj, False, "GBP", ["Generic"], 1)
-    secondary_parts = Parts("DigiKey", net_obj, False, "GBP", ["Generic"], 1)
-    file_data = PartsFileData(primary_parts, secondary_parts)
+    net_obj = KiCadNetlist(test_project3_path, excludeBoard=True, excludeBOM=True, DNP=False)
+    primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
+    secondary_parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
+    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
     columns = get_columns("", "default") + ["Rating"]
     # Prices fluctuate so the test can fail
     columns.remove("Unit/Reel Price")
@@ -568,27 +415,26 @@ def test_get_equ():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
 
-    net_obj = Net(test_project_path, excludeBoard=False, excludeBOM=False)
+    net_obj = KiCadNetlist(test_project_path, excludeBoard=False, excludeBOM=False, DNP=False)
     group_fields = "Value,Footprint,DNP,MPN,Rating,Test"
     equ = get_equ(group_fields, "", "")
 
     # INFO:
     # False means the components are not equal and therefore should not be grouped.
     # True means they are equal and therefore group them
-    assert equ(net_obj.components[1], net_obj.components[2]) == False
-    assert equ(net_obj.components[3], net_obj.components[4]) == True
+    # Components net_obj.components list  ['BT1', 'BT2', 'D1', 'D2', 'H1', 'H2', 'H3', 'R1', 'R2'] == []
     assert equ(net_obj.components[0], net_obj.components[1]) == False
-    assert (
-        equ(net_obj.components[0], net_obj.dnp.components[0]) == False
-    )  # Notice here how it's false but in the next tests it's true
+    assert equ(net_obj.components[2], net_obj.components[3]) == False
+    assert equ(net_obj.components[4], net_obj.components[5]) == False
+    assert equ(net_obj.components[0], net_obj.components[2]) == False
 
     group_fields = "Value,Footprint,MPN,Rating,Test"
     equ = get_equ(group_fields, "", "")
 
-    assert equ(net_obj.components[1], net_obj.components[2]) == False
-    assert equ(net_obj.components[3], net_obj.components[4]) == True
-    assert equ(net_obj.components[0], net_obj.components[1]) == False
-    assert equ(net_obj.components[0], net_obj.dnp.components[0]) == True
+    assert equ(net_obj.components[0], net_obj.components[1]) == True
+    assert equ(net_obj.components[2], net_obj.components[3]) == True
+    assert equ(net_obj.components[4], net_obj.components[5]) == False
+    assert equ(net_obj.components[1], net_obj.components[3]) == False
 
     # Check if it fails properly when inputting >MAX_GROUP_FIELDS
     group_fields = "Value,Footprint,MPN,Rating,Test,Test,Test,Test,Test,Test"
@@ -617,19 +463,6 @@ def test_get_equ():
     assert exc_info.value.code == 1
 
 
-def test_remove_ignore_mpn_parts():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project3\\test-project3.xml"))
-
-    net_obj = Net(test_project_path, excludeBoard=True, excludeBOM=True)
-
-    ignore_mpns = ["Generic"]
-
-    net_obj.grouped = remove_ignore_mpn_parts(net_obj.grouped, ignore_mpns)
-    net_obj.refdes_groups = net_obj.get_refdes_from_net(net_obj.grouped)
-
-    assert net_obj.refdes_groups == [["BT1"], ["D1"]]
-
 
 def test_download_datasheets():
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -638,7 +471,7 @@ def test_download_datasheets():
     test_datasheet_folder_path = os.path.normpath(os.path.join(dir_path, "test-datasheets"))
     test_datasheet_path = os.path.normpath(os.path.join(test_datasheet_folder_path, "HSMW-C170-U0000-DS100.pdf"))
 
-    net_obj = Net(test_project_path, excludeBoard=False, excludeBOM=False)
+    net_obj = KiCadNetlist(test_project_path, excludeBoard=False, excludeBOM=False, DNP=False)
 
     download_datasheets(net_obj.grouped, downloads_folder=test_datasheet_folder_path)
 
@@ -658,7 +491,7 @@ def test_main():
 
     assert exc_info.value.code == 0
 
-    argv = [test_project_path, "-o", "test-out.csv", "-k", "-q"]
+    argv = [test_project_path, "-o", "test-out.csv", "--no-api", "-q"]
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 
@@ -679,7 +512,7 @@ def test_main():
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 
-    assert exc_info.value.code == 0
+    assert exc_info.value.code == 1
     os.rename(rename_path, config_path)
 
     os.remove("test-out.csv")
