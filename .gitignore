@@ -10,3 +10,5 @@ build/
 dist/
 *.spec
 kiabom_cache/
+src/test-project1.csv
+src/test-project1.xml
