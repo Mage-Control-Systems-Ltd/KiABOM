@@ -311,6 +311,7 @@ class ApiParts:
         for group in net_obj.grouped:
             component = group[0]
             mpn = component.getField("MPN")
+            # Querying the cache would happen here
             if supplier == "mouser":
                 parts.append(mouser_api_get_part_for_kiabom(mpn, ignore_mpns))
             elif supplier == "digikey":
