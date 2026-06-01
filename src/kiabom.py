@@ -40,6 +40,7 @@ import colorama
 import requests
 import yaml
 import kicad_netlist_reader
+from pathlib import Path
 from kicad_netlist_reader import comp, netlist
 from mouser import api, base
 import digikey
@@ -194,7 +195,7 @@ class KiCadNetlist:
     """
 
     def __init__(
-        self, input_xml: str, excludeBOM: bool, excludeBoard: bool, DNP: bool
+        self, input_xml: str | Path, excludeBOM: bool, excludeBoard: bool, DNP: bool
     ) -> None:
         self.input_xml = input_xml
 
@@ -203,7 +204,7 @@ class KiCadNetlist:
 
         # Generate a netlist tree from the one provided in the command line option
         try:
-            self.net = kicad_netlist_reader.netlist(input_xml)
+            self.net = kicad_netlist_reader.netlist(str(input_xml))
         except ValueError:
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Unable to open XML file. Please check path is correct or that the file exists.",
@@ -403,11 +404,9 @@ def mouser_api_init(config: dict) -> str:
     if mouser_key is None:
         return "no API key detected"
 
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    mouser_cache_path = os.path.normpath(
-        os.path.join(dir_path, "kiabom_cache/mouser_cache/")
-    )
-
+    
+    dir_path = Path(__file__).resolve().parent
+    mouser_cache_path = dir_path / "kiabom_cache" / "mouser_cache"
     os.makedirs(mouser_cache_path, exist_ok=True)
 
     def _new_get_api_keys(*arg):
@@ -523,16 +522,14 @@ def digikey_api_init(config: dict) -> str:
     if digikey_sandbox is None:
         digikey_sandbox = "False"
 
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    digikey_cache_path = os.path.normpath(
-        os.path.join(dir_path, "kiabom_cache/digikey_cache/")
-    )
+    dir_path = Path(__file__).resolve().parent
+    digikey_cache_path = dir_path / "kiabom_cache" / "digikey_cache"
     os.makedirs(digikey_cache_path, exist_ok=True)
 
     os.environ["DIGIKEY_CLIENT_ID"] = digikey_client_id
     os.environ["DIGIKEY_CLIENT_SECRET"] = digikey_client_secret
     os.environ["DIGIKEY_CLIENT_SANDBOX"] = str(digikey_sandbox)
-    os.environ["DIGIKEY_STORAGE_PATH"] = digikey_cache_path
+    os.environ["DIGIKEY_STORAGE_PATH"] = str(digikey_cache_path)
 
     return "success"
 
@@ -1011,7 +1008,7 @@ def has_internet(test_address: str = "8.8.8.8", timeout: int = 3) -> bool:
 
 
 def download_datasheets(
-    grouped: list[list[comp]], downloads_folder: str = "datasheets", timeout: int = 2
+    grouped: list[list[comp]], downloads_folder: str | Path = "datasheets", timeout: int = 2
 ):
     """Download the datasheets from the 'Datasheets' symbol field
 
@@ -1019,7 +1016,7 @@ def download_datasheets(
     :param downloads_folder: Downloads folder name
     :param timeout: Time in seconds where the internet connection will time out.
     """
-    downloads_path = os.path.normpath(downloads_folder)
+    downloads_path = Path(downloads_folder)
 
     # Create the directory
     try:
@@ -1353,8 +1350,8 @@ def set_format_from_output_file_extension(output_file: str) -> str:
 
 def init_apis() -> dict:
     api_status = {}
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    config_path = os.path.normpath(os.path.join(dir_path, "config.yaml"))
+    dir_path = Path(__file__).resolve().parent
+    config_path = dir_path / "config.yaml"
     try:
         with open(config_path, "r") as f:
             try:

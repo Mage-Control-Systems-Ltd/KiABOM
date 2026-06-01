@@ -2,6 +2,7 @@ from src.kiabom import *
 from unittest.mock import mock_open, patch
 import pytest
 import os
+from pathlib import Path
 
 
 def test_print_title_screen():
@@ -205,8 +206,8 @@ def test_get_columns():
 
 
 def test_kicadnetlist_class():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
+    dir_path = Path(__file__).resolve().parent
+    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
 
     with pytest.raises(SystemExit) as exc_info:
         net_obj = KiCadNetlist(
@@ -245,8 +246,8 @@ def test_apiparts_mouser():
     api_status = init_apis()
     assert api_status == {"mouser": "success", "digikey": "success"}
 
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
+    dir_path = Path(__file__).resolve().parent
+    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
 
     net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
@@ -267,8 +268,8 @@ def test_apiparts_digikey():
     api_status = init_apis()
     assert api_status == {"mouser": "success", "digikey": "success"}
 
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
+    dir_path = Path(__file__).resolve().parent
+    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
 
     net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
@@ -285,8 +286,8 @@ def test_apiparts_digikey():
 
 
 def test_apiparts_return_empty():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
+    dir_path = Path(__file__).resolve().parent
+    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
 
     net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
@@ -302,8 +303,8 @@ def test_write_to_file():
 
     kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
 
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project2_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
+    dir_path = Path(__file__).resolve().parent
+    test_project2_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
     net_obj = KiCadNetlist(test_project2_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
     primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
@@ -339,15 +340,15 @@ def test_contents():
 
     kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
 
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project2_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
+    dir_path = Path(__file__).resolve().parent
+    test_project2_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
     net_obj = KiCadNetlist(test_project2_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
     # INFO:
     # Test the file content with test-project1 which is a bigger project
     # If these tests fail maybe something changed in the API results like an order code or price
     # Only way to fully verify the tool works is to manually check that the output is correct
-    test_project1_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project1\\test-project1.xml"))
+    test_project1_path = dir_path / "test-projects" / "test-project1" / "test-project1.xml"
     net_obj = KiCadNetlist(test_project1_path, excludeBoard=True, excludeBOM=True, DNP=False)
     primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
     secondary_parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
@@ -390,7 +391,7 @@ def test_contents():
 
     # INFO:
     # Test project 3 contains no DNP components which is important to test
-    test_project3_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project3\\test-project3.xml"))
+    test_project3_path = dir_path / "test-projects" / "test-project3" / "test-project3.xml"
     net_obj = KiCadNetlist(test_project3_path, excludeBoard=True, excludeBOM=True, DNP=False)
     primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
     secondary_parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
@@ -412,8 +413,8 @@ def test_contents():
 
 
 def test_get_equ():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
+    dir_path = Path(__file__).resolve().parent
+    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
 
     net_obj = KiCadNetlist(test_project_path, excludeBoard=False, excludeBOM=False, DNP=False)
     group_fields = "Value,Footprint,DNP,MPN,Rating,Test"
@@ -465,11 +466,11 @@ def test_get_equ():
 
 
 def test_download_datasheets():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
+    dir_path = Path(__file__).resolve().parent
 
-    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
-    test_datasheet_folder_path = os.path.normpath(os.path.join(dir_path, "test-datasheets"))
-    test_datasheet_path = os.path.normpath(os.path.join(test_datasheet_folder_path, "HSMW-C170-U0000-DS100.pdf"))
+    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
+    test_datasheet_folder_path = dir_path / "test-datasheets"
+    test_datasheet_path = test_datasheet_folder_path / "HSMW-C170-U0000-DS100.pdf"
 
     net_obj = KiCadNetlist(test_project_path, excludeBoard=False, excludeBOM=False, DNP=False)
 
@@ -482,37 +483,37 @@ def test_download_datasheets():
 
 
 def test_main():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    test_project_path = os.path.normpath(os.path.join(dir_path, "test-projects\\test-project2\\test-project2.xml"))
+    dir_path = Path(__file__).resolve().parent
+    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
 
-    argv = [test_project_path, "-o", "test-out.csv", "-q"]
+    argv = [str(test_project_path), "-o", "test-out.csv", "-q"]
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 
     assert exc_info.value.code == 0
 
-    argv = [test_project_path, "-o", "test-out.csv", "--no-api", "-q"]
+    argv = [str(test_project_path), "-o", "test-out.csv", "--no-api", "-q"]
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 
     assert exc_info.value.code == 0
 
-    argv = [test_project_path, "-o", "test-out.csv", "--remove-ignore-mpn-parts", "-q"]
+    argv = [str(test_project_path), "-o", "test-out.csv", "--remove-ignore-mpn-parts", "-q"]
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 
     assert exc_info.value.code == 0
 
     # Testing for no config.yaml
-    config_path = os.path.normpath(os.path.join(dir_path, "..\\src\\config.yaml"))
-    rename_path = os.path.normpath(os.path.join(dir_path, "..\\src\\aconfig.yaml"))
-    os.rename(config_path, rename_path)
+    config_path = dir_path / ".." / "src" / "config.yaml"
+    rename_path = dir_path / ".." / "src" / "aconfig.yaml"
+    os.rename(str(config_path), str(rename_path))
 
-    argv = [test_project_path, "-o", "test-out.csv", "-q"]
+    argv = [str(test_project_path), "-o", "test-out.csv", "-q"]
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 
     assert exc_info.value.code == 1
-    os.rename(rename_path, config_path)
+    os.rename(str(rename_path), str(config_path))
 
     os.remove("test-out.csv")
