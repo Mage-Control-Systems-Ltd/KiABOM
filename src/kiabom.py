@@ -23,56 +23,20 @@ Sorted By: Ref
 KiABOM, Automatic Bill Of Materials generator for KiCAD.
 
 Command line:
-    python "pathToFile/kiabom.py" "%I" "%O.csv" [options]
+    python "path/to/kiabom.py" "%I" "%O.csv" [options]
 """
 
-__version__ = "1.9.0"
+__version__ = "2.0.0"
 __author__ = "Yiannis Michael (ymic9963)"
 __license__ = "GNU General Public License v3.0 only"
 
-import csv
-import io
-import sys
-import argparse
-import re
-import os
-import http.client
-import ast
-from collections import OrderedDict
-import colorama
-import requests
+import csv, io, sys, argparse, os, http.client, colorama, requests, yaml
 import kicad_netlist_reader
 from kicad_netlist_reader import comp, netlist
+from mouser import api, base
+import digikey
+from digikey.v4.productinformation import KeywordRequest
 
-from kicost import (
-    solve_parts_qtys,
-    get_logger,
-    init_all_loggers,
-    log,
-    set_distributors_progress,
-    ProgressConsole,
-    load_config,
-    SEPRTR,
-    DistData,
-)
-from kicost.__main__ import configure_from_environment
-from kicost.config import fill_missing_with_defaults
-from kicost.distributors import (
-    api_digikey,
-    api_mouser,
-    configure_apis,
-    init_distributor_dict,
-    get_distributors_iter,
-)
-from kicost.distributors.api_mouser import (
-    MouserPartSearchRequest,
-    in_stock_re_1,
-    in_stock_re_2,
-    get_number,
-)
-from kicost.edas import get_part_groups
-from kicost.edas.tools import group_parts
-from kicost.global_vars import PartGroup
 
 MAX_GROUP_FIELDS = 7
 QUIET = False
@@ -110,7 +74,7 @@ column_preset_dict = {
         "Unit/Reel Price",
         "Total Price",
     ],
-    "no-kicost": [
+    "no-api": [
         "Group ID",
         "Quantity",
         "Schematic Ref",
@@ -211,18 +175,17 @@ preset_dict = {
 }
 
 
-class BaseNet:
-    """Base Net class where Net and NetDNP inherit their shared members
+class KiCadNetlist:
+    """Class containing KiCad netlist data
 
     :param input_xml: Input XML file name.
     :param net: Netlist reader object.
     :param components: List of components from the schematic.
     :param grouped: List of grouped compoentns.
     :param group_count: Number of groups.
-    :param refdes_groups: List of reference designators from the netlist.
     """
 
-    def __init__(self, input_xml: str, excludeBOM: bool, excludeBoard: bool) -> None:
+    def __init__(self, input_xml: str, excludeBOM: bool, excludeBoard: bool, DNP: bool) -> None:
         self.input_xml = input_xml
 
         # Initialise
@@ -239,942 +202,412 @@ class BaseNet:
             sys.exit(1)
 
         # Get the list of components
-        self.components = self.get_components(excludeBOM, excludeBoard)
+        self.components = self.net.getInterestingComponents(
+            excludeBOM=excludeBOM, excludeBoard=excludeBoard, DNP=DNP
+        )
+
+        print(
+            f"Received {colorama.Fore.LIGHTYELLOW_EX}{len(self.components)}{colorama.Style.RESET_ALL} components from netlist.",
+            flush=True,
+        )
 
         # Get all of the components in groups of matching parts + values
         self.grouped = self.net.groupComponents(self.components)
         self.group_count = len(self.grouped)
 
-        # Extract the reference designator groups from the netlist
-        self.refdes_groups = self.get_refdes_from_net(self.grouped)
-
-    def get_components(self, excludeBOM: bool, excludeBoard: bool):
-        """Get the grouped components. Implemented in BaseNet to force implementation in children.
-
-        :param excludeBOM: Boolean value of whether to include symbols with the exclude from BOM property set.
-        :param excludeBoard: Boolean value of whether to include symbols with the exclude from Board property set.
-        :raises NotImplementedError: Error raised when function not implemented in children.
-        """
-        raise NotImplementedError("Must implement get_components() in subclass")
-
-    def get_refdes_from_net(self, grouped: list[list[comp]]) -> list[list[str]]:
-        """Get reference designators from KiCAD netlist reader
-
-        :param grouped: List of kicad_netlist_reader component groups.
-        :return: A list of reference designator groups.
-        """
-        refs_groups = []
-        for group in grouped:
-            refs_list = []
-            for component in group:
-                refs_list.append(component.getRef())
-            refs_groups.append(refs_list)
-        return refs_groups
-
-
-class Net(BaseNet):
-    """Contains data read by the netlist reader.
-
-    :param dnp: NetDNP object containing information about DNP components.
-    """
-
-    def __init__(self, input_xml: str, excludeBOM: bool, excludeBoard: bool) -> None:
-        super().__init__(input_xml, excludeBOM, excludeBoard)
-        print(
-            f"Received {colorama.Fore.LIGHTYELLOW_EX}{len(self.components)}{colorama.Style.RESET_ALL} components from netlist.",
-            flush=True,
-        )
         print(
             f"Grouped netlist components into {colorama.Fore.LIGHTYELLOW_EX}{self.group_count}{colorama.Style.RESET_ALL} component groups.",
             flush=True,
         )
 
-        self.dnp = NetDNP(input_xml, excludeBOM, excludeBoard)
+        self.refdes_groups = []
+        self.get_refdes_from_net()
 
-    def get_components(self, excludeBOM: bool, excludeBoard: bool) -> list[comp]:
-        """Get the grouped components
 
-        :param excludeBOM: Boolean value of whether to include symbols with the exclude from BOM property set.
-        :param excludeBoard: Boolean value of whether to include symbols with the exclude from Board property set.
-        :return: List of grouped kicad_netlist_reader components.
+    def get_refdes_from_net(self):
+        """Get reference designators from KiCAD netlist reader
+
+        :param grouped: List of kicad_netlist_reader component groups.
+        :return: A list of reference designator groups.
         """
-        # Get components without DNP components
-        return self.net.getInterestingComponents(
-            excludeBOM=excludeBOM, excludeBoard=excludeBoard, DNP=True
-        )
+        self.refdes_groups = []
+        for group in self.grouped:
+            refs_list = []
+            for component in group:
+                refs_list.append(component.getRef())
+            self.refdes_groups.append(refs_list)
 
+    def remove_ignore_mpn_parts(self, ignore_mpns: list[str]):
+        new_grouped = []
+        for group in self.grouped:
+            # First component in group
+            component = group[0]
+            mpn = component.getField("MPN")
+            if mpn not in ignore_mpns:
+                new_grouped.append(group)
+        self.grouped = new_grouped
+         
+        # Update reference designator list and group count
+        self.get_refdes_from_net()
+        self.group_count = len(self.grouped)
 
-class NetDNP(BaseNet):
-    """Contains data read by the netlist reader for DNP components."""
-
-    def __init__(self, input_xml: str, excludeBOM: bool, excludeBoard: bool) -> None:
-        super().__init__(input_xml, excludeBOM, excludeBoard)
-        print(
-            f"Received {colorama.Fore.LIGHTYELLOW_EX}{len(self.components)}{colorama.Style.RESET_ALL} DNP components from netlist.",
-            flush=True,
-        )
-        print(
-            f"Grouped DNP netlist components into {colorama.Fore.LIGHTYELLOW_EX}{self.group_count}{colorama.Style.RESET_ALL} component groups.",
-            flush=True,
-        )
-
-    def get_components(self, excludeBOM: bool, excludeBoard: bool) -> list[comp]:
-        """Get the grouped components and extract the DNP components.
-
-        :param excludeBOM: Boolean value of whether to include symbols with the exclude from BOM property set.
-        :param excludeBoard: Boolean value of whether to include symbols with the exclude from Board property set.
-        :return: List of grouped DNP kicad_netlist_reader components.
-        """
-        # Get DNP components
-        return self.extract_dnp(
-            self.net.getInterestingComponents(
-                excludeBOM=excludeBOM, excludeBoard=excludeBoard, DNP=False
-            )
-        )
-
-    def extract_dnp(self, component_list: list[comp]) -> list[comp]:
-        """Extract the DNP components from a comp list.
-
-        :param component_list: List of components from the kicad_netlist_reader.
-        :return: A list of the DNP components.
-        """
-        dnp_component_list = [comp for comp in component_list if comp.getDNP()]
-        # Need to give an empty component in case there are no DNP components in the schematic
-        # If we don't do this KiCost duplicates the output.
-        if not dnp_component_list:
-            empty_net = kicad_netlist_reader.netlist()
-            empty_net.addElement("comp")
-            empty_net._curr_element.addAttribute("ref", "BOM-EMPTY")
-            empty_component_list = empty_net.getInterestingComponents()
-            return empty_component_list
-
-        return dnp_component_list
-
-
-class BaseParts:
-    """Base class for the Parts and PartsDNP classes containing KiCost part details as lists."""
+class ApiParts:
+    """Class containing parts data from the API"""
 
     def __init__(
         self,
         supplier: str,
-        net_obj: Net | NetDNP,
-        return_empty: bool,
+        net_obj: KiCadNetlist,
         currency: str,
         ignore_mpns: list,
-        board_quantity: int,
+        api_status: dict
     ) -> None:
-        if return_empty:
-            self.stock = [""] * net_obj.group_count
-            self.order_codes = [""] * net_obj.group_count
-            self.manufacturers = [""] * net_obj.group_count
-            self.supplier = [""] * net_obj.group_count
-            self.quantity = [""] * net_obj.group_count
-            self.price_tiers = [""] * net_obj.group_count
-            self.price = [""] * net_obj.group_count
-            self.currency = [""] * net_obj.group_count
-        else:
-            api_parts_list = self.search_parts_kicost(
+        self.parts_list = [{} for _ in range(net_obj.group_count)]
+        self.currency = None
+        self.supplier = ""
+        self.comp_count = 0
+
+        # Update class members with API results if initialisation was succesful
+        if api_status.get(supplier.lower(), "") == "success":
+            self.parts_list = self.search_parts(
                 net_obj, supplier.lower(), currency, ignore_mpns
             )
-            api_part_refs = self.get_refs_from_kicost(api_parts_list)
 
-            self.comp_count = len(api_parts_list)
-            self.parts_list = self.match_api_parts_list_with_reader_list(
-                api_part_refs, net_obj.refdes_groups, api_parts_list
-            )
-            self.stock = self.get_stock_from_kicost(self.parts_list, supplier.lower())
-            self.order_codes = self.get_order_code_from_kicost(
-                self.parts_list, supplier.lower()
-            )
-            self.manufacturers = self.get_manufacturer_from_kicost(
-                self.parts_list, supplier.lower()
-            )
-            self.supplier = self.get_supplier_list(supplier.lower(), self.order_codes)
-            self.quantity = self.get_quantity_from_kicost(
-                self.parts_list, board_quantity
-            )
-            self.price_tiers = self.get_price_tiers_from_kicost(
-                self.parts_list, supplier.lower()
-            )
-            self.price = self.get_price_from_kicost(self.quantity, self.price_tiers)
-            self.currency = self.get_currency_symbol_list(
-                currency.lower(), self.order_codes
-            )
+            for part in self.parts_list:
+                if part.get("Order Code"):
+                    self.comp_count = self.comp_count + 1
 
-    def search_parts_kicost(
-        self, net_obj: Net | NetDNP, supplier: str, currency: str, ignore_mpns: list
-    ) -> list[PartGroup]:
-        """Search the distributor for the parts given by the input XML file.
+            if currency == "GBP":
+                self.currency = "£"
+            elif currency == "USD":
+                self.currency = "$"
+            elif currency == "EUR":
+                self.currency = "€"
 
-        :param net_obj: Net object containing relevant information from the kicad_netlist_reader.
-        :param supplier: Supplier text.
-        :param currency: Currency code.
-        :param ignore_mpns: List of strings to ignore if found in the MPN field.
-        :return: Parts data as an OrderedDict.
-        """
-        # Get groups of identical parts.
-        parts = OrderedDict()
-        prj_info = []
-        components, info = get_part_groups(
-            "kicad", net_obj.input_xml, [], [" "], [supplier]
-        )
+            if supplier.lower() == "mouser":
+                self.supplier = "Mouser"
+            elif supplier.lower() == "digikey":
+                self.supplier = "DigiKey"
 
-        # Remove components not in the netlist before the API request
-        components = self.keep_only_components_in_netlist(
-            components, net_obj.refdes_groups
-        )
-
-        # Set the MPN of the parts with the ignore_mpns to blank
-        components = self.set_blank_val_to_ignore_mpns(components, ignore_mpns)
-
-        parts.update(components)
-        info["qty"] = 1
-        prj_info.append(info)
-
-        # Group part out of the module to be possible to merge different project lists, ignore some field to merge given in the `group_fields`.
-        FIELDS_SPREADSHEET = ["refs", "value", "desc", "footprint", "manf", "manf#"]
-        FIELDS_MANFCAT = [d + "#" for d in get_distributors_iter()] + ["manf#"]
-        FIELDS_MANFQTY = [d + "#_qty" for d in get_distributors_iter()] + ["manf#_qty"]
-        FIELDS_IGNORE = (
-            FIELDS_SPREADSHEET + FIELDS_MANFCAT + FIELDS_MANFQTY + ["pricing"]
-        )
-
-        group_fields = []
-        for _, fields in list(parts.items()):
-            for f in fields:
-                # Merge all extra fields that read on the files that will not be displayed (Needed to check `user_fields`).
-                if f not in FIELDS_IGNORE and SEPRTR not in f:
-                    # Not include repetitive field names or fields with the separator `:` defined on `SEPRTR`.
-                    group_fields += [f]
-
-        # Always ignore 'desc' ('description') and 'var' ('variant') fields, merging the components in groups.
-        group_fields += ["desc", "var"]
-        group_fields = set(group_fields)
-        parts = group_parts(parts, group_fields, 1)
-
-        # Compute the qtys
-        solve_parts_qtys(parts, False, prj_info)
-
-        # Assign the new function and get the distributor pricing/etc for each part.
-        if supplier == "mouser":
-            api_mouser._query_part_info = mouser_new_query_part_info
-            try:
-                api_mouser.query_part_info(parts, [supplier], [currency])
-            except AttributeError:
-                print(
-                    f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Possible issue with your Mouser API keys. Check your config.yaml.",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-        elif supplier == "digikey":
-            api_digikey._query_part_info = digikey_new_query_part_info
-            try:
-                api_digikey.query_part_info(parts, [supplier], [currency])
-            except AttributeError:
-                print(
-                    f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Possible issue with your DigiKey API keys. Check your config.yaml.",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-
-        return parts
-
-    def set_blank_val_to_ignore_mpns(
-        self, components: OrderedDict, ignore_mpns: list[str]
-    ) -> OrderedDict:
-        """Set the 'manf#' value in the components dict to blank
-        so that the ignore_mpns parts are skipped by the KiCost API.
-
-        :param components: OrderedDict of components and their information.
-        :param ignore_mpns: List of the MPN strings to not search for.
-        :return: A list with the MPN values that should be ignored set to blank.
-        """
-        for val in list(components.values()):
-            if "manf#" in val:
-                if val["manf#"] in ignore_mpns:
-                    del val["manf#"]
-            else:
-                continue
-
-        return components
-
-    def keep_only_components_in_netlist(
-        self, components: OrderedDict, net_refs_groups: list[list[str]]
-    ) -> OrderedDict:
-        """Reads all the components KiCost found from the XML and
-        keeps only those that were read initially from net.getInterestingComponents().
-
-        :param components: OrderedDict of components and their information.
-        :param net_refs_groups: List of the reference groups from the netlist reader.
-        :return: OrderedDict of components and their information but only those that match the ones from the netlist reader.
-        """
-        # Put all the net refdes in an easy to access list
-        refs_list = []
-        for refs_group in net_refs_groups:
-            for ref in refs_group:
-                refs_list.append(ref)
-
-        # Remove all the refdes that are not in the net ref groups
-        for key in list(components.keys()):
-            if key not in refs_list:
-                components.pop(key)
-
-        return components
-
-    def get_refs_from_kicost(self, parts: list[PartGroup]) -> list[list[str]]:
-        """Get reference designators from KiCost API.
-        Also sorting them so that the output is a bit more similar
-        to the netlist reader when debugging.
-
-        :param parts: List of PartGroup objects.
-        :return: List of reference groups.
-        """
-        refs = []
-        for p in parts:
-            p.refs.sort(key=refs_sort)
-            refs.append(p.refs)
-
-        return refs
-
-    # Match the KiCost API result with the KiCAD net list reader
-    def match_api_parts_list_with_reader_list(
-        self,
-        api_refs_groups: list[list[str]],
-        net_refs_groups: list[list[str]],
-        api_parts_list: list[PartGroup],
-    ) -> list[PartGroup]:
-        """Match the KiCost API result with the KiCAD net list reader
-
-        :param api_refs_groups: List of the reference designator groups from KiCost.
-        :param net_refs_groups: List of the reference designator groups from KiCAD.
-        :param api_parts_list: List of the parts returned from KiCost.
-        :return: A PartsGroup list where all parts match the KiCAD netlist reader sequence.
-        """
-        # Find where the KiCost reference designators are compared to the KiCAD netlist reference designators
-        matched_index_list = match_netlist_refs_with_api_refs(
-            net_refs_groups, api_refs_groups
-        )
-
-        matched_part_groups = []
-        for index_group in matched_index_list:
-            # Check here is due to the case where there are no DNP components and therefore the list is empty.
-            if index_group:
-                # Get the first index group since for each ref we only care about the groups here
-                first_ref_group = index_group[0]
-
-                # In index 2 for every entry is the group position in the API parts list
-                matched_api_part_list_ref = first_ref_group[2]
-
-                # Therefore get that index and match it
-                matched_part_groups.append(
-                    api_parts_list[int(matched_api_part_list_ref)]
-                )
-
-        return matched_part_groups
-
-    def get_stock_from_kicost(self, parts: list[PartGroup], supplier: str) -> list[str]:
-        """Get the stock from the returned KiCost parts list.
-
-        :param parts: List of parts returned from KiCost.
-        :param supplier: Supplier name.
-        :return: List of the stock with blanks when none was found.
-        """
-        stock = []
-        for part in parts:
-            if part.dd:
-                stock.append(str(part.dd[supplier].qty_avail))
-            else:
-                stock.append("")
-        return stock
-
-    def get_order_code_from_kicost(
-        self, parts: list[PartGroup], supplier: str
-    ) -> list[str]:
-        """Get the order code from the returned KiCost parts list.
-
-        :param parts: List of parts returned from KiCost.
-        :param supplier: Supplier name.
-        :return: List of the order codes with blanks when none was found.
-        """
-        order_code = []
-        for part in parts:
-            if part.dd:
-                order_code.append(part.dd[supplier].part_num)
-            else:
-                order_code.append("")
-        return order_code
-
-    def get_manufacturer_from_kicost(
-        self, parts: list[PartGroup], supplier: str
-    ) -> list[str]:
-        """Get the manufacturer from the returned KiCost parts list.
-
-        :param parts: List of parts returned from KiCost.
-        :param supplier: Supplier name.
-        :return: List of the manufacturers with blanks when none was found.
-        """
-        extra_info = []
-        manufacturer = []
-        for part in parts:
-            if part.dd:
-                # dd is a DistData object in global_vars
-                extra_info.append(part.dd[supplier].extra_info)
-            else:
-                extra_info.append({})
-
-        for info in extra_info:
-            if supplier == "mouser":
-                manufacturer.append(info.get("manufacturer", ""))
-            elif supplier == "digikey":
-                manf = info.get("manufacturer", "")
-                if manf:
-                    manufacturer.append(manf)
-                else:
-                    manufacturer.append("")
-        return manufacturer
-
-    def get_supplier_list(self, supplier: str, order_codes: list[str]) -> list[str]:
-        """Get the supplier list for all parts returned from KiCost.
-
-        :param supplier: Supplier text.
-        :param order_codes: List of the order codes.
-        :return: List of the suppliers for all the returned parts.
-        """
-        suppler_list = []
-        for order_code in order_codes:
-            if order_code != "":
-                if supplier == "mouser":
-                    suppler_list.append("Mouser")
-                elif supplier == "digikey":
-                    suppler_list.append("DigiKey")
-                else:
-                    suppler_list.append("Supplier")
-            else:
-                suppler_list.append("")
-
-        return suppler_list
-
-    def get_quantity_from_kicost(
-        self, parts: list[PartGroup], board_quantity: int
-    ) -> list[str]:
-        """Get the quantity from the returned KiCost parts.
-
-        :param parts: List of parts returned from KiCost.
-        :param board_quantity: Specified board quantity from the options.
-        :return: List of all the quantities detected by KiCost.
-        """
-        qty_list = []
-        for part in parts:
-            if part.dd:
-                if part.qty:
-                    qty_list.append(str(int(part.qty) * board_quantity))
-                else:
-                    qty_list.append("")
-            else:
-                qty_list.append("")
-        return qty_list
-
-    def get_price_tiers_from_kicost(
-        self, parts: list[PartGroup], supplier: str
-    ) -> list[dict]:
-        """Get the price tiers from the returned parts list.
-
-        :param parts: List of parts returned from KiCost.
-        :param supplier: Supplier string.
-        :return: List of price tiers.
-        """
-        price_tiers = []
-        for part in parts:
-            if part.dd:
-                price_tiers.append(part.dd[supplier].price_tiers)
-            else:
-                price_tiers.append({})
-        return price_tiers
-
-    def get_price_from_kicost(
-        self, quantity: list[str], price_tiers: list[dict]
-    ) -> list[str]:
-        """Get the price from the price tiers based on the quantity.
-
-        :param quantity: Quantity from the number of parts in the group.
-        :param price_tiers: Price tiers returned from the API.
-        :return: List of the prices in string format.
-        """
-        price = []
-        price_key = 0
-        for pos, price_dict in enumerate(price_tiers):
-            if price_dict:
-                for key in price_dict:
-                    if key < int(quantity[pos]):
-                        price_key = key
-                    else:
-                        price_key = list(price_dict.keys())[0]
-                price.append(str(float(price_dict[price_key])))
-            else:
-                price.append("")
-        return price
-
-    def get_currency_symbol_list(
-        self, currency: str, order_codes: list[str]
-    ) -> list[str]:
-        """Get a list with all the currency values for the parts.
-
-        :param currency: Currency string, e.g. GBP, USD, or EUR.
-        :param order_codes: Order codes list.
-        :return: A list with the currency symbols where a valid order code was found.
-        """
-        currency_symbol_list = []
-        for order_code in order_codes:
-            if order_code != "":
-                if currency == "gbp":
-                    currency_symbol_list.append("£")
-                elif currency == "usd":
-                    currency_symbol_list.append("$")
-                elif currency == "eur":
-                    currency_symbol_list.append("€")
-                else:
-                    currency_symbol_list.append("")
-            else:
-                currency_symbol_list.append("")
-
-        return currency_symbol_list
-
-
-# Contains parts data retrieved by KiCost
-class Parts(BaseParts):
-    """Contains non-DNP parts data retrieved by KiCost for a specific supplier.
-
-    :param dnp: A PartsFileDataDNP object instance.
-    """
-
-    def __init__(
-        self,
-        supplier: str,
-        net_obj: Net,
-        return_empty: bool,
-        currency: str,
-        ignore_mpns: list,
-        board_quantity: int,
-    ) -> None:
-        super().__init__(
-            supplier, net_obj, return_empty, currency, ignore_mpns, board_quantity
-        )
-        self.dnp = PartsDNP(
-            supplier, net_obj.dnp, return_empty, currency, ignore_mpns, board_quantity
-        )
-
-        if not return_empty:
             print(
-                f"Searched {supplier}, found {colorama.Fore.LIGHTYELLOW_EX}{self.comp_count + self.dnp.comp_count}{colorama.Style.RESET_ALL} valid parts.",
+                f"Searched {self.supplier}, found {colorama.Fore.LIGHTYELLOW_EX}{self.comp_count}{colorama.Style.RESET_ALL} valid parts.",
                 flush=True,
             )
 
+    def search_parts(
+        self, net_obj: KiCadNetlist, supplier: str, currency: str, ignore_mpns: list
+    ) -> list[dict]:
+        parts = []
+        for group in net_obj.grouped:
+            component = group[0]
+            mpn = component.getField("MPN")
+            if supplier == "mouser":
+                parts.append(mouser_api_get_part_for_kiabom(mpn, ignore_mpns))
+            elif supplier == "digikey":
+                parts.append(
+                    digikey_api_get_part_for_kiabom(mpn, ignore_mpns, currency=currency)
+                )
 
-class PartsDNP(BaseParts):
-    """Contains DNP parts data retrieved by KiCost for a specific supplier"""
-
-    def __init__(
-        self,
-        supplier: str,
-        net_obj: NetDNP,
-        return_empty: bool,
-        currency: str,
-        ignore_mpns: list,
-        board_quantity: int,
-    ) -> None:
-        super().__init__(
-            supplier, net_obj, return_empty, currency, ignore_mpns, board_quantity
-        )
+        return parts
 
 
-class BasePartsFileData:
-    """Class containing the file data that is common between DNP and non-DNP parts.
+class BomData:
+    """Class containing the file data required to create the BOM.
     Has data from both primary and secondary suppliers.
 
     :param manufacturer: Manufacturer list.
     :param primary_order_codes: Primary order codes list.
     :param primary_supplier: Primary supplier list containing the primary supplier string.
-    :param secondary_order_codes: Secondary order codes list.
-    :param secondary_supplier: Secondary supplier list containing the secondary supplier string.
-    :param price: List containing the prices for each part.
-    :param currency_symbol: Currency symbol for each part.
     """
 
     def __init__(
-        self, primary_parts_obj: Parts | PartsDNP, secondary_parts_obj: Parts | PartsDNP
+            self, pri_obj: ApiParts, sec_obj: ApiParts, refdes_groups: list[list[str]], board_quantity: int
     ) -> None:
-        self.manufacturer = fill_primary_list_gaps_with_secondary(
-            primary_parts_obj.manufacturers, secondary_parts_obj.manufacturers
-        )
-        self.primary_order_codes = primary_parts_obj.order_codes
-        self.primary_supplier = primary_parts_obj.supplier
-        self.secondary_order_codes = secondary_parts_obj.order_codes
-        self.secondary_supplier = secondary_parts_obj.supplier
-        self.price = fill_primary_list_gaps_with_secondary(
-            primary_parts_obj.price, secondary_parts_obj.price
-        )
-        self.currency_symbol = primary_parts_obj.currency
+        self.pri_res = pri_obj.parts_list
+        self.sec_res = sec_obj.parts_list
 
-        # If one of the lists above is empty, assume there are no DNP components and return empty lists
-        if not self.manufacturer:
-            self.manufacturer = [""]
-            self.primary_order_codes = [""]
-            self.primary_supplier = [""]
-            self.secondary_order_codes = [""]
-            self.secondary_supplier = [""]
-            self.price = [""]
-            self.currency_symbol = [""]
+        self.currency_symbol = ""
+        if pri_obj.currency:
+            self.currency_symbol = pri_obj.currency
+        elif sec_obj.currency:
+            self.currency_symbol = sec_obj.currency
 
+        self.insert_in_result(self.pri_res, "Supplier", pri_obj.supplier)
+        self.insert_in_result(self.sec_res, "Supplier", sec_obj.supplier)
 
-def fill_primary_list_gaps_with_secondary(
-    primary_list: list[str], secondary_list: list[str]
-) -> list[str]:
-    """Fills the gaps in the primary list with the data from the secondary list.
-
-    :param primary_list: A list containining blank or filled string data.
-    :param secondary_list: A list containining blank or filled string data.
-    :return: Primary list with its blanks filled by the secondary list.
-    """
-    out_list = primary_list
-    for pos, _ in enumerate(primary_list):
-        if primary_list[pos] == "" and secondary_list[pos] != "":
-            out_list[pos] = secondary_list[pos]
-    return out_list
-
-
-class PartsFileData(BasePartsFileData):
-    """Contains data of the parts as simple lists for outputting.
-
-    :param dnp: A PartsFileDataDNP object instance.
-    """
-
-    def __init__(self, primary_parts_obj: Parts, secondary_parts_obj: Parts) -> None:
-        super().__init__(primary_parts_obj, secondary_parts_obj)
-        self.dnp = PartsFileDataDNP(primary_parts_obj.dnp, secondary_parts_obj.dnp)
-
-
-class PartsFileDataDNP(BasePartsFileData):
-    """Contains DNP CSV data of the DNP parts"""
-
-    def __init__(
-        self, primary_parts_obj: PartsDNP, secondary_parts_obj: PartsDNP
-    ) -> None:
-        super().__init__(primary_parts_obj, secondary_parts_obj)
-
-
-def mouser_new_query_part_info(
-    parts: OrderedDict, distributors: list[str], currency: list[str]
-):
-    """Used to override the api_digikey._query_part_info function to return additional part details
-    like the manufacturer.
-
-    :param parts: Parts read by KiCost.
-    :param distributors: The chosen distributor which in this case will be digikey.
-    :param currency: Chosen currency of returned prices.
-    """
-    DIST_NAME = "mouser"
-    if DIST_NAME not in distributors:
-        return
-    field_cat = DIST_NAME + "#"
-    for part in parts:
-        partnumber = None
-        data = None
-        # Get the Mouser P/N for this part
-        part_stock = part.fields.get(field_cat)
-        if part_stock:
-            partnumber = part_stock
-            prefix = "mou"
-        else:
-            # No Mouser P/N, search using the manufacturer code
-            partnumber = part.fields.get("manf#")
-            prefix = "mpn"
-        if partnumber:
-            request, loaded = api_mouser.cache.load_results(prefix, partnumber)
-            if loaded:
-                data = MouserPartSearchRequest.get_clean_response(request)
+        self.com_res = []
+        for pri, sec in zip(self.pri_res, self.sec_res):
+            if pri:
+                self.com_res.append(pri)
             else:
-                request = MouserPartSearchRequest("partnumber", api_mouser.key)
-                if request.part_search(partnumber):
-                    data = request.get_clean_response(request.response_parsed)
-                    api_mouser.cache.save_results(
-                        prefix, partnumber, request.response_parsed
-                    )
+                self.com_res.append(sec)
 
-        if data is None:
-            if not QUIET:
-                if partnumber == "" or partnumber is None:
-                    pass
-                else:
-                    # breakpoint()
-                    print(
-                        f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No information found at Mouser for part(s) '{','.join(part.refs)}' with MPN '{partnumber}'."
-                    )
-        else:
-            if not part.datasheet:
-                datasheet = data["DataSheetUrl"]
-                if datasheet:
-                    part.datasheet = datasheet
-            if not part.lifecycle:
-                lifecycle = data["LifecycleStatus"]
-                if lifecycle:
-                    part.lifecycle = lifecycle.lower()
-            dd = part.dd.get(DIST_NAME, DistData())
-            dd.qty_increment = dd.moq = int(data["Min"])
-            dd.url = data["ProductDetailUrl"]
-            dd.part_num = data["MouserPartNumber"]
-            dd.qty_avail = 0
-            availability = data["Availability"]
-            dd.qty_avail_comment = availability
-            res_stock = in_stock_re_1.match(availability)
-            if not res_stock:
-                res_stock = in_stock_re_2.match(availability)
-            if res_stock:
-                dd.qty_avail = int(res_stock.group(1))
-            pb = data["PriceBreaks"]
-            dd.currency = pb[0]["Currency"] if pb else currency
-            dd.price_tiers = {p["Quantity"]: get_number(p["Price"]) for p in pb}
-            # Extra information
-            if data["Manufacturer"]:
-                dd.extra_info["manufacturer"] = data["Manufacturer"]
-            part.dd[DIST_NAME] = dd
+        self.insert_in_result(self.com_res, "Currency", self.currency_symbol)
 
+        if len(refdes_groups) != len(self.com_res):
+            print(
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} The length of the reference designator groups and API result must match because the index is used to match API result with the netlist. Aborting BOM generation..."
+            )
+            sys.exit(1)
 
-def digikey_new_query_part_info(
-    parts: OrderedDict, distributors: list[str], currency: list[str]
-):
-    """Used to override the api_digikey._query_part_info function to return additional part details
-    like the manufacturer.
+        # Get the quantities for each part and insert into common result
+        for group, part in zip(refdes_groups, self.com_res):
+            part["Quantity"] = int(len(group) * board_quantity)
 
-    :param parts: Parts read by KiCost.
-    :param distributors: The chosen distributor which in this case will be digikey.
-    :param currency: Chosen currency of returned prices.
-    """
-    part_code = ""
-    DIST_NAME = "digikey"
-    if DIST_NAME not in distributors:
-        return
-    field_cat = DIST_NAME + "#"
-
-    # This is handled in KiCost in the api_digikey.py configure() function. That function does some other things but this should be ok.
-    if api_digikey.version == 3:
-        from kicost_digikey_api_v3 import by_digikey_pn, by_manf_pn, by_keyword
-    else:
-        from kicost_digikey_api_v4 import by_digikey_pn, by_manf_pn, by_keyword
-
-    # Setup progress bar to track progress of server queries.
-    for part in parts:
-        data = None
-        # Get the Digi-Key P/N for this part
-        part_stock = part.fields.get(field_cat)
-        if part_stock:
-            o = by_digikey_pn(part_stock)
-            data = o.search()
-            if data is None:
-                if not QUIET:
-                    print(
-                        f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} The '{part_stock}' Digi-Key code is not valid."
-                    )
-                o = by_keyword(part_stock)
-                data = o.search()
-        else:
-            # No Digi-Key P/N, search using the manufacturer code
-            part_code = part.fields.get("manf#")
-            if part_code:
-                o = by_manf_pn(part_code)
-                data = o.search()
-                if data is None:
-                    o = by_keyword(part_code)
-                    data = o.search()
-        if data is None:
-            if not QUIET:
-                if part_code == "" or part_code is None:
-                    pass
-                else:
-                    print(
-                        f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No information found at DigiKey for part(s) '{','.join(part.refs)}' with MPN '{part_code}'."
-                    )
-        else:
-            if api_digikey.version == 3:
-                # Extract v3 data
-                primary_datasheet = data.primary_datasheet
-                product_status = data.product_status.lower()
-                specs = {
-                    sp.parameter.lower(): (sp.parameter, sp.value)
-                    for sp in data.parameters
-                }
-                ro_hs_status = data.ro_hs_status
-                minimum_order_quantity = data.minimum_order_quantity
-                product_url = data.product_url
-                digi_key_part_number = data.digi_key_part_number
-                quantity_available = data.quantity_available
-                price_tiers = {
-                    p.break_quantity: p.unit_price for p in data.standard_pricing
-                }
-                product_description = data.product_description
-                manufacturer = data.manufacturer
+        # Get the price for each part and insert into common result
+        for part in self.com_res:
+            if part.get("MPN"):
+                price_tiers = part.get("Price Tiers", {})
+                for key in price_tiers.keys():
+                    part["Price"] = float(price_tiers.get(key))
+                    if key > part["Quantity"]:
+                        break
             else:
-                # Extract v4 data
-                p = data.product  # The selected product
-                m = p.match  # The selected variant
-                primary_datasheet = p.datasheet_url
-                product_status = p.product_status.status.lower()
-                specs = {
-                    sp.parameter_text.lower(): (sp.parameter_text, sp.value_text)
-                    for sp in p.parameters
-                }
-                ro_hs_status = p.classifications.rohs_status
-                minimum_order_quantity = m.minimum_order_quantity
-                product_url = p.product_url
-                digi_key_part_number = m.digi_key_product_number
-                quantity_available = m.quantity_availablefor_package_type
-                price_tiers = {
-                    p.break_quantity: p.unit_price for p in m.standard_pricing
-                }
-                product_description = p.description.product_description
-                manufacturer = p.manufacturer.name
+                part["Price"] = ""
 
-            # Fill internal structure
-            part.datasheet = primary_datasheet
-            part.lifecycle = product_status
-            specs["rohs"] = ("RoHS", ro_hs_status)
-            part.update_specs(specs)
-            dd = part.dd.get(DIST_NAME, DistData())
-            dd.qty_increment = dd.moq = minimum_order_quantity
-            dd.url = product_url
-            dd.part_num = digi_key_part_number
-            dd.qty_avail = quantity_available
-            dd.currency = data.search_locale_used.currency
-            dd.price_tiers = price_tiers
-            dd.extra_info["manufacturer"] = manufacturer
-            part.dd[DIST_NAME] = dd
-            dd.extra_info["desc"] = product_description
+        self.total_price = 0
+        for part in self.com_res:
+            price = part.get("Price")
+            if price and price != "":
+                self.total_price = self.total_price + price
 
+    def insert_in_result(self, result: list[dict], key: str, val: str):
+        for part in result:
+            # Check if a result for the part was been found. Could be any API field
+            if part.get("Order Code"):
+                part.update({key: val})
 
-def match_netlist_refs_with_api_refs(
-    lst1: list[list[str]], lst2: list[list[str]]
-) -> list[list[str]]:
-    """Matches the group number and location of a reference in lst1
-    to what group and location it is in lst2, and uses counters to store the indexes.
-    In this software's case, lst1 = Net list reader reference groups
-    and lst2 = API reference groups.
+def mouser_api_init(config: dict) -> str:
+    mouser_entry = config.get("Mouser", {})
+    mouser_key = mouser_entry.get("key")
 
-    This function used to be used for extracting from the KiCost result only the
-    components present in the net list. Now it is used to sort the KiCost result
-    exactly how the net list reader does it so that the results can simply be indexed.
+    if mouser_entry is None:
+        return "no config entry detected"
 
-    Format of returned list is [lst1_group_index, lst1_ref_index, lst2_group_index, lst2_ref_index].
+    if mouser_key is None:
+        return "no API key detected"
 
-    :param lst1: List with nested lists of strings.
-    :param lst2: List with nested lists of strings.
-    :return: List with nested lists of indexes where lst1 nested items match lst2 nested items. Goupred based on the location in lst1.
-    """
-    matched_ref_list = []
-    grouped_matched_ref_list = []
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    mouser_cache_path = os.path.normpath(os.path.join(dir_path, "kiabom_cache/mouser_cache/"))
 
-    # Get all the lst1 items that match in lst2, and store their locations in matched_ref_list
-    for lst1_group_counter, lst1_group in enumerate(lst1):
-        for lst1_ref_counter, lst1_ref in enumerate(lst1_group):
-            for lst2_group_counter, lst2_group in enumerate(lst2):
-                for lst2_ref_counter, lst2_ref in enumerate(lst2_group):
-                    if lst1_ref == lst2_ref:
-                        # ref is the location of the corresponding refdes in both lists
-                        ref = [
-                            lst1_group_counter,
-                            lst1_ref_counter,
-                            lst2_group_counter,
-                            lst2_ref_counter,
-                        ]
-                        matched_ref_list.append(ref)
+    os.makedirs(mouser_cache_path, exist_ok=True)
 
-    # Due to how the for-loop is structured, the length of the first list is the length of the desired final list
-    matched_num = len(lst1)
+    def _new_get_api_keys(*arg):
+        return [
+            "",
+            mouser_key,
+        ]
 
-    # Initialise a list with empty nested lists to store each group
-    for i in range(matched_num):
-        grouped_matched_ref_list.append([])
+    base.get_api_keys = _new_get_api_keys
 
-    # Find the where the item was in lst1 and group it with items that also belong in that group
-    for i, group in enumerate(grouped_matched_ref_list):
-        for ref in matched_ref_list:
-            if i == ref[0]:
-                group.append(ref)
-
-    return grouped_matched_ref_list
+    return "success"
 
 
-def refs_sort(ref: str) -> list[int]:
-    """Used as a sort key in get_refs_from_kicost().
+def mouser_api_search_part(mpn: str) -> list:
+    mpn = mpn.strip()
 
-    For example, KiCost sorts a reference like so ['R2', 'R9', 'R13', 'R14', 'R10']
-    whereas kicad_netlist_reader sorts it like so ['R2', 'R9', 'R10', 'R13', 'R14'].
-    Therefore for optimum matching between the two outputs, they need to be sorted the same
-    way.
+    # Search by Part-Number
+    obj = api.MouserPartSearchRequest("partnumber")
+    obj.part_search(mpn, option="None")  # instead of "None" can be "Exact"
+    res = obj.get_response()
 
-    :param ref: Reference designator string.
-    :return: A list
-    """
+    # Check for errors or print the returned results
+    if res == None or res == {}:
+        print(f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}.")
+        return [{}]
 
-    return [int(ref_int) for ref_int in re.findall(r"\d+", ref)]
+    search_results = res.get("SearchResults")
+    if not search_results:
+        return [{}]
 
+    result_count = search_results.get("NumberOfResult", 0)
+    if result_count == 0:
+        if not QUIET:
+            print(f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on Mouser for part number '{mpn}' ")
+        return [{}]
 
-def init_kicost() -> bool:
-    """Initialise KiCost by initialising the logger and the APIs.
+    parts = []
+    for part in search_results.get("Parts", [""]):
+        parts.append(part)
 
-    :return: True or Fasle (Success or Failure).
-    """
-    # Set up logging verbosity
-    log.set_domain("kicost")
-    init_all_loggers(
-        log.init(), log.get_logger("kicost.distributors"), log.get_logger("kicost.edas")
-    )
-    log.set_verbosity(get_logger(), None, True)
-    set_distributors_progress(ProgressConsole)
-
-    # Determine if application is a script file or an executable
-    application_path = ""
-    if getattr(sys, "frozen", False):
-        application_path = os.path.dirname(sys.executable)
-    elif __file__:
-        application_path = os.path.dirname(__file__)
-
-    config_name = "config.yaml"
-    config_path = os.path.join(application_path, config_name)
-
-    api_found = False
-    api_options = {}
-    if os.path.isfile(config_path):
-        api_options = load_config(config_path)
-
-        # Check if at least one API key was found
-        for api in list(api_options.values()):
-            if api:
-                api_found = True
-
-    if api_found:
-        configure_from_environment(api_options, False)
-        fill_missing_with_defaults()
-        configure_apis(api_options)
-        init_distributor_dict()
-
-    return api_found
+    return parts
 
 
-def check_empty_dnp(component: comp) -> bool:
-    """Fixes issue of outputting an empty DNP component list, which is what happens when
-       no DNP components exist in the XML. The empty DNP value is set by extract_dnp().
+def mouser_api_get_price_tiers_for_kiabom(price_tiers_list: list[dict]) -> dict:
+    if not price_tiers_list:
+        return {}
 
-    :param component: Component to check.
-    :return: True or False.
-    """
-    return bool(component.getRef() == "BOM-EMPTY")
+    price_tiers_dict = {}
+    for price_tier in price_tiers_list:
+        price_tiers_dict[price_tier["Quantity"]] = float(price_tier["Price"][1:])
+
+    return price_tiers_dict
 
 
-def write_parts_to_csv(
+def mouser_api_parse_for_kiabom(parts: list[dict]) -> list[dict]:
+    # If no parts were found
+    if parts[0] == {}:
+        return [{}]
+
+    parsed_parts = []
+    for part in parts:
+        parsed_dict = {}
+        parsed_dict["Datasheet"] = part.get("DataSheetUrl", "")
+        parsed_dict["Description"] = part.get("Description", "")
+        parsed_dict["Manufacturer"] = part.get("Manufacturer", "")
+        parsed_dict["MPN"] = part.get("ManufacturerPartNumber", "")
+        parsed_dict["Order Code"] = part.get("MouserPartNumber", "")
+        parsed_dict["Stock"] = part.get("AvailabilityInStock", "")
+        parsed_dict["Product Page"] = part.get("ProductDetailUrl", "")
+        parsed_dict["Price Tiers"] = mouser_api_get_price_tiers_for_kiabom(part.get("PriceBreaks", []))
+        parsed_parts.append(parsed_dict)
+
+    return parsed_parts
+
+
+def mouser_api_get_part_for_kiabom(mpn: str, ignore_mpns=[""]) -> dict:
+    if mpn in ignore_mpns:
+        return {}
+
+    parts = mouser_api_search_part(mpn)
+    parts = mouser_api_parse_for_kiabom(parts)
+
+    for part in parts:
+        if part.get("MPN") == mpn:
+            # If there is an exact MPN match return that
+            return part
+
+    # If there isn't an exact MPN match then return the first entry
+    return parts[0]
+
+def digikey_api_init(config: dict) -> str:
+    digikey_entry = config.get("DigiKey", {})
+    digikey_client_id = digikey_entry.get("client_id")
+    digikey_client_secret = digikey_entry.get("client_secret")
+    digikey_sandbox = digikey_entry.get("sandbox")
+
+    if digikey_entry is None:
+        return "no config entry"
+
+    if digikey_client_id is None:
+        return "no client ID"
+
+    if digikey_client_secret is None:
+        return "no client secret"
+
+    if digikey_sandbox is None:
+        digikey_sandbox = "False"
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    digikey_cache_path = os.path.normpath(os.path.join(dir_path, "kiabom_cache/digikey_cache/"))
+    os.makedirs(digikey_cache_path, exist_ok=True)
+
+    os.environ["DIGIKEY_CLIENT_ID"] = digikey_client_id
+    os.environ["DIGIKEY_CLIENT_SECRET"] = digikey_client_secret
+    os.environ["DIGIKEY_CLIENT_SANDBOX"] = str(digikey_sandbox)
+    os.environ["DIGIKEY_STORAGE_PATH"] = digikey_cache_path
+
+    return "success"
+
+
+def digikey_api_search_part(mpn: str, site: str = "uk", language: str = "en", currency: str = "gbp") -> list[dict]:
+    mpn = mpn.strip()
+
+    # x_digikey_locale_site: Two letter code for Digi-Key product website to search on. Different countries sites have different part restrictions, supported languages, and currencies. Acceptable values include: US, CA, JP, UK, DE, AT, BE, DK, FI, GR, IE, IT, LU, NL, NO, PT, ES, KR, HK, SG, CN, TW, AU, FR, IN, NZ, SE, MX, CH, IL, PL, SK, SI, LV, LT, EE, CZ, HU, BG, MY, ZA, RO, TH, PH.
+    # x_digikey_locale_language: Two letter code for language to search on. Langauge must be supported by the selected site. If searching on keyword, this language is used to find productes. Acceptable values include: en, ja, de, fr, ko, zhs, zht, it, es, he, nl, sv, pl, fi, da, no.
+    # x_digikey_locale_currency: Three letter code for Currency to return part pricing for. Currency must be supported by the selected site. Acceptable values include: USD, CAD, JPY, GBP, EUR, HKD, SGD, TWD, KRW, AUD, NZD, INR, DKK, NOK, SEK, ILS, CNY, PLN, CHF, CZK, HUF, RON, ZAR, MYR, THB, PHP.
+    # Search for parts
+    search_request = KeywordRequest(keywords=mpn, offset=0)
+    res = digikey.keyword_search(body=search_request, x_digikey_locale_site=site, x_digikey_locale_language=language, x_digikey_locale_currency=currency)
+    if res == None:
+        print(f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request")
+        return [{}]
+
+    res_dict = res.to_dict()
+    result_count = res_dict.get("products_count", 0)
+    if result_count == 0:
+        if not QUIET:
+            print(f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on DigiKey for part number '{mpn}' ")
+        return [{}]
+
+    parts = []
+    for product in res_dict["products"]:
+        parts.append(product)
+
+    return parts
+
+
+def digikey_api_get_order_code_for_kiabom(product_variations: list[dict]) -> str:
+    if not product_variations:
+        return ""
+
+    # Get the Order Code with Cut Tape package type
+    selected_product_variations = product_variations[0]
+    for prod_var in product_variations:
+        id = prod_var.get("package_type", {}).get("id", {})
+        if id == 2: # Cut Tape package type id
+            selected_product_variations = prod_var
+            break
+    
+    return selected_product_variations["digi_key_product_number"]
+
+
+def digikey_api_get_order_code_price_tiers_for_kiabom(order_code: str, product_variations: list[dict]) -> dict:
+    if not product_variations:
+        return {}
+
+    found_product = {}
+    for product in product_variations:
+        if product["digi_key_product_number"] == order_code:
+            found_product = product
+
+    price_tiers_dict = {}
+    for price_tier in found_product["standard_pricing"]:
+        price_tiers_dict[price_tier["break_quantity"]] = float(price_tier["unit_price"])
+
+    return price_tiers_dict
+
+
+def digikey_api_parse_for_kiabom(parts: list[dict]) -> list[dict]:
+    # If no parts were found
+    if parts[0] == {}:
+        return [{}]
+
+    parsed_parts = []
+    for part in parts:
+        parsed_dict = {}
+        parsed_dict["Datasheet"] = part.get("datasheet_url", "")
+        parsed_dict["Description"] = part.get("description", {}).get("product_description", "")
+        parsed_dict["Manufacturer"] = part.get("manufacturer", {}).get("name", "")
+        parsed_dict["MPN"] = part.get("manufacturer_product_number", "")
+        parsed_dict["Order Code"] = digikey_api_get_order_code_for_kiabom(part.get("product_variations", []))
+        parsed_dict["Stock"] = part.get("quantity_available", "")
+        parsed_dict["Price Tiers"] = digikey_api_get_order_code_price_tiers_for_kiabom(parsed_dict["Order Code"], part.get("product_variations", []))
+        parsed_parts.append(parsed_dict)
+
+    return parsed_parts
+
+
+def digikey_api_get_part_for_kiabom(mpn: str, ignore_mpns=[""], site: str = "uk", language: str = "en", currency: str = "gbp") -> dict:
+    if mpn in ignore_mpns:
+        return {}
+
+    parts = digikey_api_search_part(mpn, site=site, language=language, currency=currency)
+    parts = digikey_api_parse_for_kiabom(parts)
+
+    for part in parts:
+        if part.get("MPN") == mpn:
+            # If there is an exact MPN match return that
+            return part
+
+    # If there isn't then return the first entry
+    return parts[0]
+
+def csv_write_bom(
     out,
-    board_quantity: int,
     columns: list[str],
     grouped: list[list[comp]],
-    output_data: PartsFileData | PartsFileDataDNP,
+    opdata: BomData,
 ):
     """Write grouped parts into the opened CSV file
 
@@ -1203,23 +636,23 @@ def write_parts_to_csv(
 
         refs = ", ".join(refs_l)
 
-        # Check if an empty component was used for the DNP parts
-        # which means no DNP components in the XML
-        if check_empty_dnp(c):
-            return
-
-        quantity = len(group) * board_quantity
+        quantity = opdata.com_res[pos].get("Quantity", "")
+        price = opdata.com_res[pos].get("Price", "")
+        currency_symbol = opdata.com_res[pos].get("Currency", "")
 
         # Add values based on the columns
         for name in columns:
             if name == "Group ID":
-                row.append(c.getDNPString() + str(pos + 1))
+                row.append(str(pos + 1))
             elif name == "Quantity":
                 row.append(quantity)
             elif name == "Schematic Ref" or name == "Designator":
                 row.append(refs)
             elif name == "DNP":
-                row.append(c.getDNPString())
+                if c.getDNP():
+                    row.append("DNP")
+                else:
+                    row.append(" ")
             elif name == "Description":
                 row.append(c.getField("Description"))
             elif name == "Datasheet":
@@ -1231,29 +664,24 @@ def write_parts_to_csv(
             elif name == "Rating":
                 row.append(c.getField("Rating"))
             elif name == "Manufacturer":
-                row.append(output_data.manufacturer[pos])
+                row.append(opdata.com_res[pos].get("Manufacturer", ""))
             elif name == "MPN":
                 row.append(c.getField("MPN"))
             elif name == "Preferred Supplier":
-                row.append(output_data.primary_supplier[pos])
+                row.append(opdata.pri_res[pos].get("Supplier", ""))
             elif name == "Order Code":
-                row.append(output_data.primary_order_codes[pos])
+                row.append(opdata.pri_res[pos].get("Order Code", ""))
             elif name == "Alt. Supplier":
-                row.append(output_data.secondary_supplier[pos])
+                row.append(opdata.sec_res[pos].get("Supplier", ""))
             elif name == "Alt. Order Code":
-                row.append(output_data.secondary_order_codes[pos])
+                row.append(opdata.sec_res[pos].get("Order Code", ""))
             elif name == "Unit/Reel Price":
-                row.append(
-                    output_data.currency_symbol[pos] + str(output_data.price[pos])
-                )
+                row.append(currency_symbol + str(price))
             elif name == "Total Price":
-                if output_data.price[pos] != "":
-                    row.append(
-                        output_data.currency_symbol[pos]
-                        + str(quantity * float(output_data.price[pos]))
-                    )
+                if price != "":
+                    row.append(currency_symbol + str(quantity * price))
                 else:
-                    row.append(output_data.price[pos])
+                    row.append(price)
                 # To output custom fields if they exist in the symbol properties
             elif c.getField(name):
                 row.append(c.getField(name))
@@ -1263,7 +691,7 @@ def write_parts_to_csv(
         writerow(out, row)
 
 
-def get_html_td_string(string: str) -> str:
+def html_get_td_string(string: str) -> str:
     """Get a string as a table data cell HTML element.
 
     :param string: Text to be placed between the <td> and </td>.
@@ -1272,12 +700,11 @@ def get_html_td_string(string: str) -> str:
     return "<td>" + string + "</td>"
 
 
-def set_html_table(
+def html_get_table(
     html_text: str,
-    board_quantity: int,
     columns: list[str],
     grouped: list[list[comp]],
-    output_data: PartsFileData | PartsFileDataDNP,
+    opdata: BomData,
 ) -> str:
     """Set the table in the HTML string.
 
@@ -1304,63 +731,57 @@ def set_html_table(
 
         refs = ", ".join(refs_l)
 
-        # Check if an empty component was used for the DNP parts
-        # which means no DNP components in the XML
-        if check_empty_dnp(c):
-            break
-
-        quantity = len(group) * board_quantity
+        quantity = opdata.com_res[pos].get("Quantity", "")
+        price = opdata.com_res[pos].get("Price", "")
+        currency_symbol = opdata.com_res[pos].get("Currency", "")
 
         # Add values based on the columns
         row = "\t<tr>"
         for name in columns:
             if name == "Group ID":
-                row += get_html_td_string(c.getDNPString() + str(pos + 1))
+                row += html_get_td_string(str(pos + 1))
             elif name == "Quantity":
-                row += get_html_td_string(str(quantity))
+                row += html_get_td_string(str(quantity))
             elif name == "Schematic Ref" or name == "Designator":
-                row += get_html_td_string(refs)
+                row += html_get_td_string(refs)
             elif name == "DNP":
-                row += get_html_td_string(c.getDNPString())
+                row += html_get_td_string(c.getDNPString())
             elif name == "Description":
-                row += get_html_td_string(c.getField("Description"))
+                row += html_get_td_string(c.getField("Description"))
             elif name == "Datasheet":
-                row += get_html_td_string(c.getField("Datasheet"))
+                row += html_get_td_string(c.getField("Datasheet"))
             elif name == "Footprint":
-                row += get_html_td_string(get_footprint_name(c.getFootprint()))
+                row += html_get_td_string(get_footprint_name(c.getFootprint()))
             elif name == "Value" or name == "Comment":
-                row += get_html_td_string(c.getValue())
+                row += html_get_td_string(c.getValue())
             elif name == "Rating":
-                row += get_html_td_string(c.getField("Rating"))
+                row += html_get_td_string(c.getField("Rating"))
             elif name == "Manufacturer":
-                row += get_html_td_string(output_data.manufacturer[pos])
+                row += html_get_td_string(opdata.com_res[pos].get("Manufacturer", ""))
             elif name == "MPN":
-                row += get_html_td_string(c.getField("MPN"))
+                row += html_get_td_string(c.getField("MPN"))
             elif name == "Preferred Supplier":
-                row += get_html_td_string(output_data.primary_supplier[pos])
+                row += html_get_td_string(opdata.pri_res[pos].get("Supplier", ""))
             elif name == "Order Code":
-                row += get_html_td_string(output_data.primary_order_codes[pos])
+                row += html_get_td_string(opdata.pri_res[pos].get("Order Code", ""))
             elif name == "Alt. Supplier":
-                row += get_html_td_string(output_data.secondary_supplier[pos])
+                row += html_get_td_string(opdata.sec_res[pos].get("Supplier", ""))
             elif name == "Alt. Order Code":
-                row += get_html_td_string(output_data.secondary_order_codes[pos])
+                row += html_get_td_string(opdata.sec_res[pos].get("Order Code", ""))
             elif name == "Unit/Reel Price":
-                row += get_html_td_string(
-                    output_data.currency_symbol[pos] + str(output_data.price[pos])
-                )
+                row += html_get_td_string(currency_symbol + str(price))
             elif name == "Total Price":
-                if output_data.price[pos] != "":
-                    row += get_html_td_string(
-                        output_data.currency_symbol[pos]
-                        + str(quantity * float(output_data.price[pos]))
+                if price != "":
+                    row += html_get_td_string(
+                        currency_symbol + str(quantity * float(price))
                     )
                 else:
-                    row += get_html_td_string(output_data.price[pos])
+                    row += html_get_td_string(price)
                 # To output custom fields if they exist in the symbol properties
             elif c.getField(name):
-                row += get_html_td_string(c.getField(name))
+                row += html_get_td_string(c.getField(name))
             else:
-                row += get_html_td_string("")
+                row += html_get_td_string("")
         row += "</tr>\n\t\t\t"
         html_text = html_text.replace("<!--TABLEROW-->", row + "<!--TABLEROW-->")
 
@@ -1546,7 +967,7 @@ def print_title_screen():
     )
 
 
-def output_general_info_csv(out, net: netlist, board_quantity: int):
+def csv_output_general_info(out, net: netlist, board_quantity: int):
     """
 
     :param out: A csv.writer object created with csv.writer().
@@ -1563,7 +984,7 @@ def output_general_info_csv(out, net: netlist, board_quantity: int):
     writerow(out, ["Link: https://github.com/Mage-Control-Systems/kiabom"])
 
 
-def output_general_info_html(html: str, net: netlist, board_quantity: int) -> str:
+def html_output_general_info(html: str, net: netlist, board_quantity: int) -> str:
     """Output some general info afte the HTML BOM table.
 
     :param html: HTML string.
@@ -1622,33 +1043,6 @@ def has_internet(test_address: str = "8.8.8.8", timeout: int = 3) -> bool:
         conn.close()
 
 
-def get_return_empty(no_kicost: bool, primary_only: bool) -> tuple:
-    """Get if any parts need to not be searched and returned empty lists
-
-    :param no_kicost: Flag if no KiCost should be used
-    :param primary_only: Flag if only the primary supplier should be used
-
-    :return: A tuple of boolean values. Used to decide if the suppliers objects should be empty lists.
-    """
-    primary_supplier_return_empty = False
-    secondary_supplier_return_empty = False
-
-    if no_kicost is True and primary_only is True:
-        primary_supplier_return_empty = True
-        secondary_supplier_return_empty = True
-    elif no_kicost is True and primary_only is False:
-        primary_supplier_return_empty = True
-        secondary_supplier_return_empty = True
-    elif no_kicost is False and primary_only is True:
-        primary_supplier_return_empty = False
-        secondary_supplier_return_empty = True
-    elif no_kicost is False and primary_only is False:
-        primary_supplier_return_empty = False
-        secondary_supplier_return_empty = False
-
-    return (primary_supplier_return_empty, secondary_supplier_return_empty)
-
-
 def download_datasheets(
     grouped: list[list[comp]], downloads_folder: str = "datasheets", timeout: int = 2
 ):
@@ -1705,7 +1099,6 @@ def download_datasheets(
         try:
             r = requests.get(url, allow_redirects=True, timeout=timeout)
         except requests.exceptions.ReadTimeout:
-            print(f"URL '{url}' timed out - skipping.")
             if not QUIET:
                 print(
                     f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} URL '{url}' timed out - skipping."
@@ -1750,7 +1143,7 @@ def check_args(args: argparse.Namespace):
 
     if args.list_presets:
         print("Built in presets are:\n")
-        for key, val in preset_dict.items():
+        for key, val in column_preset_dict.items():
             print("{key}:\n\t{val}\n".format(key=key, val="\n\t".join(val)))
         sys.exit(0)
 
@@ -1867,26 +1260,6 @@ def check_args(args: argparse.Namespace):
         sys.exit(1)
 
 
-def get_total_price_sum(
-    parts_prices: list[str], parts_prices_dnp: list[str], board_quantity: int
-) -> float:
-    """Get the total price sum to add to the end of the BOM table
-
-    :param parts_prices: List of part prices.
-    :param parts_price_dnp: List of DNP part prices.
-    :param board_quantity: Specified board quantity.
-    :return: Total price sum.
-    """
-    price_sum = 0.0
-    for price in parts_prices:
-        if price:
-            price_sum += board_quantity * float(price)
-    for price in parts_prices_dnp:
-        if price:
-            price_sum += board_quantity * float(price)
-    return price_sum
-
-
 def write_to_file(
     f: io.TextIOWrapper,
     output_format: str,
@@ -1895,8 +1268,8 @@ def write_to_file(
     sum_flag: bool,
     board_quantity: int,
     columns: list[str],
-    net_obj: Net,
-    parts_file_data: PartsFileData,
+    net_obj: KiCadNetlist,
+    bom_data: BomData,
 ):
     """Write to the corresponding file the collated data.
 
@@ -1921,36 +1294,17 @@ def write_to_file(
             writerow(out, columns)
 
         # Output the component groups to the csv based on data retrieved by the suppliers
-        write_parts_to_csv(
-            out, board_quantity, columns, net_obj.grouped, parts_file_data
-        )
-        write_parts_to_csv(
-            out, board_quantity, columns, net_obj.dnp.grouped, parts_file_data.dnp
-        )
+        csv_write_bom(out, columns, net_obj.grouped, bom_data)
 
         if sum_flag:
-            # Remove blank entries to get the symbol in the first entry
-            currency_symbol = [x for x in parts_file_data.currency_symbol if x][0]
-
             writerow(out, [""])
             writerow(
-                out,
-                [
-                    "Total Price Sum:",
-                    currency_symbol
-                    + str(
-                        get_total_price_sum(
-                            parts_file_data.price,
-                            parts_file_data.dnp.price,
-                            board_quantity,
-                        )
-                    ),
-                ],
+                out, ["Total Price Sum:", bom_data.currency_symbol + str(bom_data.total_price)]
             )
 
         # Output column headings and some info about the generator/script
         if info_flag:
-            output_general_info_csv(out, net_obj.net, board_quantity)
+            csv_output_general_info(out, net_obj.net, board_quantity)
 
     elif output_format == "html":
         # Start with a basic html template
@@ -1985,33 +1339,18 @@ def write_to_file(
             html = html.replace("<!--TABLEROW-->", row + "<!--TABLEROW-->")
 
         # Output the component groups to the csv based on data retrieved by the suppliers
-        html = set_html_table(
-            html, board_quantity, columns, net_obj.grouped, parts_file_data
-        )
-        html = set_html_table(
-            html, board_quantity, columns, net_obj.dnp.grouped, parts_file_data.dnp
-        )
+        html = html_get_table(html, columns, net_obj.grouped, bom_data)
 
         if sum_flag:
-            # Remove blank entries to get the symbol in the first entry
-            currency_symbol = [x for x in parts_file_data.currency_symbol if x][0]
-
             row = "\t<tr>"
-            row += get_html_td_string("Total Price Sum:")
-            row += get_html_td_string(
-                currency_symbol
-                + str(
-                    get_total_price_sum(
-                        parts_file_data.price, parts_file_data.dnp.price, board_quantity
-                    )
-                )
-            )
+            row += html_get_td_string("Total Price Sum:")
+            row += html_get_td_string(bom_data.currency_symbol + str(bom_data.total_price))
             row += "</tr>\n\t\t\t"
             html = html.replace("<!--TABLEROW-->", row + "<!--TABLEROW-->")
 
         # Output column headings and some info about the generator/script
         if info_flag:
-            html = output_general_info_html(html, net_obj.net, board_quantity)
+            html = html_output_general_info(html, net_obj.net, board_quantity)
 
         f.write(html)
 
@@ -2039,17 +1378,35 @@ def set_format_from_output_file_extension(output_file: str) -> str:
     return output_format
 
 
-def remove_ignore_mpn_parts(
-    grouped: list[list[comp]], ignore_mpns: list[str]
-) -> list[list[comp]]:
-    new_grouped = []
-    for group in grouped:
-        component = group[0]
-        mpn = component.getField("MPN")
-        if mpn not in ignore_mpns:
-            new_grouped.append(group)
 
-    return new_grouped
+def init_apis() -> dict:
+    api_status = {}
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    config_path = os.path.normpath(os.path.join(dir_path, "config.yaml"))
+    try:
+        with open(config_path, "r") as f:
+            try:
+                config = yaml.safe_load(f)
+            except yaml.YAMLError as e:
+                print(f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error reading config.yaml file:", e)
+                sys.exit(1)
+    except:
+        print(f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} config.yaml could not be opened for reading. Use '--no-api' to skip config check.")
+        sys.exit(1)
+
+    api_status["mouser"] = mouser_api_init(config)
+    if api_status["mouser"] == "success":
+        print("Mouser API initialised.", flush=True)
+    elif not QUIET:
+        print(f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} Mouser API not initialised: {api_status["mouser"]}.", flush=True)
+
+    api_status["digikey"] = digikey_api_init(config)
+    if api_status["digikey"] == "success":
+        print("DigiKey API initialised.", flush=True)
+    elif not QUIET:
+        print(f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} DigiKey API not initialised: {api_status["digikey"]}.", flush=True)
+
+    return api_status
 
 
 def main(argv: list[str]):
@@ -2103,25 +1460,24 @@ def main(argv: list[str]):
         default=True,
     )
     parser.add_argument(
-        "-k",
-        "--no-kicost",
-        help="disable the KiCost integration.",
+        "--no-api",
+        help="disable using the APIs to retrieve online parts data. Using this option also skips the config check.",
         action="store_true",
         default=False,
     )
     parser.add_argument(
         "--preset",
-        help="specify both the columns and group presets at the same time with this option. Both '--columns-preset' and '--group-preset' overwrite this option.",
+        help="specify both the columns and group presets at the same time with this option. Both '--columns-preset' and '--group-preset' overwrite this option. Use '--list-presets' to list available.",
         default="Default",
     )
     parser.add_argument(
         "--columns-preset",
-        help="set a BOM preset for what part data should be outputed. Overwrites '--columns' if it comes after. Use '--append-columns' to append columns to a preset. Choose between 'Default', 'Minimal', 'No-KiCost', and 'Mage'.",
+        help="set a BOM preset for what part data should be outputed. Overwrites '--columns' if it comes after. Use '--append-columns' to append columns to a preset. Use '--list-column-presets' to list available.",
         default="",
     )
     parser.add_argument(
         "--group-preset",
-        help="choose a group preset. Available ones are 'Default', 'Minimal', and 'Mage'. Append to a preset with '--append-groups'.",
+        help="choose a group preset. Use '--list-group-presets' to list available. Append to a preset with '--append-groups'.",
         default="default",
     )
     parser.add_argument(
@@ -2172,13 +1528,6 @@ def main(argv: list[str]):
         default=False,
     )
     parser.add_argument(
-        "-u",
-        "--primary-only",
-        help="only use the primary supplier.",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
         "-q", "--quiet", help="silence warnings", action="store_true", default=False
     )
     parser.add_argument(
@@ -2192,8 +1541,14 @@ def main(argv: list[str]):
         "--kefboard",
         "--keep-exclude-from-board",
         help="include the components with the 'Exclude from Board' property set.",
-        action="store_false",
-        default=True,
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--remove-dnp",
+        help="remove DNP components from BOM.",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
         "-b",
@@ -2266,9 +1621,6 @@ def main(argv: list[str]):
 
     QUIET = args.quiet
 
-    # Open the output file for writing. Do that at the start to check if the file is open.
-    f = open_output_file(args.output)
-
     # Override the component equivalence operator for grouping
     kicad_netlist_reader.comp.__eq__ = get_equ(
         args.group_by, args.group_preset.lower(), args.append_groups
@@ -2276,7 +1628,7 @@ def main(argv: list[str]):
 
     # Initialise Net object to read everything from the XML file
     print("Reading schematic XML file...", flush=True)
-    net_obj = Net(args.input_xml, excludeBOM=args.kefbom, excludeBoard=args.kefboard)
+    net_obj = KiCadNetlist(args.input_xml, excludeBOM=args.kefbom, excludeBoard=args.kefboard, DNP=args.remove_dnp)
 
     ignore_mpns = [
         "Generic",
@@ -2287,56 +1639,41 @@ def main(argv: list[str]):
 
     # Remove parts with the ignore MPN values if specified
     if args.remove_ignore_mpn_parts:
-        net_obj.grouped = remove_ignore_mpn_parts(net_obj.grouped, ignore_mpns)
-        net_obj.group_count = len(net_obj.grouped)
-        net_obj.refdes_groups = net_obj.get_refdes_from_net(net_obj.grouped)
+        net_obj.remove_ignore_mpn_parts(ignore_mpns)
 
-        net_obj.dnp.grouped = remove_ignore_mpn_parts(net_obj.dnp.grouped, ignore_mpns)
-        net_obj.dnp.group_count = len(net_obj.dnp.grouped)
-        net_obj.dnp.refdes_groups = net_obj.get_refdes_from_net(net_obj.dnp.grouped)
-
-    # If no internet then just skip the KiCost integration
+    # If no internet then just skip the API integration
     if not has_internet():
-        args.no_kicost = True
+        args.no_api = True
         args.download_datasheets = False
         print(
-            "Detected no internet, KiCost and downloading datasheets is unavailable.",
+            "Detected no internet, using APIs and downloading datasheets is unavailable.",
             flush=True,
         )
 
-    # Initialise the KiCost logger and APIs
-    if not args.no_kicost:
-        if init_kicost():
-            print("Initialised KiCost.", flush=True)
-        else:
-            print(
-                "Config file'config.yaml' not found; continuing without the KiCost integration.",
-                flush=True,
-            )
-            args.no_kicost = True
+    # Initialise APIs
+    api_status = {"mouser": "", "digikey": ""}
+    if args.no_api == True:
+        print("Disabled API integration.", flush=True)
     else:
-        print("Disabled KiCost integration.", flush=True)
+        api_status = init_apis()
 
-    (primary_ret_empty, secondary_ret_empty) = get_return_empty(
-        args.no_kicost, args.primary_only
-    )
+    # Open the output file for writing before any API requests to save time
+    f = open_output_file(args.output)
 
-    # Initialise Suppliers class to search for parts in the specified suppliers
-    primary_supplier_parts = Parts(
+    # Initialise Parts class to search for parts in the specified suppliers
+    primary_supplier_parts = ApiParts(
         args.primary_supplier,
         net_obj,
-        primary_ret_empty,
         args.currency,
         ignore_mpns,
-        int(args.board_quantity),
+        api_status
     )
-    secondary_supplier_parts = Parts(
+    secondary_supplier_parts = ApiParts(
         args.secondary_supplier,
         net_obj,
-        secondary_ret_empty,
         args.currency,
         ignore_mpns,
-        int(args.board_quantity),
+        api_status
     )
 
     # Columns to be used for each part.
@@ -2345,11 +1682,17 @@ def main(argv: list[str]):
     ) + args.append_columns.split(",")
     columns = [column for column in columns if column != ""]  # Remove blank entries
     print(
-        f"Columns for the BOM will be: {colorama.Fore.LIGHTYELLOW_EX}{','.join(columns)}{colorama.Style.RESET_ALL}."
+        f"Columns for the BOM will be: {colorama.Fore.LIGHTYELLOW_EX}{','.join(columns)}{colorama.Style.RESET_ALL}.",
+        flush=True,
     )
 
-    # Create the file data based on what was returned from KiCost and the net reader
-    parts_file_data = PartsFileData(primary_supplier_parts, secondary_supplier_parts)
+    # Combine the Parts objects with the quantities to create the BOM data
+    bom_data = BomData(
+        primary_supplier_parts,
+        secondary_supplier_parts,
+        net_obj.refdes_groups,
+        args.board_quantity,
+    )
 
     # Finally write the data to file
     write_to_file(
@@ -2361,11 +1704,10 @@ def main(argv: list[str]):
         args.board_quantity,
         columns,
         net_obj,
-        parts_file_data,
+        bom_data,
     )
     print(
         f"Wrote results to '{colorama.Fore.LIGHTYELLOW_EX}{args.output}{colorama.Style.RESET_ALL}'.",
-        flush=True,
     )
 
     if args.download_datasheets:
