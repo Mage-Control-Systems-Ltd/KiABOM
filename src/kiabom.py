@@ -30,7 +30,15 @@ __version__ = "2.0.0"
 __author__ = "Yiannis Michael (ymic9963)"
 __license__ = "GNU General Public License v3.0 only"
 
-import csv, io, sys, argparse, os, http.client, colorama, requests, yaml
+import csv
+import io
+import sys
+import argparse
+import os
+import http.client
+import colorama
+import requests
+import yaml
 import kicad_netlist_reader
 from kicad_netlist_reader import comp, netlist
 from mouser import api, base
@@ -185,7 +193,9 @@ class KiCadNetlist:
     :param group_count: Number of groups.
     """
 
-    def __init__(self, input_xml: str, excludeBOM: bool, excludeBoard: bool, DNP: bool) -> None:
+    def __init__(
+        self, input_xml: str, excludeBOM: bool, excludeBoard: bool, DNP: bool
+    ) -> None:
         self.input_xml = input_xml
 
         # Initialise
@@ -223,7 +233,6 @@ class KiCadNetlist:
         self.refdes_groups = []
         self.get_refdes_from_net()
 
-
     def get_refdes_from_net(self):
         """Get reference designators from KiCAD netlist reader
 
@@ -246,10 +255,11 @@ class KiCadNetlist:
             if mpn not in ignore_mpns:
                 new_grouped.append(group)
         self.grouped = new_grouped
-         
+
         # Update reference designator list and group count
         self.get_refdes_from_net()
         self.group_count = len(self.grouped)
+
 
 class ApiParts:
     """Class containing parts data from the API"""
@@ -260,7 +270,7 @@ class ApiParts:
         net_obj: KiCadNetlist,
         currency: str,
         ignore_mpns: list,
-        api_status: dict
+        api_status: dict,
     ) -> None:
         self.parts_list = [{} for _ in range(net_obj.group_count)]
         self.currency = None
@@ -321,7 +331,11 @@ class BomData:
     """
 
     def __init__(
-            self, pri_obj: ApiParts, sec_obj: ApiParts, refdes_groups: list[list[str]], board_quantity: int
+        self,
+        pri_obj: ApiParts,
+        sec_obj: ApiParts,
+        refdes_groups: list[list[str]],
+        board_quantity: int,
     ) -> None:
         self.pri_res = pri_obj.parts_list
         self.sec_res = sec_obj.parts_list
@@ -377,6 +391,7 @@ class BomData:
             if part.get("Order Code"):
                 part.update({key: val})
 
+
 def mouser_api_init(config: dict) -> str:
     mouser_entry = config.get("Mouser", {})
     mouser_key = mouser_entry.get("key")
@@ -388,7 +403,9 @@ def mouser_api_init(config: dict) -> str:
         return "no API key detected"
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    mouser_cache_path = os.path.normpath(os.path.join(dir_path, "kiabom_cache/mouser_cache/"))
+    mouser_cache_path = os.path.normpath(
+        os.path.join(dir_path, "kiabom_cache/mouser_cache/")
+    )
 
     os.makedirs(mouser_cache_path, exist_ok=True)
 
@@ -412,8 +429,10 @@ def mouser_api_search_part(mpn: str) -> list:
     res = obj.get_response()
 
     # Check for errors or print the returned results
-    if res == None or res == {}:
-        print(f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}.")
+    if res is None or res == {}:
+        print(
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}."
+        )
         return [{}]
 
     search_results = res.get("SearchResults")
@@ -423,7 +442,9 @@ def mouser_api_search_part(mpn: str) -> list:
     result_count = search_results.get("NumberOfResult", 0)
     if result_count == 0:
         if not QUIET:
-            print(f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on Mouser for part number '{mpn}' ")
+            print(
+                f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on Mouser for part number '{mpn}' "
+            )
         return [{}]
 
     parts = []
@@ -459,7 +480,9 @@ def mouser_api_parse_for_kiabom(parts: list[dict]) -> list[dict]:
         parsed_dict["Order Code"] = part.get("MouserPartNumber", "")
         parsed_dict["Stock"] = part.get("AvailabilityInStock", "")
         parsed_dict["Product Page"] = part.get("ProductDetailUrl", "")
-        parsed_dict["Price Tiers"] = mouser_api_get_price_tiers_for_kiabom(part.get("PriceBreaks", []))
+        parsed_dict["Price Tiers"] = mouser_api_get_price_tiers_for_kiabom(
+            part.get("PriceBreaks", [])
+        )
         parsed_parts.append(parsed_dict)
 
     return parsed_parts
@@ -480,6 +503,7 @@ def mouser_api_get_part_for_kiabom(mpn: str, ignore_mpns=[""]) -> dict:
     # If there isn't an exact MPN match then return the first entry
     return parts[0]
 
+
 def digikey_api_init(config: dict) -> str:
     digikey_entry = config.get("DigiKey", {})
     digikey_client_id = digikey_entry.get("client_id")
@@ -499,7 +523,9 @@ def digikey_api_init(config: dict) -> str:
         digikey_sandbox = "False"
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    digikey_cache_path = os.path.normpath(os.path.join(dir_path, "kiabom_cache/digikey_cache/"))
+    digikey_cache_path = os.path.normpath(
+        os.path.join(dir_path, "kiabom_cache/digikey_cache/")
+    )
     os.makedirs(digikey_cache_path, exist_ok=True)
 
     os.environ["DIGIKEY_CLIENT_ID"] = digikey_client_id
@@ -510,7 +536,9 @@ def digikey_api_init(config: dict) -> str:
     return "success"
 
 
-def digikey_api_search_part(mpn: str, site: str = "uk", language: str = "en", currency: str = "gbp") -> list[dict]:
+def digikey_api_search_part(
+    mpn: str, site: str = "uk", language: str = "en", currency: str = "gbp"
+) -> list[dict]:
     mpn = mpn.strip()
 
     # x_digikey_locale_site: Two letter code for Digi-Key product website to search on. Different countries sites have different part restrictions, supported languages, and currencies. Acceptable values include: US, CA, JP, UK, DE, AT, BE, DK, FI, GR, IE, IT, LU, NL, NO, PT, ES, KR, HK, SG, CN, TW, AU, FR, IN, NZ, SE, MX, CH, IL, PL, SK, SI, LV, LT, EE, CZ, HU, BG, MY, ZA, RO, TH, PH.
@@ -518,16 +546,25 @@ def digikey_api_search_part(mpn: str, site: str = "uk", language: str = "en", cu
     # x_digikey_locale_currency: Three letter code for Currency to return part pricing for. Currency must be supported by the selected site. Acceptable values include: USD, CAD, JPY, GBP, EUR, HKD, SGD, TWD, KRW, AUD, NZD, INR, DKK, NOK, SEK, ILS, CNY, PLN, CHF, CZK, HUF, RON, ZAR, MYR, THB, PHP.
     # Search for parts
     search_request = KeywordRequest(keywords=mpn, offset=0)
-    res = digikey.keyword_search(body=search_request, x_digikey_locale_site=site, x_digikey_locale_language=language, x_digikey_locale_currency=currency)
-    if res == None:
-        print(f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request")
+    res = digikey.keyword_search(
+        body=search_request,
+        x_digikey_locale_site=site,
+        x_digikey_locale_language=language,
+        x_digikey_locale_currency=currency,
+    )
+    if res is None:
+        print(
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request"
+        )
         return [{}]
 
     res_dict = res.to_dict()
     result_count = res_dict.get("products_count", 0)
     if result_count == 0:
         if not QUIET:
-            print(f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on DigiKey for part number '{mpn}' ")
+            print(
+                f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on DigiKey for part number '{mpn}' "
+            )
         return [{}]
 
     parts = []
@@ -545,14 +582,16 @@ def digikey_api_get_order_code_for_kiabom(product_variations: list[dict]) -> str
     selected_product_variations = product_variations[0]
     for prod_var in product_variations:
         id = prod_var.get("package_type", {}).get("id", {})
-        if id == 2: # Cut Tape package type id
+        if id == 2:  # Cut Tape package type id
             selected_product_variations = prod_var
             break
-    
+
     return selected_product_variations["digi_key_product_number"]
 
 
-def digikey_api_get_order_code_price_tiers_for_kiabom(order_code: str, product_variations: list[dict]) -> dict:
+def digikey_api_get_order_code_price_tiers_for_kiabom(
+    order_code: str, product_variations: list[dict]
+) -> dict:
     if not product_variations:
         return {}
 
@@ -577,22 +616,36 @@ def digikey_api_parse_for_kiabom(parts: list[dict]) -> list[dict]:
     for part in parts:
         parsed_dict = {}
         parsed_dict["Datasheet"] = part.get("datasheet_url", "")
-        parsed_dict["Description"] = part.get("description", {}).get("product_description", "")
+        parsed_dict["Description"] = part.get("description", {}).get(
+            "product_description", ""
+        )
         parsed_dict["Manufacturer"] = part.get("manufacturer", {}).get("name", "")
         parsed_dict["MPN"] = part.get("manufacturer_product_number", "")
-        parsed_dict["Order Code"] = digikey_api_get_order_code_for_kiabom(part.get("product_variations", []))
+        parsed_dict["Order Code"] = digikey_api_get_order_code_for_kiabom(
+            part.get("product_variations", [])
+        )
         parsed_dict["Stock"] = part.get("quantity_available", "")
-        parsed_dict["Price Tiers"] = digikey_api_get_order_code_price_tiers_for_kiabom(parsed_dict["Order Code"], part.get("product_variations", []))
+        parsed_dict["Price Tiers"] = digikey_api_get_order_code_price_tiers_for_kiabom(
+            parsed_dict["Order Code"], part.get("product_variations", [])
+        )
         parsed_parts.append(parsed_dict)
 
     return parsed_parts
 
 
-def digikey_api_get_part_for_kiabom(mpn: str, ignore_mpns=[""], site: str = "uk", language: str = "en", currency: str = "gbp") -> dict:
+def digikey_api_get_part_for_kiabom(
+    mpn: str,
+    ignore_mpns=[""],
+    site: str = "uk",
+    language: str = "en",
+    currency: str = "gbp",
+) -> dict:
     if mpn in ignore_mpns:
         return {}
 
-    parts = digikey_api_search_part(mpn, site=site, language=language, currency=currency)
+    parts = digikey_api_search_part(
+        mpn, site=site, language=language, currency=currency
+    )
     parts = digikey_api_parse_for_kiabom(parts)
 
     for part in parts:
@@ -603,92 +656,77 @@ def digikey_api_get_part_for_kiabom(mpn: str, ignore_mpns=[""], site: str = "uk"
     # If there isn't then return the first entry
     return parts[0]
 
-def csv_write_bom(
-    out,
-    columns: list[str],
-    grouped: list[list[comp]],
-    opdata: BomData,
-):
-    """Write grouped parts into the opened CSV file
 
-    :param out: A csv.writer object to use for writing to the CSV.
-    :type out: csv.writer
-    :param board_quantity: Board quantity.
-    :param columns: Columns list for what data to output.
-    :param grouped: List of lists of components from the kicad_netlist_reader.
-    :param output_data: Parts data that will be used to populate the table.
-    """
-    c = grouped[0][0]  # Initialise with the first component in the first group
+def get_bom_row(
+    pos: int,
+    group: list[comp],
+    columns: list[str],
+    opdata: BomData,
+) -> list[str]:
+    """Generate a BOM row as a list of strings."""
+
+    c = group[0] # Initialise with the first component in the first group
+
+    # Add the reference of every component in the group and
+    # keep a reference to the component so that the other data
+    # can be filled in once per group
+    refs = ", ".join(component.getRef() for component in group)
+
+    quantity = opdata.com_res[pos].get("Quantity", "")
+    price = opdata.com_res[pos].get("Price", "")
+    currency_symbol = opdata.com_res[pos].get("Currency", "")
+
     row = []
 
-    # Output component information organized by group, aka as collated:
-    for pos, group in enumerate(grouped):
-        del row[:]
-        refs = ""
-        refs_l = []
-
-        # Add the reference of every component in the group and
-        # keep a reference to the component so that the other data
-        # can be filled in once per group
-        for component in group:
-            refs_l.append(component.getRef())
-            c = component
-
-        refs = ", ".join(refs_l)
-
-        quantity = opdata.com_res[pos].get("Quantity", "")
-        price = opdata.com_res[pos].get("Price", "")
-        currency_symbol = opdata.com_res[pos].get("Currency", "")
-
-        # Add values based on the columns
-        for name in columns:
-            if name == "Group ID":
-                row.append(str(pos + 1))
-            elif name == "Quantity":
-                row.append(quantity)
-            elif name == "Schematic Ref" or name == "Designator":
-                row.append(refs)
-            elif name == "DNP":
-                if c.getDNP():
-                    row.append("DNP")
-                else:
-                    row.append(" ")
-            elif name == "Description":
-                row.append(c.getField("Description"))
-            elif name == "Datasheet":
-                row.append(c.getField("Datasheet"))
-            elif name == "Footprint":
-                row.append(get_footprint_name(c.getFootprint()))
-            elif name == "Value" or name == "Comment":
-                row.append(c.getValue())
-            elif name == "Rating":
-                row.append(c.getField("Rating"))
-            elif name == "Manufacturer":
-                row.append(opdata.com_res[pos].get("Manufacturer", ""))
-            elif name == "MPN":
-                row.append(c.getField("MPN"))
-            elif name == "Preferred Supplier":
-                row.append(opdata.pri_res[pos].get("Supplier", ""))
-            elif name == "Order Code":
-                row.append(opdata.pri_res[pos].get("Order Code", ""))
-            elif name == "Alt. Supplier":
-                row.append(opdata.sec_res[pos].get("Supplier", ""))
-            elif name == "Alt. Order Code":
-                row.append(opdata.sec_res[pos].get("Order Code", ""))
-            elif name == "Unit/Reel Price":
-                row.append(currency_symbol + str(price))
-            elif name == "Total Price":
-                if price != "":
-                    row.append(currency_symbol + str(quantity * price))
-                else:
-                    row.append(price)
-                # To output custom fields if they exist in the symbol properties
-            elif c.getField(name):
-                row.append(c.getField(name))
+    for name in columns:
+        if name == "Group ID":
+            row.append(str(pos + 1))
+        elif name == "Quantity":
+            row.append(str(quantity))
+        elif name in ("Schematic Ref", "Designator"):
+            row.append(refs)
+        elif name == "DNP":
+            row.append("DNP" if c.getDNP() else " ") # Space character needed for sorting in spreadsheet software
+        elif name == "Description":
+            row.append(c.getField("Description"))
+        elif name == "Datasheet":
+            row.append(c.getField("Datasheet"))
+        elif name == "Footprint":
+            row.append(get_footprint_name(c.getFootprint()))
+        elif name in ("Value", "Comment"):
+            row.append(c.getValue())
+        elif name == "Rating":
+            row.append(c.getField("Rating"))
+        elif name == "Manufacturer":
+            row.append(opdata.com_res[pos].get("Manufacturer", ""))
+        elif name == "MPN":
+            row.append(c.getField("MPN"))
+        elif name == "Preferred Supplier":
+            row.append(opdata.pri_res[pos].get("Supplier", ""))
+        elif name == "Order Code":
+            row.append(opdata.pri_res[pos].get("Order Code", ""))
+        elif name == "Alt. Supplier":
+            row.append(opdata.sec_res[pos].get("Supplier", ""))
+        elif name == "Alt. Order Code":
+            row.append(opdata.sec_res[pos].get("Order Code", ""))
+        elif name == "Unit/Reel Price":
+            row.append(f"{currency_symbol}{price}")
+        elif name == "Total Price":
+            if price != "":
+                row.append(f"{currency_symbol}{quantity * float(price)}")
             else:
                 row.append("")
+        elif c.getField(name):
+            row.append(c.getField(name))
+        else:
+            row.append("")
 
-        writerow(out, row)
+    return row
+
+
+def csv_write_bom(out, columns, grouped, opdata):
+    for pos, group in enumerate(grouped):
+        writerow(out, get_bom_row(pos, group, columns, opdata))
 
 
 def html_get_td_string(string: str) -> str:
@@ -700,90 +738,18 @@ def html_get_td_string(string: str) -> str:
     return "<td>" + string + "</td>"
 
 
-def html_get_table(
-    html_text: str,
-    columns: list[str],
-    grouped: list[list[comp]],
-    opdata: BomData,
-) -> str:
-    """Set the table in the HTML string.
-
-    :param html_text: HTML string.
-    :param board_quantity: Board quantity.
-    :param columns: Columns list for what data to output.
-    :param grouped: List of lists of components from the kicad_netlist_reader.
-    :param output_data: Parts data that will be used to populate the table.
-    :return: HTML table string containing all the parts data.
-    """
-    c = grouped[0][0]  # Initialise with the first component in the first group
-
-    # Output all of the component information
+def html_get_table(html_text, columns, grouped, opdata):
     for pos, group in enumerate(grouped):
-        refs_l = []
-        refs = ""
-
-        # Add the reference of every component in the group and
-        # keep a reference to the component so that the other data
-        # can be filled in once per group
-        for component in group:
-            refs_l.append(component.getRef())
-            c = component
-
-        refs = ", ".join(refs_l)
-
-        quantity = opdata.com_res[pos].get("Quantity", "")
-        price = opdata.com_res[pos].get("Price", "")
-        currency_symbol = opdata.com_res[pos].get("Currency", "")
-
-        # Add values based on the columns
-        row = "\t<tr>"
-        for name in columns:
-            if name == "Group ID":
-                row += html_get_td_string(str(pos + 1))
-            elif name == "Quantity":
-                row += html_get_td_string(str(quantity))
-            elif name == "Schematic Ref" or name == "Designator":
-                row += html_get_td_string(refs)
-            elif name == "DNP":
-                row += html_get_td_string(c.getDNPString())
-            elif name == "Description":
-                row += html_get_td_string(c.getField("Description"))
-            elif name == "Datasheet":
-                row += html_get_td_string(c.getField("Datasheet"))
-            elif name == "Footprint":
-                row += html_get_td_string(get_footprint_name(c.getFootprint()))
-            elif name == "Value" or name == "Comment":
-                row += html_get_td_string(c.getValue())
-            elif name == "Rating":
-                row += html_get_td_string(c.getField("Rating"))
-            elif name == "Manufacturer":
-                row += html_get_td_string(opdata.com_res[pos].get("Manufacturer", ""))
-            elif name == "MPN":
-                row += html_get_td_string(c.getField("MPN"))
-            elif name == "Preferred Supplier":
-                row += html_get_td_string(opdata.pri_res[pos].get("Supplier", ""))
-            elif name == "Order Code":
-                row += html_get_td_string(opdata.pri_res[pos].get("Order Code", ""))
-            elif name == "Alt. Supplier":
-                row += html_get_td_string(opdata.sec_res[pos].get("Supplier", ""))
-            elif name == "Alt. Order Code":
-                row += html_get_td_string(opdata.sec_res[pos].get("Order Code", ""))
-            elif name == "Unit/Reel Price":
-                row += html_get_td_string(currency_symbol + str(price))
-            elif name == "Total Price":
-                if price != "":
-                    row += html_get_td_string(
-                        currency_symbol + str(quantity * float(price))
-                    )
-                else:
-                    row += html_get_td_string(price)
-                # To output custom fields if they exist in the symbol properties
-            elif c.getField(name):
-                row += html_get_td_string(c.getField(name))
-            else:
-                row += html_get_td_string("")
-        row += "</tr>\n\t\t\t"
-        html_text = html_text.replace("<!--TABLEROW-->", row + "<!--TABLEROW-->")
+        values = get_bom_row(pos, group, columns, opdata)
+        row = (
+            "\t<tr>"
+            + "".join(html_get_td_string(str(v)) for v in values)
+            + "</tr>\n\t\t\t"
+        )
+        html_text = html_text.replace(
+            "<!--TABLEROW-->",
+            row + "<!--TABLEROW-->",
+        )
 
     return html_text
 
@@ -1299,7 +1265,11 @@ def write_to_file(
         if sum_flag:
             writerow(out, [""])
             writerow(
-                out, ["Total Price Sum:", bom_data.currency_symbol + str(bom_data.total_price)]
+                out,
+                [
+                    "Total Price Sum:",
+                    bom_data.currency_symbol + str(bom_data.total_price),
+                ],
             )
 
         # Output column headings and some info about the generator/script
@@ -1344,7 +1314,9 @@ def write_to_file(
         if sum_flag:
             row = "\t<tr>"
             row += html_get_td_string("Total Price Sum:")
-            row += html_get_td_string(bom_data.currency_symbol + str(bom_data.total_price))
+            row += html_get_td_string(
+                bom_data.currency_symbol + str(bom_data.total_price)
+            )
             row += "</tr>\n\t\t\t"
             html = html.replace("<!--TABLEROW-->", row + "<!--TABLEROW-->")
 
@@ -1378,7 +1350,6 @@ def set_format_from_output_file_extension(output_file: str) -> str:
     return output_format
 
 
-
 def init_apis() -> dict:
     api_status = {}
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -1388,23 +1359,34 @@ def init_apis() -> dict:
             try:
                 config = yaml.safe_load(f)
             except yaml.YAMLError as e:
-                print(f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error reading config.yaml file:", e)
+                print(
+                    f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error reading config.yaml file:",
+                    e,
+                )
                 sys.exit(1)
-    except:
-        print(f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} config.yaml could not be opened for reading. Use '--no-api' to skip config check.")
+    except FileNotFoundError or IOError:
+        print(
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} config.yaml could not be opened for reading. Use '--no-api' to skip config check."
+        )
         sys.exit(1)
 
     api_status["mouser"] = mouser_api_init(config)
     if api_status["mouser"] == "success":
         print("Mouser API initialised.", flush=True)
     elif not QUIET:
-        print(f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} Mouser API not initialised: {api_status["mouser"]}.", flush=True)
+        print(
+            f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} Mouser API not initialised: {api_status['mouser']}.",
+            flush=True,
+        )
 
     api_status["digikey"] = digikey_api_init(config)
     if api_status["digikey"] == "success":
         print("DigiKey API initialised.", flush=True)
     elif not QUIET:
-        print(f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} DigiKey API not initialised: {api_status["digikey"]}.", flush=True)
+        print(
+            f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} DigiKey API not initialised: {api_status['digikey']}.",
+            flush=True,
+        )
 
     return api_status
 
@@ -1628,7 +1610,12 @@ def main(argv: list[str]):
 
     # Initialise Net object to read everything from the XML file
     print("Reading schematic XML file...", flush=True)
-    net_obj = KiCadNetlist(args.input_xml, excludeBOM=args.kefbom, excludeBoard=args.kefboard, DNP=args.remove_dnp)
+    net_obj = KiCadNetlist(
+        args.input_xml,
+        excludeBOM=args.kefbom,
+        excludeBoard=args.kefboard,
+        DNP=args.remove_dnp,
+    )
 
     ignore_mpns = [
         "Generic",
@@ -1652,7 +1639,7 @@ def main(argv: list[str]):
 
     # Initialise APIs
     api_status = {"mouser": "", "digikey": ""}
-    if args.no_api == True:
+    if args.no_api:
         print("Disabled API integration.", flush=True)
     else:
         api_status = init_apis()
@@ -1662,18 +1649,10 @@ def main(argv: list[str]):
 
     # Initialise Parts class to search for parts in the specified suppliers
     primary_supplier_parts = ApiParts(
-        args.primary_supplier,
-        net_obj,
-        args.currency,
-        ignore_mpns,
-        api_status
+        args.primary_supplier, net_obj, args.currency, ignore_mpns, api_status
     )
     secondary_supplier_parts = ApiParts(
-        args.secondary_supplier,
-        net_obj,
-        args.currency,
-        ignore_mpns,
-        api_status
+        args.secondary_supplier, net_obj, args.currency, ignore_mpns, api_status
     )
 
     # Columns to be used for each part.
