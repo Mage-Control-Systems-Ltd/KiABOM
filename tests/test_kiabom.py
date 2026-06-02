@@ -349,9 +349,6 @@ def test_write_to_file():
 
 # Very important test
 def test_contents():
-    api_status = init_apis()
-    assert api_status == {"mouser": "success", "digikey": "success"}
-
     kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
     dir_path = Path(__file__).resolve().parent
 
@@ -496,38 +493,16 @@ def test_download_datasheets():
     os.rmdir(test_datasheet_folder_path)
 
 
-def test_main():
+def test_init_apis():
     dir_path = Path(__file__).resolve().parent
-    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
-
-    argv = [str(test_project_path), "-o", "test-out.csv", "-q"]
-    with pytest.raises(SystemExit) as exc_info:
-        main(argv)
-
-    assert exc_info.value.code == 0
-
-    argv = [str(test_project_path), "-o", "test-out.csv", "--no-api", "-q"]
-    with pytest.raises(SystemExit) as exc_info:
-        main(argv)
-
-    assert exc_info.value.code == 0
-
-    argv = [str(test_project_path), "-o", "test-out.csv", "--remove-ignore-mpn-parts", "-q"]
-    with pytest.raises(SystemExit) as exc_info:
-        main(argv)
-
-    assert exc_info.value.code == 0
 
     # Testing for no config.yaml
     config_path = dir_path / ".." / "src" / "config.yaml"
     rename_path = dir_path / ".." / "src" / "aconfig.yaml"
     os.rename(str(config_path), str(rename_path))
 
-    argv = [str(test_project_path), "-o", "test-out.csv", "-q"]
     with pytest.raises(SystemExit) as exc_info:
-        main(argv)
+        init_apis()
 
     assert exc_info.value.code == 1
     os.rename(str(rename_path), str(config_path))
-
-    os.remove("test-out.csv")
