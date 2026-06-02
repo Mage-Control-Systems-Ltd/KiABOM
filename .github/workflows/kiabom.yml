@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Create config.yaml
+        shell: bash
+        run: |
+            echo "" > src/config.yaml
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
