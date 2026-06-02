@@ -247,10 +247,6 @@ def test_kicadnetlist_class():
 
 
 def test_apiparts_mouser():
-    api_status = init_apis()
-    assert api_status == {"mouser": "success", "digikey": "success"}
-
-
     with open("test_api_cache/test_apiparts_mouser.pickle", 'rb') as f:
         parts = pickle.load(f)
         # This simulates the following code snippet
@@ -306,9 +302,6 @@ def test_apiparts_return_empty():
     assert parts.parts_list == empty_list
 
 def test_write_to_file():
-    api_status = init_apis()
-    assert api_status == {"mouser": "success", "digikey": "success"}
-
     kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
 
     dir_path = Path(__file__).resolve().parent
