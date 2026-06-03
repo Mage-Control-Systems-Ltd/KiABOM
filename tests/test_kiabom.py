@@ -5,14 +5,21 @@ import os
 from pathlib import Path
 import pickle
 
-# NOTE: If the tests that use pickle require re-writing for new data, they should be
-# run normally with the API keys, and then pickle should be used to cache the new API
-# result. This result should then be loaded for the test
+DISABLE_API = os.getenv("DISABLE_API", None)
+DIR_PATH = Path(__file__).resolve().parent
+CACHE_TEST_DIR = DIR_PATH / "test_api_cache"
+
+# NOTE: If the tests are run locally then they should be run with the API keys.
+# This also saves the results from the API calls to the CACHE_TEST_DIR so that
+# the latest results are used in the CI/CD pipeline for testing.
+
+config = {}
+if not DISABLE_API:
+    config = read_config()
 
 def test_print_title_screen():
     print_title_screen()  # not really sure how to test this but it's good for coverage
     assert True
-
 
 def test_open_output_file():
     output_file = "test.txt"
@@ -209,9 +216,8 @@ def test_get_columns():
     assert columns_ret == ["a", "b", "c"]
 
 
-def test_kicadnetlist_class():
-    dir_path = Path(__file__).resolve().parent
-    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
+def test_class_kicadnetlist():
+    test_project_path = DIR_PATH / "test-projects" / "test-project2" / "test-project2.xml"
 
     with pytest.raises(SystemExit) as exc_info:
         net_obj = KiCadNetlist(
@@ -245,95 +251,72 @@ def test_kicadnetlist_class():
 
     assert net_obj.refdes_groups == [["BT1"], ["D1"], ["H1", "H2", "H3"]]
 
+@pytest.mark.skipif(DISABLE_API is not None,reason="API keys required")
+def test_class_mouserapi():
+    config = read_config()
+    mouser = MouserAPI(config, None)
+    part = mouser.search("HSMW-C170-U0000 ")
+    part = mouser.parse(part)
+    part = part[0] # just in case multiple are retrieved
 
-def test_apiparts_mouser():
-    with open("test_api_cache/test_apiparts_mouser.pickle", 'rb') as f:
-        parts = pickle.load(f)
-        # This simulates the following code snippet
-        # api_status = init_apis()
-        # dir_path = Path(__file__).resolve().parent
-        # test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
-        # net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
-        # parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
+    # Values here are taken from Mouser directly
+    assert part.get("Order Code") == "630-HSMW-C170-U0000"
+    assert part.get("Manufacturer") == "Broadcom / Avago"
 
-    assert parts.comp_count == 2
+@pytest.mark.skipif(DISABLE_API is not None,reason="API keys required")
+def test_class_digikeyapi():
+    config = read_config()
+    digikey = DigiKeyAPI(config, None)
+    part = digikey.search("HSMW-C170-U0000 ")
+    part = digikey.parse(part)
+    part = part[0] # just in case multiple are retrieved
 
-    # Order code is based on MPN used for the LED in the test project. Taken from Mouser directly.
-    test_part_order_code = "630-HSMW-C170-U0000"
-    test_part_manf = "Broadcom / Avago"
-
-    # Testing it retrieves the correct order code and manf (blank entries removed)
-    non_blank_parts = [ part for part in parts.parts_list if part.get("Order Code") ]
-    assert non_blank_parts[0].get("Order Code") == test_part_order_code
-    assert non_blank_parts[0].get("Manufacturer") == test_part_manf
-
-
-def test_apiparts_digikey():
-    with open("test_api_cache/test_apiparts_digikey.pickle", 'rb') as f:
-        parts = pickle.load(f)
-        # This simulates the following code snippet
-        # api_status = init_apis()
-        # dir_path = Path(__file__).resolve().parent
-        # test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
-        # net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
-        # parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
-
-    # Order code is based on MPN used for the LED in the test project. Taken from Mouser directly.
-    test_part_order_code = "516-3993-1-ND"
-    test_part_manf = "Broadcom Limited"
-
-    # Testing it retrieves the correct order code and manf (blank entries removed)
-    non_blank_parts = [ part for part in parts.parts_list if part.get("Order Code") ]
-    assert non_blank_parts[0].get("Order Code") == test_part_order_code
-    assert non_blank_parts[0].get("Manufacturer") == test_part_manf
-
-
-def test_apiparts_return_empty():
-    dir_path = Path(__file__).resolve().parent
-    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
-
-    net_obj = KiCadNetlist(test_project_path, excludeBoard=True, excludeBOM=True, DNP=False)
-
-    with open("test_api_cache/test_apiparts_return_empty.pickle", 'rb') as f:
-        parts = pickle.load(f)
-
-    empty_list = [{}] * net_obj.group_count
-
-    assert parts.parts_list == empty_list
+    # Values here are taken from DigiKey directly
+    assert part.get("Order Code") == "516-3993-1-ND"
+    assert part.get("Manufacturer") == "Broadcom Limited"
 
 def test_write_to_file():
     kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
 
-    dir_path = Path(__file__).resolve().parent
-    test_project2_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
+    test_project2_path = DIR_PATH / "test-projects" / "test-project2" / "test-project2.xml"
     net_obj = KiCadNetlist(test_project2_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
-    # Pickle replaces: primary_parts = ApiParts("Mouser", net_obj, "GBP", ["Generic"], api_status)
-    with open('test_api_cache/test_write_to_file_mouser.pickle', 'rb') as f:
-        primary_parts = pickle.load(f)
+    cache_file = CACHE_TEST_DIR / "test_write_to_file_mouser.pickle"
+    if not DISABLE_API:
+        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["Generic"], config)
+        with open(cache_file, 'wb') as f:
+            pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(cache_file, "rb") as f:
+            primary_parts = pickle.load(f)
 
-    # Pickle replaces secondary_parts = ApiParts("DigiKey", net_obj, "GBP", ["Generic"], api_status)
-    with open('test_api_cache/test_write_to_file_digikey.pickle', 'rb') as f:
-        secondary_parts = pickle.load(f)
+    cache_file = CACHE_TEST_DIR / "test_write_to_file_digikey.pickle"
+    if not DISABLE_API:
+        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["Generic"], config)
+        with open(cache_file, 'wb') as f:
+            pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(cache_file, "rb") as f:
+            secondary_parts = pickle.load(f)
 
     file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
     columns = get_columns("", "default") + ["Rating", "Test"]
 
-    test_csv2_path = dir_path / "test-project2.csv"
+    test_csv2_path = DIR_PATH / "test-project2.csv"
     f = open_output_file(str(test_csv2_path))
     write_to_file(f, "csv", True, True, True, 1, columns, net_obj, file_data)
     f.close()
     assert os.path.isfile(test_csv2_path) == True
     os.remove(test_csv2_path)
 
-    test_html2_path = dir_path / "test-project2.html"
+    test_html2_path = DIR_PATH / "test-project2.html"
     f = open_output_file(str(test_html2_path))
     write_to_file(f, "html", True, True, True, 1, columns, net_obj, file_data)
     f.close()
     assert os.path.isfile(test_html2_path) == True
     os.remove(test_html2_path)
 
-    test_txt2_path = dir_path / "test-project2.txt"
+    test_txt2_path = DIR_PATH / "test-project2.txt"
     f = open_output_file(str(test_txt2_path))
     write_to_file(f, "txt", True, True, True, 1, columns, net_obj, file_data)
     f.close()
@@ -343,17 +326,28 @@ def test_write_to_file():
 # Very important test
 def test_contents():
     kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
-    dir_path = Path(__file__).resolve().parent
 
     # Test the file content with test-project1 which is a bigger project
-    test_project1_path = dir_path / "test-projects" / "test-project1" / "test-project1.xml"
+    test_project1_path = DIR_PATH / "test-projects" / "test-project1" / "test-project1.xml"
     net_obj = KiCadNetlist(test_project1_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
-    # Load the cache instead of calling the objects
-    with open('test_api_cache/test_contents_project1_mouser.pickle', 'rb') as f:
-        primary_parts = pickle.load(f)
-    with open('test_api_cache/test_contents_project1_digikey.pickle', 'rb') as f:
-        secondary_parts = pickle.load(f)
+    cache_file = CACHE_TEST_DIR / "test_contents_project1_mouser.pickle"
+    if not DISABLE_API:
+        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["Generic"], config)
+        with open(cache_file, 'wb') as f:
+            pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(cache_file, "rb") as f:
+            primary_parts = pickle.load(f)
+
+    cache_file = CACHE_TEST_DIR / "test_contents_project1_digikey.pickle"
+    if not DISABLE_API:
+        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["Generic"], config)
+        with open(cache_file, 'wb') as f:
+            pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(cache_file, "rb") as f:
+            secondary_parts = pickle.load(f)
 
     file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
     columns = get_columns("", "default") + ["Rating"]
@@ -390,14 +384,26 @@ def test_contents():
     os.remove("test-project1.txt")
 
     # Test project 3 contains no DNP components which is important to test
-    test_project3_path = dir_path / "test-projects" / "test-project3" / "test-project3.xml"
+    test_project3_path = DIR_PATH / "test-projects" / "test-project3" / "test-project3.xml"
     net_obj = KiCadNetlist(test_project3_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
-    with open('test_api_cache/test_contents_project3_mouser.pickle', 'rb') as f:
-        primary_parts = pickle.load(f)
+    cache_file = CACHE_TEST_DIR / "test_contents_project3_mouser.pickle"
+    if not DISABLE_API:
+        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["", "Generic"], config)
+        with open(cache_file, 'wb') as f:
+            pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(cache_file, "rb") as f:
+            primary_parts = pickle.load(f)
 
-    with open('test_api_cache/test_contents_project3_digikey.pickle', 'rb') as f:
-        secondary_parts = pickle.load(f)
+    cache_file = CACHE_TEST_DIR / "test_contents_project3_digikey.pickle"
+    if not DISABLE_API:
+        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["", "Generic"], config)
+        with open(cache_file, 'wb') as f:
+            pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(cache_file, "rb") as f:
+            secondary_parts = pickle.load(f)
 
     file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
 
@@ -418,8 +424,7 @@ def test_contents():
 
 
 def test_get_equ():
-    dir_path = Path(__file__).resolve().parent
-    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
+    test_project_path = DIR_PATH / "test-projects" / "test-project2" / "test-project2.xml"
 
     net_obj = KiCadNetlist(test_project_path, excludeBoard=False, excludeBOM=False, DNP=False)
     group_fields = "Value,Footprint,DNP,MPN,Rating,Test"
@@ -467,13 +472,9 @@ def test_get_equ():
 
     assert exc_info.value.code == 1
 
-
-
 def test_download_datasheets():
-    dir_path = Path(__file__).resolve().parent
-
-    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
-    test_datasheet_folder_path = dir_path / "test-datasheets"
+    test_project_path = DIR_PATH / "test-projects" / "test-project2" / "test-project2.xml"
+    test_datasheet_folder_path = DIR_PATH / "test-datasheets"
     test_datasheet_path = test_datasheet_folder_path / "HSMW-C170-U0000-DS100.pdf"
 
     net_obj = KiCadNetlist(test_project_path, excludeBoard=False, excludeBOM=False, DNP=False)
@@ -485,17 +486,27 @@ def test_download_datasheets():
     os.remove(test_datasheet_path)
     os.rmdir(test_datasheet_folder_path)
 
-
-def test_init_apis():
-    dir_path = Path(__file__).resolve().parent
-
+def test_read_config():
     # Testing for no config.yaml
-    config_path = dir_path / ".." / "src" / "config.yaml"
-    rename_path = dir_path / ".." / "src" / "aconfig.yaml"
+    config_path = DIR_PATH / ".." / "src" / "config.yaml"
+    rename_path = DIR_PATH / ".." / "src" / "aconfig.yaml"
     os.rename(str(config_path), str(rename_path))
 
     with pytest.raises(SystemExit) as exc_info:
-        init_apis()
+        read_config()
 
     assert exc_info.value.code == 1
     os.rename(str(rename_path), str(config_path))
+
+def test_main():
+    dir_path = Path(__file__).resolve().parent
+    test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
+
+    argv = [str(test_project_path), "-o", "test-out.csv", "--no-api", "-q"]
+    with pytest.raises(SystemExit) as exc_info:
+        main(argv)
+
+    assert exc_info.value.code == 0
+
+    os.remove("test-out.csv")
+
