@@ -258,7 +258,7 @@ def test_class_kicadnetlist():
     assert net_obj.refdes_groups == [["BT1"], ["D1"], ["H1", "H2", "H3"]]
 
 def test_class_supplierapi():
-    supplier = SupplierAPI("",1, time = 1)
+    supplier = SupplierAPI(1, time = 1)
     supplier.cache_path = CACHE_TEST_DIR
 
     test_mpn = "TEST//MPN"
@@ -280,7 +280,7 @@ def test_class_supplierapi():
 @pytest.mark.skipif(DISABLE_API is not None,reason="API keys required")
 def test_class_mouserapi():
     config = read_config()
-    mouser = MouserAPI(config, "", -1)
+    mouser = MouserAPI(config, -1)
     part = mouser.search("HSMW-C170-U0000 ")
     part = mouser.parse(part)
     part = part[0] # just in case multiple are retrieved
@@ -292,7 +292,7 @@ def test_class_mouserapi():
 @pytest.mark.skipif(DISABLE_API is not None,reason="API keys required")
 def test_class_digikeyapi():
     config = read_config()
-    digikey = DigiKeyAPI(config, "", -1)
+    digikey = DigiKeyAPI(config, -1)
     part = digikey.search("HSMW-C170-U0000 ")
     part = digikey.parse(part)
     part = part[0] # just in case multiple are retrieved
@@ -300,6 +300,18 @@ def test_class_digikeyapi():
     # Values here are taken from DigiKey directly
     assert part.get("Order Code") == "516-3993-1-ND"
     assert part.get("Manufacturer") == "Broadcom Limited"
+
+# This is only to test the conversion function within the class
+def test_class_currencyconverter():
+    currency_obj = CurrencyConverter("", False)
+
+    # Values here were taken manually
+    # May need updating in the future
+    currency_obj.currency_rates["GBP"] = 0.74
+    currency_obj.currency_rates["EUR"] = 0.86
+    price = currency_obj.convert("GBP", 1.00, "EUR")
+
+    assert round(price, 2) == 1.16
 
 def test_write_to_file():
     kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
@@ -309,7 +321,7 @@ def test_write_to_file():
 
     cache_file = CACHE_TEST_DIR / "test_write_to_file_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["Generic"], config, 0)
+        primary_parts = PartsSearch("Mouser", net_obj, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -318,14 +330,14 @@ def test_write_to_file():
 
     cache_file = CACHE_TEST_DIR / "test_write_to_file_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["Generic"], config, 0)
+        secondary_parts = PartsSearch("DigiKey", net_obj, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         with open(cache_file, "rb") as f:
             secondary_parts = pickle.load(f)
 
-    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
+    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1, None)
     columns = get_columns("", "default") + ["Rating", "Test"]
 
     test_csv2_path = DIR_PATH / "test-project2.csv"
@@ -359,7 +371,7 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project1_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["Generic"], config, 0)
+        primary_parts = PartsSearch("Mouser", net_obj, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -368,14 +380,14 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project1_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["Generic"], config, 0)
+        secondary_parts = PartsSearch("DigiKey", net_obj, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         with open(cache_file, "rb") as f:
             secondary_parts = pickle.load(f)
 
-    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
+    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1, None)
     columns = get_columns("", "default") + ["Rating"]
     columns.remove("Unit/Reel Price")
     columns.remove("Total Price")
@@ -415,7 +427,7 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project3_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["", "Generic"], config, 0)
+        primary_parts = PartsSearch("Mouser", net_obj, ["", "Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -424,14 +436,14 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project3_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["", "Generic"], config, 0)
+        secondary_parts = PartsSearch("DigiKey", net_obj, ["", "Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         with open(cache_file, "rb") as f:
             secondary_parts = pickle.load(f)
 
-    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1)
+    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1, None)
 
     columns = get_columns("", "default") + ["Rating"]
     # Prices fluctuate so the test can fail
@@ -528,7 +540,7 @@ def test_main():
     dir_path = Path(__file__).resolve().parent
     test_project_path = dir_path / "test-projects" / "test-project2" / "test-project2.xml"
 
-    argv = [str(test_project_path), "-o", "test-out.csv", "--no-api", "-q"]
+    argv = [str(test_project_path), "-o", "test-out.csv", "--no-api", "--no-cache", "-q"]
     with pytest.raises(SystemExit) as exc_info:
         main(argv)
 

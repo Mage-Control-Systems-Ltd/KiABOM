@@ -42,6 +42,8 @@ import yaml
 import time
 import pickle
 import re
+import json
+from currency_symbols import CurrencySymbols
 import kicad_netlist_reader
 from pathlib import Path
 from kicad_netlist_reader import comp, netlist
@@ -268,22 +270,14 @@ class KiCadNetlist:
         self.group_count = len(self.grouped)
 
 class SupplierAPI:
-    def __init__(self, currency_code: str, cache_ttl: int, time: int = EPOCH_TIME):
+    def __init__(self, cache_ttl: int, time: int = EPOCH_TIME):
         self.name = ""
         self.api_status = ""
         self.comp_count = 0
         self.cache_comp_count = 0
         self.cache_path = Path()
-        self.currency = ""
         self.cache_ttl = cache_ttl
         self.time = time
-
-        if currency_code == "GBP":
-            self.currency = "£"
-        elif currency_code == "USD":
-            self.currency = "$"
-        elif currency_code == "EUR":
-            self.currency = "€"
 
     def api_init(self, config: dict) -> str:
         raise NotImplementedError("Must implement in derived subclass")
@@ -298,6 +292,7 @@ class SupplierAPI:
         if mpn in ignore_mpns:
             return {}
 
+        mpn = self.cache_mpn_normalise(mpn)
         cached_part = self.cache_query(mpn)
 
         if self.cache_ttl >= 0:
@@ -331,7 +326,6 @@ class SupplierAPI:
         return mpn
 
     def cache_query(self, mpn: str) -> dict | None:
-        mpn = self.cache_mpn_normalise(mpn)
         cached_file = None
         for (_, _, files) in os.walk(self.cache_path):
             for f in files:
@@ -362,7 +356,6 @@ class SupplierAPI:
             return None
         
     def cache_part(self, mpn, data):
-        mpn = self.cache_mpn_normalise(mpn)
         filename = mpn + "___" + str(self.time) + ".pickle"
         cache_file = self.cache_path / filename
         with open(cache_file, 'wb') as f:
@@ -373,11 +366,12 @@ class SupplierAPI:
 
 
 class MouserAPI(SupplierAPI):
-    def __init__(self, config: dict, currency: str, cache_ttl: int):
-        super().__init__(currency, cache_ttl)
+    def __init__(self, config: dict, cache_ttl: int):
+        super().__init__(cache_ttl)
         self.api_status = self.api_init(config)
         self.name = "Mouser"
         self.cache_path = CACHE_PATH / "mouser_cache"
+        self.currency_code = ""
 
     def api_init(self, config: dict) -> str:
         mouser_entry = config.get("Mouser", {})
@@ -462,17 +456,19 @@ class MouserAPI(SupplierAPI):
             parsed_dict["Price Tiers"] = self.get_price_tiers(
                     part.get("PriceBreaks", [])
                     )
+            parsed_dict["Currency Code"] = part.get("PriceBreaks", [{}])[0].get("Currency")
             parsed_parts.append(parsed_dict)
 
         return parsed_parts
 
 
 class DigiKeyAPI(SupplierAPI):
-    def __init__(self, config: dict, currency: str, cache_ttl: int):
-        super().__init__(currency, cache_ttl)
+    def __init__(self, config: dict, cache_ttl: int):
+        super().__init__(cache_ttl)
         self.cache_path = CACHE_PATH / "digikey_cache"
         self.name = "DigiKey"
         self.api_status = self.api_init(config)
+        self.currency_code = "USD"
 
     def api_init(self, config: dict) -> str:
         digikey_entry = config.get("DigiKey", {})
@@ -503,7 +499,7 @@ class DigiKeyAPI(SupplierAPI):
 
 
     def search(self,
-            mpn: str, site: str = "uk", language: str = "en", currency: str = "gbp"
+            mpn: str, site: str = "uk", language: str = "en", currency: str = "usd"
             ) -> list[dict]:
         mpn = mpn.strip()
 
@@ -588,6 +584,7 @@ class DigiKeyAPI(SupplierAPI):
             parsed_dict["Order Code"] = self.get_order_code( part.get("product_variations", []))
             parsed_dict["Stock"] = part.get("quantity_available", "")
             parsed_dict["Price Tiers"] = self.get_order_code_price_tiers( parsed_dict["Order Code"], part.get("product_variations", []))
+            parsed_dict["Currency Code"] = "USD"
             parsed_parts.append(parsed_dict)
 
         return parsed_parts
@@ -599,19 +596,18 @@ class PartsSearch:
             self,
             supplier: str,
             net_obj: KiCadNetlist,
-            currency: str,
             ignore_mpns: list,
             config: dict,
             cache_ttl: int
             ) -> None:
         self.parts_list = [{} for _ in range(net_obj.group_count)]
-        self.supplier = SupplierAPI("", -1)
+        self.supplier = SupplierAPI(-1)
 
         if config.get(supplier.lower()) != "disabled":
             if supplier.lower() == "mouser":
-                self.supplier = MouserAPI(config, currency, cache_ttl)
+                self.supplier = MouserAPI(config, cache_ttl)
             elif supplier.lower() == "digikey":
-                self.supplier = DigiKeyAPI(config, currency, cache_ttl)
+                self.supplier = DigiKeyAPI(config, cache_ttl)
 
             # Update class members with API results if initialisation was succesful
             if self.supplier.api_status == "success":
@@ -621,6 +617,12 @@ class PartsSearch:
             else:
                 print( f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} {self.supplier.name} API not initialised: {self.supplier.api_status}.", flush=True,)
 
+            # Get the currency code from the parsed response
+            for part in self.parts_list:
+                currency_code = part.get("Currency Code")
+                if currency_code:
+                    self.currency_code = currency_code
+                    break
 
     def search_parts(
             self, net_obj: KiCadNetlist, ignore_mpns: list
@@ -633,6 +635,40 @@ class PartsSearch:
 
         return parts
 
+class CurrencyConverter():
+    def __init__(self, currency: str, use_cache: bool = True):
+        symbol = CurrencySymbols.get_symbol(currency)
+        if symbol:
+            self.symbol = symbol
+        else:
+            self.symbol = ""
+
+        self.requested_currency = currency
+
+        self.currency_rates = {}
+
+        if use_cache:
+            filename = CACHE_PATH / "usd_currency_rates.json"
+            try:
+                with open(filename, "r") as f:
+                    self.response_usd = json.load(f)
+            except FileNotFoundError:
+                self.response_usd = requests.get("https://open.er-api.com/v6/latest/USD").json()
+                with open(filename, 'w') as f:
+                    json.dump(self.response_usd, f)
+
+            print("Retrieved currency rates.")
+
+            if self.response_usd.get("time_next_update_unix", 0) < EPOCH_TIME:
+                self.response_usd = requests.get("https://open.er-api.com/v6/latest/USD").json()
+                with open(filename, 'w') as f:
+                    json.dump(self.response_usd, f)
+                print("Updated retrieved currency rates.")
+
+            self.currency_rates = self.response_usd["rates"]
+
+    def convert(self, from_currency, price, to_currency): 
+        return round(price * (self.currency_rates[to_currency] / self.currency_rates[from_currency]) , 7) 
 
 class BomData:
     """Class containing the file data required to create the BOM.
@@ -649,27 +685,28 @@ class BomData:
             sec_obj: PartsSearch,
             refdes_groups: list[list[str]],
             board_quantity: int,
+            currency: CurrencyConverter | None
             ) -> None:
         self.pri_res = pri_obj.parts_list
         self.sec_res = sec_obj.parts_list
+        self.currency = currency
 
-        self.currency_symbol = ""
-        if pri_obj.supplier.currency:
-            self.currency_symbol = pri_obj.supplier.currency
-        elif sec_obj.supplier.currency:
-            self.currency_symbol = sec_obj.supplier.currency
+        if self.currency:
+            self.currency_symbol = self.currency.symbol
+        else:
+            self.currency_symbol = ""
 
-        self.insert_in_result(self.pri_res, "Supplier", pri_obj.supplier.name)
-        self.insert_in_result(self.sec_res, "Supplier", sec_obj.supplier.name)
+        self.insert_in_api_response(self.pri_res, "Supplier", pri_obj.supplier.name)
+        self.insert_in_api_response(self.sec_res, "Supplier", sec_obj.supplier.name)
 
-        self.com_res = []
+        self.com_res = [] # merged secondary into primary
         for pri, sec in zip(self.pri_res, self.sec_res):
             if pri:
                 self.com_res.append(pri)
             else:
                 self.com_res.append(sec)
 
-        self.insert_in_result(self.com_res, "Currency", self.currency_symbol)
+        self.insert_in_api_response(self.com_res, "Currency", self.currency_symbol)
 
         if len(refdes_groups) != len(self.com_res):
             print(
@@ -683,7 +720,7 @@ class BomData:
 
         # Get the price for each part and insert into common result
         for part in self.com_res:
-            if part.get("MPN"):
+            if part.get("Order Code"):
                 price_tiers = part.get("Price Tiers", {})
                 for key in price_tiers.keys():
                     part["Price"] = float(price_tiers.get(key))
@@ -692,13 +729,22 @@ class BomData:
             else:
                 part["Price"] = ""
 
+        if self.currency:
+            # Convert from part's currency to requested currency
+            for part in self.com_res:
+                price = part.get("Price")
+                if price != "":
+                    part["Price"] = self.currency.convert(part.get("Currency Code"), price, self.currency.requested_currency)
+
+        # Calculate total price
         self.total_price = 0
         for part in self.com_res:
             price = part.get("Price")
             if price and price != "":
                 self.total_price = self.total_price + price
 
-    def insert_in_result(self, result: list[dict], key: str, val: str):
+
+    def insert_in_api_response(self, result: list[dict], key: str, val: str):
         for part in result:
             # Check if a result for the part was been found. Could be any API field
             if part.get("Order Code"):
@@ -1135,7 +1181,6 @@ def check_args(args: argparse.Namespace):
     :param args: Input arguments.
     """
     supported_suppliers = ["Mouser", "DigiKey"]
-    supported_currencies = ["GBP", "USD", "EUR"]
     supported_formats = ["csv", "html", "txt"]
 
     if args.preset.lower() in preset_dict:
@@ -1219,11 +1264,9 @@ def check_args(args: argparse.Namespace):
                 )
         sys.exit(1)
 
-    if args.currency.lower() not in [
-            currency.lower() for currency in supported_currencies
-            ]:
+    if not args.currency.isalpha():
         print(
-                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Currency '{args.currency}' not supported.",
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Currency option must be a currency code, e.g. EUR, GBP, USD etc.",
                 file=sys.stderr,
                 )
         sys.exit(1)
@@ -1589,7 +1632,7 @@ def main(argv: list[str]):
             )
     parser.add_argument(
             "--currency",
-            help="select the currency, currently supports 'GBP', 'EUR', and 'USD' options.",
+            help="select the currency using any widely used currency code.",
             default="GBP",
             )
     parser.add_argument(
@@ -1702,14 +1745,16 @@ def main(argv: list[str]):
     else:
         config = read_config()
 
-    # Set cache ttl to -1 if no cache is to be used
+    use_currency_cache = True
     if args.no_cache:
-        print("Disabled cache.", flush=True)
+        print("Disabled cache for parts and currencies.", flush=True)
         args.cache_ttl = -1
+        use_currency_cache = False
+
 
     # Search for the parts using the APIs
-    primary_supplier_parts = PartsSearch( args.primary_supplier, net_obj, args.currency, ignore_mpns, config, args.cache_ttl)
-    secondary_supplier_parts = PartsSearch( args.secondary_supplier, net_obj, args.currency, ignore_mpns, config, args.cache_ttl)
+    primary_supplier_parts = PartsSearch( args.primary_supplier, net_obj, ignore_mpns, config, args.cache_ttl)
+    secondary_supplier_parts = PartsSearch( args.secondary_supplier, net_obj, ignore_mpns, config, args.cache_ttl)
 
     # Columns to be used for each part.
     columns = get_columns( args.columns, args.columns_preset) + args.append_columns.split(",")
@@ -1719,12 +1764,15 @@ def main(argv: list[str]):
             flush=True,
             )
 
+    currency_obj = CurrencyConverter(args.currency, use_currency_cache)
+
     # Combine the Parts objects with the quantities to create the BOM data
     bom_data = BomData(
             primary_supplier_parts,
             secondary_supplier_parts,
             net_obj.refdes_groups,
             args.board_quantity,
+            currency_obj
             )
 
     # Finally write the data to file
