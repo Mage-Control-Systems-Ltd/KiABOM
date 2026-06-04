@@ -55,7 +55,6 @@ MAX_GROUP_FIELDS = 7
 QUIET = False
 DIR_PATH = Path(__file__).resolve().parent
 CACHE_PATH = DIR_PATH / "kiabom_cache"
-CACHE_TTL_SECS = 60000
 
 column_preset_dict = {
         "default": [
@@ -269,19 +268,21 @@ class KiCadNetlist:
         self.group_count = len(self.grouped)
 
 class SupplierAPI:
-    def __init__(self, currency: str | None = None):
+    def __init__(self, currency_code: str, cache_ttl: int, time: int = EPOCH_TIME):
         self.name = ""
         self.api_status = ""
         self.comp_count = 0
         self.cache_comp_count = 0
         self.cache_path = Path()
-        self.currency = None
+        self.currency = ""
+        self.cache_ttl = cache_ttl
+        self.time = time
 
-        if currency == "GBP":
+        if currency_code == "GBP":
             self.currency = "£"
-        elif currency == "USD":
+        elif currency_code == "USD":
             self.currency = "$"
-        elif currency == "EUR":
+        elif currency_code == "EUR":
             self.currency = "€"
 
     def api_init(self, config: dict) -> str:
@@ -299,10 +300,11 @@ class SupplierAPI:
 
         cached_part = self.cache_query(mpn)
 
-        # Important to accept empty dicts
-        if cached_part != None:
-            self.cache_comp_count = self.cache_comp_count + 1
-            return cached_part
+        if self.cache_ttl >= 0:
+            # Important to accept empty dicts
+            if cached_part != None:
+                self.cache_comp_count = self.cache_comp_count + 1
+                return cached_part
 
         parts = self.search(mpn)
         parts = self.parse(parts)
@@ -316,7 +318,8 @@ class SupplierAPI:
                 found_part = part
                 break
 
-        self.cache_part(mpn, found_part)
+        if self.cache_ttl >= 0:
+            self.cache_part(mpn, found_part)
 
         self.comp_count = self.comp_count + 1
         return found_part
@@ -343,12 +346,12 @@ class SupplierAPI:
         if not match:
             return None
 
-        file_lifetime = EPOCH_TIME - int(match.group(1))
+        file_lifetime = self.time - int(match.group(1))
 
         # If the file is older than the TTL then
         # don't return part and delete cache so that
         # it can be re-cached
-        if file_lifetime > CACHE_TTL_SECS:
+        if file_lifetime > self.cache_ttl:
             os.remove(cached_file)
             return None
 
@@ -360,7 +363,7 @@ class SupplierAPI:
         
     def cache_part(self, mpn, data):
         mpn = self.cache_mpn_normalise(mpn)
-        filename = mpn + "___" + str(EPOCH_TIME) + ".pickle"
+        filename = mpn + "___" + str(self.time) + ".pickle"
         cache_file = self.cache_path / filename
         with open(cache_file, 'wb') as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -370,8 +373,8 @@ class SupplierAPI:
 
 
 class MouserAPI(SupplierAPI):
-    def __init__(self, config: dict, currency: str | None):
-        super().__init__(currency)
+    def __init__(self, config: dict, currency: str, cache_ttl: int):
+        super().__init__(currency, cache_ttl)
         self.api_status = self.api_init(config)
         self.name = "Mouser"
         self.cache_path = CACHE_PATH / "mouser_cache"
@@ -465,8 +468,8 @@ class MouserAPI(SupplierAPI):
 
 
 class DigiKeyAPI(SupplierAPI):
-    def __init__(self, config: dict, currency: str | None):
-        super().__init__(currency)
+    def __init__(self, config: dict, currency: str, cache_ttl: int):
+        super().__init__(currency, cache_ttl)
         self.cache_path = CACHE_PATH / "digikey_cache"
         self.name = "DigiKey"
         self.api_status = self.api_init(config)
@@ -599,15 +602,16 @@ class PartsSearch:
             currency: str,
             ignore_mpns: list,
             config: dict,
+            cache_ttl: int
             ) -> None:
         self.parts_list = [{} for _ in range(net_obj.group_count)]
-        self.supplier = SupplierAPI()
+        self.supplier = SupplierAPI("", -1)
 
         if config.get(supplier.lower()) != "disabled":
             if supplier.lower() == "mouser":
-                self.supplier = MouserAPI(config, currency)
+                self.supplier = MouserAPI(config, currency, cache_ttl)
             elif supplier.lower() == "digikey":
-                self.supplier = DigiKeyAPI(config, currency)
+                self.supplier = DigiKeyAPI(config, currency, cache_ttl)
 
             # Update class members with API results if initialisation was succesful
             if self.supplier.api_status == "success":
@@ -1268,6 +1272,21 @@ def check_args(args: argparse.Namespace):
                 )
         sys.exit(1)
 
+    if not args.cache_ttl.isdigit():
+        print(
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Detected non-integer board quantity, please input an integer as the quantity.",
+                file=sys.stderr,
+                )
+        sys.exit(1)
+    else:
+        args.cache_ttl = int(args.cache_ttl)
+
+    if args.cache_ttl < 0:
+        print(
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Cannot have cache TTL less than 0.",
+                file=sys.stderr,
+                )
+        sys.exit(1)
 
 def write_to_file(
         f: io.TextIOWrapper,
@@ -1609,6 +1628,17 @@ def main(argv: list[str]):
             action="store_true",
             default=False,
             )
+    parser.add_argument(
+            "--cache-ttl",
+            help="cache time to live (TTL) in seconds. Defaults to 60 * 60 * 24 = 1 day",
+            default=str(60*60*24),
+            )
+    parser.add_argument(
+            "--no-cache",
+            help="completely ignore any stored cache",
+            action="store_true",
+            default=False,
+            )
 
     args = parser.parse_args(args=argv)
 
@@ -1672,9 +1702,14 @@ def main(argv: list[str]):
     else:
         config = read_config()
 
+    # Set cache ttl to -1 if no cache is to be used
+    if args.no_cache:
+        print("Disabled cache.", flush=True)
+        args.cache_ttl = -1
+
     # Search for the parts using the APIs
-    primary_supplier_parts = PartsSearch( args.primary_supplier, net_obj, args.currency, ignore_mpns, config)
-    secondary_supplier_parts = PartsSearch( args.secondary_supplier, net_obj, args.currency, ignore_mpns, config)
+    primary_supplier_parts = PartsSearch( args.primary_supplier, net_obj, args.currency, ignore_mpns, config, args.cache_ttl)
+    secondary_supplier_parts = PartsSearch( args.secondary_supplier, net_obj, args.currency, ignore_mpns, config, args.cache_ttl)
 
     # Columns to be used for each part.
     columns = get_columns( args.columns, args.columns_preset) + args.append_columns.split(",")
