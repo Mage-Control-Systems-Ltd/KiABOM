@@ -61,6 +61,7 @@ def test_check_args():
         currency = "GBP"
         input_xml = "test.xml"
         output_format = "csv"
+        cache_ttl = str(60*60*24)
 
     args = Args()
 
@@ -167,6 +168,11 @@ def test_check_args():
     assert exc_info.value.code == 1
     args = Args()
 
+    args.cache_ttl = "1.5"
+    with pytest.raises(SystemExit) as exc_info:
+        check_args(args)
+    assert exc_info.value.code == 1
+    args = Args()
 
 def test_set_format_from_output_file_extension():
     assert set_format_from_output_file_extension("test.csv") == "csv"
@@ -251,10 +257,30 @@ def test_class_kicadnetlist():
 
     assert net_obj.refdes_groups == [["BT1"], ["D1"], ["H1", "H2", "H3"]]
 
+def test_class_supplierapi():
+    supplier = SupplierAPI("",1, time = 1)
+    supplier.cache_path = CACHE_TEST_DIR
+
+    test_mpn = "TEST//MPN"
+
+    test_mpn = supplier.cache_mpn_normalise(test_mpn)
+
+    assert "TEST--MPN" == test_mpn
+
+    supplier.cache_part(test_mpn, test_mpn)
+
+    filename = test_mpn + "___" + str(1) + ".pickle"
+    filepath = CACHE_TEST_DIR / filename
+    assert filepath.is_file() == True
+
+    data = supplier.cache_query(test_mpn)
+
+    assert test_mpn == data
+
 @pytest.mark.skipif(DISABLE_API is not None,reason="API keys required")
 def test_class_mouserapi():
     config = read_config()
-    mouser = MouserAPI(config, None)
+    mouser = MouserAPI(config, "", -1)
     part = mouser.search("HSMW-C170-U0000 ")
     part = mouser.parse(part)
     part = part[0] # just in case multiple are retrieved
@@ -266,7 +292,7 @@ def test_class_mouserapi():
 @pytest.mark.skipif(DISABLE_API is not None,reason="API keys required")
 def test_class_digikeyapi():
     config = read_config()
-    digikey = DigiKeyAPI(config, None)
+    digikey = DigiKeyAPI(config, "", -1)
     part = digikey.search("HSMW-C170-U0000 ")
     part = digikey.parse(part)
     part = part[0] # just in case multiple are retrieved
@@ -283,7 +309,7 @@ def test_write_to_file():
 
     cache_file = CACHE_TEST_DIR / "test_write_to_file_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["Generic"], config)
+        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -292,7 +318,7 @@ def test_write_to_file():
 
     cache_file = CACHE_TEST_DIR / "test_write_to_file_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["Generic"], config)
+        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -333,7 +359,7 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project1_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["Generic"], config)
+        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -342,7 +368,7 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project1_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["Generic"], config)
+        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -389,7 +415,7 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project3_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["", "Generic"], config)
+        primary_parts = PartsSearch("Mouser", net_obj, "GBP", ["", "Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -398,7 +424,7 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project3_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["", "Generic"], config)
+        secondary_parts = PartsSearch("DigiKey", net_obj, "GBP", ["", "Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
