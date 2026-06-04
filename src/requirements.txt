@@ -1,4 +1,5 @@
 colorama == 0.4.6
+currency-symbols == 2.0.4
 git+https://github.com/hurricaneJoef/digikey-api/ # DigiKey API v4
 kicad-netlist-reader == 7.0.1
 mouser == 0.1.6
