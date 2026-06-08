@@ -216,7 +216,7 @@ class KiCadNetlist:
         except ValueError:
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Unable to open XML file. Please check path is correct or that the file exists.",
-                file=sys.stderr,
+                file = sys.stderr,
             )
             sys.exit(1)
 
@@ -410,7 +410,8 @@ class MouserAPI(SupplierAPI):
         # Check for errors or print the returned results
         if res is None or res == {}:
             print(
-                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}."
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}.",
+                file = sys.stderr
             )
             return [{}]
 
@@ -418,7 +419,8 @@ class MouserAPI(SupplierAPI):
             search_results = res.get("SearchResults")
         except AttributeError:
             print(
-                    f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error with API response: {res}\n\nEnsure supplier website is live..."
+                    f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error with API response: {res}\n\nEnsure supplier website is live...",
+                    file = sys.stderr
             )
             sys.exit(1)
 
@@ -528,7 +530,8 @@ class DigiKeyAPI(SupplierAPI):
         )
         if res is None:
             print(
-                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request"
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request",
+                file = sys.stderr
             )
             return [{}]
 
@@ -739,7 +742,8 @@ class BomData:
 
         if len(refdes_groups) != len(self.com_res):
             print(
-                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} The length of the reference designator groups and API result must match because the index is used to match API result with the netlist. Aborting BOM generation..."
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} The length of the reference designator groups and API result must match because the index is used to match API result with the netlist. Aborting BOM generation...",
+                file = sys.stderr
             )
             sys.exit(1)
 
@@ -1502,11 +1506,13 @@ def read_config() -> dict:
                 print(
                     f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error reading config.yaml file:",
                     e,
+                    file = sys.stderr
                 )
                 sys.exit(1)
     except FileNotFoundError or IOError:
         print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} config.yaml could not be opened for reading. Use '--no-api' to skip config check."
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} config.yaml could not be opened for reading. Use '--no-api' to skip config check.",
+            file = sys.stderr
         )
         sys.exit(1)
 
