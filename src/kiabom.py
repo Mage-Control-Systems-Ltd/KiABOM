@@ -23,8 +23,18 @@ Sorted By: Ref
 KiABOM, Automatic Bill Of Materials generator for KiCAD.
 
 Command line:
-    python "path/to/kiabom.py" "%I" "%O.csv" [options]
+    python "path/to/kiabom.py" "%I" [options]
 """
+
+###### KiABOM API Config ######
+# These values get used if no config.yaml file is found
+# Set all to None if not used and all values are strings
+MOUSER_API_KEY = None
+
+DIGIKEY_CLIENT_ID = None
+DIGIKEY_CLIENT_SECRET = None
+DIGIKEY_CLIENT_SANDBOX = None
+###############################
 
 __version__ = "2.0.0"
 __author__ = "Yiannis Michael (ymic9963)"
@@ -191,22 +201,22 @@ preset_dict = {
     ],
 }
 
+# Global variable to be used in the equ functions
+global_group_fields = []
+
 
 class KiCadNetlist:
     """Class containing KiCad netlist data
 
-    :param input_xml: Input XML file name.
     :param net: Netlist reader object.
     :param components: List of components from the schematic.
-    :param grouped: List of grouped compoentns.
-    :param group_count: Number of groups.
+    :param grouped: A list containing lists of grouped parts
+    :param refdes_groups: List of reference designator groups
     """
 
     def __init__(
         self, input_xml: str | Path, excludeBOM: bool, excludeBoard: bool, DNP: bool
     ) -> None:
-        self.input_xml = input_xml
-
         # Initialise
         self.net = netlist()
 
@@ -216,7 +226,7 @@ class KiCadNetlist:
         except ValueError:
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Unable to open XML file. Please check path is correct or that the file exists.",
-                file = sys.stderr,
+                file=sys.stderr,
             )
             sys.exit(1)
 
@@ -232,10 +242,9 @@ class KiCadNetlist:
 
         # Get all of the components in groups of matching parts + values
         self.grouped = self.net.groupComponents(self.components)
-        self.group_count = len(self.grouped)
 
         print(
-            f"Grouped netlist components into {colorama.Fore.LIGHTYELLOW_EX}{self.group_count}{colorama.Style.RESET_ALL} component groups.",
+            f"Grouped netlist components into {colorama.Fore.LIGHTYELLOW_EX}{len(self.grouped)}{colorama.Style.RESET_ALL} component groups.",
             flush=True,
         )
 
@@ -243,11 +252,7 @@ class KiCadNetlist:
         self.get_refdes_from_net()
 
     def get_refdes_from_net(self):
-        """Get reference designators from KiCAD netlist reader
-
-        :param grouped: List of kicad_netlist_reader component groups.
-        :return: A list of reference designator groups.
-        """
+        """Get reference designators from KiCAD netlist reader"""
         self.refdes_groups = []
         for group in self.grouped:
             refs_list = []
@@ -256,6 +261,10 @@ class KiCadNetlist:
             self.refdes_groups.append(refs_list)
 
     def remove_ignore_mpn_parts(self, ignore_mpns: list[str]):
+        """Remove the parts with the MPN values found in the ignore_mpns list
+
+        :param ignore_mpns: List containing MPN values to ignore
+        """
         new_grouped = []
         for group in self.grouped:
             # First component in group
@@ -267,10 +276,21 @@ class KiCadNetlist:
 
         # Update reference designator list and group count
         self.get_refdes_from_net()
-        self.group_count = len(self.grouped)
 
 
 class SupplierAPI:
+    """Base SupplierAPI class to be used by all supported
+    supplier APIs
+
+    :param name: Supplier name
+    :param api_status: Supplier API status. Should be "success" or any error string
+    :param comp_count: Number of components found
+    :param cache_comp_count: Number of components found in cache
+    :param cache_path: Supplier cache path
+    :param cache_ttl: Cache time-to-live
+    :param time: Time used for cache_ttl comparison
+    """
+
     def __init__(self, cache_ttl: int, time: int = EPOCH_TIME):
         self.name = ""
         self.api_status = ""
@@ -281,15 +301,42 @@ class SupplierAPI:
         self.time = time
 
     def api_init(self, config: dict) -> str:
+        """Supplier API initialisation function.
+        All derived classes must return a "success" string on success
+
+        :param config: Config dict
+        :raises NotImplementedError:
+        :return: "success" on success and other error strings on failure
+        """
         raise NotImplementedError("Must implement in derived subclass")
 
-    def search(self, mpn: str) -> list:
+    def search(self, mpn: str) -> list[dict]:
+        """Search the MPN with the Supplier API
+
+        :param mpn: MPN value
+        :raises NotImplementedError:
+        :return: List of API results
+        """
         raise NotImplementedError("Must implement in derived subclass")
 
     def parse(self, parts: list[dict]) -> list[dict]:
+        """Parse the API result into the dictionary KiABOM uses for BOM generation.
+        Look at the other parse functions for examples.
+
+        :param parts: List of API results
+        :raises NotImplementedError:
+        :return: List of parsed API results
+        """
         raise NotImplementedError("Must implement in derived subclass")
 
-    def get_part(self, mpn: str, ignore_mpns=[""]) -> dict:
+    def get_part(self, mpn: str, ignore_mpns: list[str] = [""]) -> dict:
+        """Get the specified part MPN for KiABOM. Calls the search and parser functions.
+        Also handles the required caching for each part.
+
+        :param mpn: MPN value
+        :param ignore_mpns: List of ignore MPN strings
+        :return:
+        """
         if mpn in ignore_mpns:
             return {}
 
@@ -320,13 +367,24 @@ class SupplierAPI:
         self.comp_count = self.comp_count + 1
         return found_part
 
-    def cache_mpn_normalise(self, mpn):
+    def cache_mpn_normalise(self, mpn: str) -> str:
+        """Normalize the MPN string to a string that can be used
+        as a file name.
+
+        :param mpn: MPN value
+        :return: normalized MPN value
+        """
         mpn = mpn.replace("/", "-")
         mpn = mpn.replace("\\", "-")
 
         return mpn
 
     def cache_query(self, mpn: str) -> dict | None:
+        """Query the cache for the requested MPN
+
+        :param mpn: requested MPN
+        :return: KiABOM dictionary or None if not found in cache
+        """
         cached_file = None
         for _, _, files in os.walk(self.cache_path):
             for f in files:
@@ -356,13 +414,19 @@ class SupplierAPI:
         except FileNotFoundError or IOError:
             return None
 
-    def cache_part(self, mpn, data):
+    def cache_part(self, mpn: str, data: dict):
+        """Store the specified part in the cache
+
+        :param mpn: MPN value
+        :param data: KiABOM dict of specified part
+        """
         filename = mpn + "___" + str(self.time) + ".pickle"
         cache_file = self.cache_path / filename
         with open(cache_file, "wb") as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     def print_stats(self):
+        """Print some stats to see how many parts from cache were used"""
         print(
             f"Searched {self.name}, requested {colorama.Fore.LIGHTYELLOW_EX}{self.comp_count}{colorama.Style.RESET_ALL} parts and retrieved {colorama.Fore.LIGHTYELLOW_EX}{self.cache_comp_count}{colorama.Style.RESET_ALL} from cache.",
             flush=True,
@@ -370,11 +434,16 @@ class SupplierAPI:
 
 
 class MouserAPI(SupplierAPI):
+    """Class for Mouser API.
+
+    :param currency_code: Currency code for/from parts search
+    """
+
     def __init__(self, config: dict, cache_ttl: int):
         super().__init__(cache_ttl)
         self.cache_path = CACHE_PATH / "mouser_cache"
         self.name = "Mouser"
-        self.currency_code = ""
+        self.currency_code = ""  # for Mouser it gets retrieved from the API result
         self.api_status = self.api_init(config)
 
     def api_init(self, config: dict) -> str:
@@ -404,14 +473,14 @@ class MouserAPI(SupplierAPI):
 
         # Search by Part-Number
         obj = api.MouserPartSearchRequest("partnumber")
-        obj.part_search(mpn, option="None")  # instead of "None" can be "Exact"
+        obj.part_search(mpn, option="None")
         res = obj.get_response()
 
         # Check for errors or print the returned results
         if res is None or res == {}:
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}.",
-                file = sys.stderr
+                file=sys.stderr,
             )
             return [{}]
 
@@ -419,8 +488,8 @@ class MouserAPI(SupplierAPI):
             search_results = res.get("SearchResults")
         except AttributeError:
             print(
-                    f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error with API response: {res}\n\nEnsure supplier website is live...",
-                    file = sys.stderr
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error with API response: {res}\n\nEnsure supplier website is live...",
+                file=sys.stderr,
             )
             sys.exit(1)
 
@@ -442,6 +511,11 @@ class MouserAPI(SupplierAPI):
         return parts
 
     def get_price_tiers(self, price_tiers_list: list[dict]) -> dict:
+        """MouserAPI-specific function to get the price tiers
+
+        :param price_tiers_list: Price tiers from API response
+        :return: Dict of the price tiers
+        """
         if not price_tiers_list:
             return {}
 
@@ -478,11 +552,16 @@ class MouserAPI(SupplierAPI):
 
 
 class DigiKeyAPI(SupplierAPI):
+    """Class for DigiKey API.
+
+    :param currency_code: Currency code for/from parts search
+    """
+
     def __init__(self, config: dict, cache_ttl: int):
         super().__init__(cache_ttl)
         self.cache_path = CACHE_PATH / "digikey_cache"
         self.name = "DigiKey"
-        self.currency_code = "USD"
+        self.currency_code = "USD"  # hard coded for DigiKey
         self.api_status = self.api_init(config)
 
     def api_init(self, config: dict) -> str:
@@ -531,7 +610,7 @@ class DigiKeyAPI(SupplierAPI):
         if res is None:
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request",
-                file = sys.stderr
+                file=sys.stderr,
             )
             return [{}]
 
@@ -551,11 +630,18 @@ class DigiKeyAPI(SupplierAPI):
         return parts
 
     def get_order_code(self, product_variations: list[dict]) -> str:
+        """DigiKeyAPI-specific function to get the order code.
+
+        :param product_variations: Product variations entry from API response
+        :return: Order code
+        """
         if not product_variations:
             return ""
 
-        # Get the Order Code with Cut Tape package type
         selected_product_variations = product_variations[0]
+
+        # Prefer the Order Code with Cut Tape package type
+        # This could be specified as a config option
         for prod_var in product_variations:
             id = prod_var.get("package_type", {}).get("id", {})
             if id == 2:  # Cut Tape package type id
@@ -567,6 +653,12 @@ class DigiKeyAPI(SupplierAPI):
     def get_order_code_price_tiers(
         self, order_code: str, product_variations: list[dict]
     ) -> dict:
+        """DigiKeyAPI-specific function to get the price tiers
+
+        :param order_code: Order code
+        :param product_variations: Product variations entry from API response
+        :return: Dict of the price tiers
+        """
         if not product_variations:
             return {}
 
@@ -611,17 +703,29 @@ class DigiKeyAPI(SupplierAPI):
 
 
 class PartsSearch:
-    """Class containing parts data from the API"""
+    """Class containing parts data from the API
+
+    :param parts_list: List of dictionaries of the parsed API results for each part
+    :param supplier: SupplierAPI object
+    """
 
     def __init__(
         self,
         supplier: str,
-        net_obj: KiCadNetlist,
+        grouped: list[list[comp]],
         ignore_mpns: list,
         config: dict,
         cache_ttl: int,
     ) -> None:
-        self.parts_list = [{} for _ in range(net_obj.group_count)]
+        """Initialisation function
+
+        :param supplier: Supported supplier string
+        :param grouped: KiCad netlist reader grouped parts
+        :param ignore_mpns: List of MPN values to ignore
+        :param config: Config dictionary
+        :param cache_ttl: Cache time-to-live value in seconds
+        """
+        self.parts_list = [{} for _ in range(len(grouped))]
         self.supplier = SupplierAPI(-1)
 
         if config.get(supplier.lower()) != "disabled":
@@ -633,7 +737,7 @@ class PartsSearch:
             # Update class members with API results if initialisation was succesful
             if self.supplier.api_status == "success":
                 print(f"Searching {self.supplier.name}...")
-                self.parts_list = self.search_parts(net_obj, ignore_mpns)
+                self.parts_list = self.search_parts(grouped, ignore_mpns)
                 self.supplier.print_stats()
             else:
                 print(
@@ -648,9 +752,15 @@ class PartsSearch:
                     self.currency_code = currency_code
                     break
 
-    def search_parts(self, net_obj: KiCadNetlist, ignore_mpns: list) -> list[dict]:
+    def search_parts(self, grouped: list[list[comp]], ignore_mpns: list) -> list[dict]:
+        """Search the parts from the KiCad netlist groups
+
+        :param grouped: KiCad netlist reader grouped parts
+        :param ignore_mpns: List of MPN values to ignore
+        :return: List of dictionaries of the parsed API results
+        """
         parts = []
-        for group in net_obj.grouped:
+        for group in grouped:
             component = group[0]
             mpn = component.getField("MPN")
             parts.append(self.supplier.get_part(mpn, ignore_mpns))
@@ -659,14 +769,25 @@ class PartsSearch:
 
 
 class CurrencyConverter:
-    def __init__(self, currency: str, use_cache: bool = True):
-        symbol = CurrencySymbols.get_symbol(currency)
+    """Class used for currency conversion
+
+    :param requested_currency: Currency specified
+    :param currency_rates: Currency rates in use
+    """
+
+    def __init__(self, currency_code: str, use_cache: bool = True):
+        """Initialisation function
+
+        :param currency_code: Currency code
+        :param use_cache: Boolean value for using the rates cache or not
+        """
+        symbol = CurrencySymbols.get_symbol(currency_code)
         if symbol:
             self.symbol = symbol
         else:
             self.symbol = ""
 
-        self.requested_currency = currency
+        self.requested_currency = currency_code
 
         self.currency_rates = {}
 
@@ -694,7 +815,14 @@ class CurrencyConverter:
 
             self.currency_rates = self.response_usd["rates"]
 
-    def convert(self, from_currency, price, to_currency):
+    def convert(self, from_currency: str, price: float, to_currency: str) -> float:
+        """Convert a price from one currency to the other
+
+        :param from_currency: Currency code to convert from
+        :param price: Price to convert
+        :param to_currency: Currency code to convert to
+        :return: Converted currency to 7 decimal places
+        """
         return round(
             price
             * (self.currency_rates[to_currency] / self.currency_rates[from_currency]),
@@ -706,9 +834,11 @@ class BomData:
     """Class containing the file data required to create the BOM.
     Has data from both primary and secondary suppliers.
 
-    :param manufacturer: Manufacturer list.
-    :param primary_order_codes: Primary order codes list.
-    :param primary_supplier: Primary supplier list containing the primary supplier string.
+    :param pri_res: Primary supplier API response
+    :param sec_res: Secondary supplier API response
+    :param currency: CurrencyConverter object
+    :param filled_res: Primary API response with gaps filled from secondary response
+    :param total_price_sum: Total price sum of all parts
     """
 
     def __init__(
@@ -719,6 +849,14 @@ class BomData:
         board_quantity: int,
         currency: CurrencyConverter | None,
     ) -> None:
+        """
+
+        :param pri_obj: PartsSearch object for primary supplier
+        :param sec_obj: PartsSearch object for secondary supplier
+        :param refdes_groups:
+        :param board_quantity:
+        :param currency:
+        """
         self.pri_res = pri_obj.parts_list
         self.sec_res = sec_obj.parts_list
         self.currency = currency
@@ -731,28 +869,28 @@ class BomData:
         self.insert_in_api_response(self.pri_res, "Supplier", pri_obj.supplier.name)
         self.insert_in_api_response(self.sec_res, "Supplier", sec_obj.supplier.name)
 
-        self.com_res = []  # merged secondary into primary
+        self.filled_res = []
         for pri, sec in zip(self.pri_res, self.sec_res):
             if pri:
-                self.com_res.append(pri)
+                self.filled_res.append(pri)
             else:
-                self.com_res.append(sec)
+                self.filled_res.append(sec)
 
-        self.insert_in_api_response(self.com_res, "Currency", self.currency_symbol)
+        self.insert_in_api_response(self.filled_res, "Currency", self.currency_symbol)
 
-        if len(refdes_groups) != len(self.com_res):
+        if len(refdes_groups) != len(self.filled_res):
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} The length of the reference designator groups and API result must match because the index is used to match API result with the netlist. Aborting BOM generation...",
-                file = sys.stderr
+                file=sys.stderr,
             )
             sys.exit(1)
 
         # Get the quantities for each part and insert into common result
-        for group, part in zip(refdes_groups, self.com_res):
+        for group, part in zip(refdes_groups, self.filled_res):
             part["Quantity"] = int(len(group) * board_quantity)
 
         # Get the price for each part and insert into common result
-        for part in self.com_res:
+        for part in self.filled_res:
             if part.get("Order Code"):
                 price_tiers = part.get("Price Tiers", {})
                 for key in price_tiers.keys():
@@ -763,7 +901,7 @@ class BomData:
 
         if self.currency:
             # Convert from part's currency to requested currency
-            for part in self.com_res:
+            for part in self.filled_res:
                 price = part.get("Price")
                 if price != "":
                     part["Price"] = self.currency.convert(
@@ -773,26 +911,52 @@ class BomData:
                     )
 
         # Calculate total price
-        self.total_price = 0
-        for part in self.com_res:
+        self.total_price_sum = 0
+        for part in self.filled_res:
             price = part.get("Price")
             if price and price != "":
-                self.total_price = self.total_price + price
+                self.total_price_sum = self.total_price_sum + price
 
     def insert_in_api_response(self, result: list[dict], key: str, val: str):
+        """Insert an entry with the same value in all valid API responses
+
+        :param result: API result dictionary
+        :param key: New key for the dictionary
+        :param val: New value for the dictionary
+        """
         for part in result:
             # Check if a result for the part was been found. Could be any API field
             if part.get("Order Code"):
                 part.update({key: val})
 
 
+def get_footprint_name(text: str) -> str:
+    """Get the footprint name from the Lib:Name string in the footprint symbol field.
+
+    :param text: Footprint field string.
+    :return: Footprint name or blank.
+    """
+    # In the case of no colon in the footprint field for some reason
+    try:
+        return text.split(":", 1)[1]
+    except IndexError:
+        return ""
+
+
 def get_bom_row(
     pos: int,
     group: list[comp],
     columns: list[str],
-    opdata: BomData,
+    bom_data: BomData,
 ) -> list[str]:
-    """Generate a BOM row as a list of strings."""
+    """Generate a BOM row as a list of strings.
+
+    :param pos: Index position
+    :param group: List of comp() objects from the KiCad netlist reader indicating the component group
+    :param columns: Columns list to use
+    :param opdata: BomData object
+    :return: List of strings indicating the BOM row of the component group
+    """
 
     c = group[0]  # Initialise with the first component in the first group
 
@@ -801,9 +965,9 @@ def get_bom_row(
     # can be filled in once per group
     refs = ", ".join(component.getRef() for component in group)
 
-    quantity = opdata.com_res[pos].get("Quantity", "")
-    price = opdata.com_res[pos].get("Price", "")
-    currency_symbol = opdata.com_res[pos].get("Currency", "")
+    quantity = bom_data.filled_res[pos].get("Quantity", "")
+    price = bom_data.filled_res[pos].get("Price", "")
+    currency_symbol = bom_data.filled_res[pos].get("Currency", "")
 
     row = []
 
@@ -829,17 +993,17 @@ def get_bom_row(
         elif name == "Rating":
             row.append(c.getField("Rating"))
         elif name == "Manufacturer":
-            row.append(opdata.com_res[pos].get("Manufacturer", ""))
+            row.append(bom_data.filled_res[pos].get("Manufacturer", ""))
         elif name == "MPN":
             row.append(c.getField("MPN"))
         elif name == "Preferred Supplier":
-            row.append(opdata.pri_res[pos].get("Supplier", ""))
+            row.append(bom_data.pri_res[pos].get("Supplier", ""))
         elif name == "Order Code":
-            row.append(opdata.pri_res[pos].get("Order Code", ""))
+            row.append(bom_data.pri_res[pos].get("Order Code", ""))
         elif name == "Alt. Supplier":
-            row.append(opdata.sec_res[pos].get("Supplier", ""))
+            row.append(bom_data.sec_res[pos].get("Supplier", ""))
         elif name == "Alt. Order Code":
-            row.append(opdata.sec_res[pos].get("Order Code", ""))
+            row.append(bom_data.sec_res[pos].get("Order Code", ""))
         elif name == "Unit/Reel Price":
             row.append(f"{currency_symbol}{price}")
         elif name == "Total Price":
@@ -855,11 +1019,6 @@ def get_bom_row(
     return row
 
 
-def csv_write_bom(out, columns, grouped, opdata):
-    for pos, group in enumerate(grouped):
-        writerow(out, get_bom_row(pos, group, columns, opdata))
-
-
 def html_get_td_string(string: str) -> str:
     """Get a string as a table data cell HTML element.
 
@@ -869,9 +1028,19 @@ def html_get_td_string(string: str) -> str:
     return "<td>" + string + "</td>"
 
 
-def html_get_table(html_text, columns, grouped, opdata):
+def html_get_table(
+    html_text: str, columns: list[str], grouped: list[list[comp]], bomd_data: BomData
+) -> str:
+    """Get the HTML table containing the BOM data
+
+    :param html_text: Text containing HTML template
+    :param columns: Columns list
+    :param grouped: A list containing lists of grouped parts
+    :param opdata: BomData object
+    :return: HTML string
+    """
     for pos, group in enumerate(grouped):
-        values = get_bom_row(pos, group, columns, opdata)
+        values = get_bom_row(pos, group, columns, bomd_data)
         row = (
             "\t<tr>"
             + "".join(html_get_td_string(str(v)) for v in values)
@@ -885,21 +1054,175 @@ def html_get_table(html_text, columns, grouped, opdata):
     return html_text
 
 
-def get_footprint_name(text: str) -> str:
-    """Get the footprint name from the Lib:Name string in the footprint symbol field.
+def html_output_general_info(html: str, net: netlist, board_quantity: int) -> str:
+    """Output some general info afte the HTML BOM table.
 
-    :param text: Footprint field string.
-    :return: Footprint name or blank.
+    :param html: HTML string.
+    :param net: Netlist object opened using kicad_netlist_reader.
+    :param board_quantity: Board quantity.
+    :return: HTML string.
     """
-    # In the case of no colon in the footprint field for some reason
-    try:
-        return text.split(":", 1)[1]
-    except IndexError:
-        return ""
+    html = html.replace("<!--QUANTITY-->", "Board Quantity" + str(board_quantity))
+    html = html.replace("<!--SOURCE-->", "Schematic" + str(net.getSource()))
+    html = html.replace(
+        "<!--COMPCOUNT-->", "Component Count:" + str(len(net.components))
+    )
+    html = html.replace("<!--DATE-->", "Date:" + str(net.getDate()))
+    html = html.replace(
+        "<!--TOOL-->", "Generator:" + sys.argv[0] + " KiABOM v" + __version__
+    )
+    html = html.replace(
+        "<!--LINK-->", "Link: https://github.com/Mage-Control-Systems/kiabom"
+    )
+
+    return html
 
 
-# Global variable to be used in the equ functions
-global_group_fields = []
+def writerow(acsvwriter, columns: list[str]):
+    """Override csv.writer's writerow() to support encoding conversion (initial encoding is utf8)
+
+    :param acsvwriter: A csv.writer object used to write the columns list.
+    :type acsvwriter: csv.writer object
+    :param columns: A list of string values to write as a row.
+    """
+    utf8row = []
+    for col in columns:
+        utf8row.append(str(col))
+    acsvwriter.writerow(utf8row)
+
+
+def csv_write_bom(
+    out, columns: list[str], grouped: list[list[comp]], bom_data: BomData
+):
+    """Write the rows for the CSV BOM
+
+    :param out: A csv.writer object created with csv.writer().
+    :type out: csv.writer object
+    :param columns:  Columns list
+    :param grouped: A list containing lists of grouped parts
+    :param bom_data: BomData object
+    """
+    for pos, group in enumerate(grouped):
+        writerow(out, get_bom_row(pos, group, columns, bom_data))
+
+
+def csv_output_general_info(out, net: netlist, board_quantity: int):
+    """Write the general info to the CSV
+
+    :param out: A csv.writer object created with csv.writer().
+    :type out: csv.writer object
+    :param net: The netlist object created by opening the XML with kicad_netlist_reader.
+    :param board_quantity: Board quantity.
+    """
+    writerow(out, [""])
+    writerow(out, ["Board Quantity:", str(board_quantity)])
+    writerow(out, ["Schematic:", str(net.getSource())])
+    writerow(out, ["Component Count:", str(len(net.components))])
+    writerow(out, ["Date:", str(net.getDate())])
+    writerow(out, ["Generator:", sys.argv[0], " KiABOM v", __version__])
+    writerow(out, ["Link: https://github.com/Mage-Control-Systems/kiabom"])
+
+
+def write_to_file(
+    f: io.TextIOWrapper,
+    output_format: str,
+    headers_flag: bool,
+    info_flag: bool,
+    sum_flag: bool,
+    board_quantity: int,
+    columns: list[str],
+    net_obj: KiCadNetlist,
+    bom_data: BomData,
+):
+    """Write to the corresponding file the collated data.
+
+    :param f: File object
+    :param output_format: Selected output format.
+    :param headers_flag: Flag to output headers to the BOM table.
+    :param info_flag: Flag to output extra info to the end of the file.
+    :param sum_flag: Flag to output the total price sum after the BOM table.
+    :param board_quantity: Specify board quantity.
+    :param columns: Columns to be used when outputting BOM.
+    :param net_obj: A Net object.
+    :param bom_data: A BomData object.
+    """
+    if output_format in ("csv", "txt"):
+        # Create a new csv writer object to use as the output formatter
+        out = csv.writer(
+            f, lineterminator="\n", delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        # Output column headings
+        if headers_flag:
+            writerow(out, columns)
+
+        # Write each row to file
+        csv_write_bom(out, columns, net_obj.grouped, bom_data)
+
+        if sum_flag:
+            writerow(out, [""])
+            writerow(
+                out,
+                [
+                    "Total Price Sum:",
+                    bom_data.currency_symbol + str(bom_data.total_price_sum),
+                ],
+            )
+
+        # Output column headings and some info about the generator/script
+        if info_flag:
+            csv_output_general_info(out, net_obj.net, board_quantity)
+
+    elif output_format == "html":
+        # Start with a basic html template
+        html = """
+        # <!DOCTYPE html PUBLIC   "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        #     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        <html xmlns="http://www.w3.org/1999/xhtml">
+            <head>
+                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+                <title>KiABOM Bill Of Materials</title>
+            </head>
+            <body>
+            <h1>KiABOM HTML Bill Of Materials</h1>
+            <p><!--QUANTITY--></p>
+            <p><!--SOURCE--></p>
+            <p><!--DATE--></p>
+            <p><!--TOOL--></p>
+            <p><!--COMPCOUNT--></p>
+            <p><!--LINK--></p>
+            <table border="1">
+            <!--TABLEROW-->
+            </table>
+            </body>
+        </html>
+            """
+
+        if headers_flag:
+            row = "\t<tr>"
+            for column in columns:
+                row += "<th>" + column + "</th>"
+            row += "</tr>\n\t\t\t"
+            html = html.replace("<!--TABLEROW-->", row + "<!--TABLEROW-->")
+
+        # Get the HTML table with BOM data
+        html = html_get_table(html, columns, net_obj.grouped, bom_data)
+
+        if sum_flag:
+            row = "\t<tr>"
+            row += html_get_td_string("Total Price Sum:")
+            row += html_get_td_string(
+                bom_data.currency_symbol + str(bom_data.total_price_sum)
+            )
+            row += "</tr>\n\t\t\t"
+            html = html.replace("<!--TABLEROW-->", row + "<!--TABLEROW-->")
+
+        # Output column headings and some info about the generator/script
+        if info_flag:
+            html = html_output_general_info(html, net_obj.net, board_quantity)
+
+        # Write to file
+        f.write(html)
 
 
 def get_equ(group_fields: str, group_preset: str, append_groups: str):
@@ -1011,19 +1334,6 @@ def get_equ(group_fields: str, group_preset: str, append_groups: str):
     return equ
 
 
-def writerow(acsvwriter, columns: list[str]):
-    """Override csv.writer's writerow() to support encoding conversion (initial encoding is utf8)
-
-    :param acsvwriter: A csv.writer object used to write the columns list.
-    :type acsvwriter: csv.writer
-    :param columns: A list of string values to write as a row.
-    """
-    utf8row = []
-    for col in columns:
-        utf8row.append(str(col))
-    acsvwriter.writerow(utf8row)
-
-
 def open_output_file(output_file: str) -> io.TextIOWrapper:
     """Open the file to be used for outputing the BOM data.
 
@@ -1062,47 +1372,6 @@ def print_title_screen():
             """,
         file=sys.stdout,
     )
-
-
-def csv_output_general_info(out, net: netlist, board_quantity: int):
-    """
-
-    :param out: A csv.writer object created with csv.writer().
-    :type out: csv.writer.
-    :param net: The netlist object created by opening the XML with kicad_netlist_reader.
-    :param board_quantity: Board quantity.
-    """
-    writerow(out, [""])
-    writerow(out, ["Board Quantity:", str(board_quantity)])
-    writerow(out, ["Schematic:", str(net.getSource())])
-    writerow(out, ["Component Count:", str(len(net.components))])
-    writerow(out, ["Date:", str(net.getDate())])
-    writerow(out, ["Generator:", sys.argv[0], " KiABOM v", __version__])
-    writerow(out, ["Link: https://github.com/Mage-Control-Systems/kiabom"])
-
-
-def html_output_general_info(html: str, net: netlist, board_quantity: int) -> str:
-    """Output some general info afte the HTML BOM table.
-
-    :param html: HTML string.
-    :param net: Netlist object opened using kicad_netlist_reader.
-    :param board_quantity: Board quantity.
-    :return: HTML string.
-    """
-    html = html.replace("<!--QUANTITY-->", "Board Quantity" + str(board_quantity))
-    html = html.replace("<!--SOURCE-->", "Schematic" + str(net.getSource()))
-    html = html.replace(
-        "<!--COMPCOUNT-->", "Component Count:" + str(len(net.components))
-    )
-    html = html.replace("<!--DATE-->", "Date:" + str(net.getDate()))
-    html = html.replace(
-        "<!--TOOL-->", "Generator:" + sys.argv[0] + " KiABOM v" + __version__
-    )
-    html = html.replace(
-        "<!--LINK-->", "Link: https://github.com/Mage-Control-Systems/kiabom"
-    )
-
-    return html
 
 
 def get_columns(columns: str, preset: str) -> list[str]:
@@ -1372,107 +1641,6 @@ def check_args(args: argparse.Namespace):
         sys.exit(1)
 
 
-def write_to_file(
-    f: io.TextIOWrapper,
-    output_format: str,
-    headers_flag: bool,
-    info_flag: bool,
-    sum_flag: bool,
-    board_quantity: int,
-    columns: list[str],
-    net_obj: KiCadNetlist,
-    bom_data: BomData,
-):
-    """Write to the corresponding file the collated data.
-
-    :param f: File object
-    :param output_format: Selected output format.
-    :param headers_flag: Flag to output headers to the BOM table.
-    :param info_flag: Flag to output extra info to the end of the file.
-    :param sum_flag: Flag to output the total price sum after the BOM table.
-    :param board_quantity: Specify board quantity.
-    :param columns: Columns to be used when outputting BOM.
-    :param net_obj: A Net object.
-    :param parts_file_data: A PartsFileData object.
-    """
-    if output_format in ("csv", "txt"):
-        # Create a new csv writer object to use as the output formatter
-        out = csv.writer(
-            f, lineterminator="\n", delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Output column headings
-        if headers_flag:
-            writerow(out, columns)
-
-        # Output the component groups to the csv based on data retrieved by the suppliers
-        csv_write_bom(out, columns, net_obj.grouped, bom_data)
-
-        if sum_flag:
-            writerow(out, [""])
-            writerow(
-                out,
-                [
-                    "Total Price Sum:",
-                    bom_data.currency_symbol + str(bom_data.total_price),
-                ],
-            )
-
-        # Output column headings and some info about the generator/script
-        if info_flag:
-            csv_output_general_info(out, net_obj.net, board_quantity)
-
-    elif output_format == "html":
-        # Start with a basic html template
-        html = """
-        # <!DOCTYPE html PUBLIC   "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        #     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-        <html xmlns="http://www.w3.org/1999/xhtml">
-            <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-                <title>KiABOM Bill Of Materials</title>
-            </head>
-            <body>
-            <h1>KiABOM HTML Bill Of Materials</h1>
-            <p><!--QUANTITY--></p>
-            <p><!--SOURCE--></p>
-            <p><!--DATE--></p>
-            <p><!--TOOL--></p>
-            <p><!--COMPCOUNT--></p>
-            <p><!--LINK--></p>
-            <table border="1">
-            <!--TABLEROW-->
-            </table>
-            </body>
-        </html>
-            """
-
-        if headers_flag:
-            row = "\t<tr>"
-            for column in columns:
-                row += "<th>" + column + "</th>"
-            row += "</tr>\n\t\t\t"
-            html = html.replace("<!--TABLEROW-->", row + "<!--TABLEROW-->")
-
-        # Output the component groups to the csv based on data retrieved by the suppliers
-        html = html_get_table(html, columns, net_obj.grouped, bom_data)
-
-        if sum_flag:
-            row = "\t<tr>"
-            row += html_get_td_string("Total Price Sum:")
-            row += html_get_td_string(
-                bom_data.currency_symbol + str(bom_data.total_price)
-            )
-            row += "</tr>\n\t\t\t"
-            html = html.replace("<!--TABLEROW-->", row + "<!--TABLEROW-->")
-
-        # Output column headings and some info about the generator/script
-        if info_flag:
-            html = html_output_general_info(html, net_obj.net, board_quantity)
-
-        f.write(html)
-
-
 def set_format_from_output_file_extension(output_file: str) -> str:
     """Automatically set the output format based on the output file extension
 
@@ -1497,24 +1665,43 @@ def set_format_from_output_file_extension(output_file: str) -> str:
 
 
 def read_config() -> dict:
+    """Read the config file placed in the same directory as the main script file.
+    If no config was found, use the hardcoded options instead.
+
+    :return: Dictionary of YAML file
+    """
     config_path = DIR_PATH / "config.yaml"
     try:
         with open(config_path, "r") as f:
             try:
-                return yaml.safe_load(f)
+                config = yaml.safe_load(f)
             except yaml.YAMLError as e:
                 print(
                     f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error reading config.yaml file:",
                     e,
-                    file = sys.stderr
+                    file=sys.stderr,
                 )
                 sys.exit(1)
-    except FileNotFoundError or IOError:
+    except FileNotFoundError:
+        print(
+            f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No config.yaml file found, continuing with hardcoded API credentials."
+        )
+        config = {
+            "Mouser": {"key": MOUSER_API_KEY},
+            "DigiKey": {
+                "client_id": DIGIKEY_CLIENT_ID,
+                "client_secret": DIGIKEY_CLIENT_SECRET,
+                "sandbox": DIGIKEY_CLIENT_SANDBOX,
+            },
+        }
+    except IOError:
         print(
             f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} config.yaml could not be opened for reading. Use '--no-api' to skip config check.",
-            file = sys.stderr
+            file=sys.stderr,
         )
         sys.exit(1)
+
+    return config
 
 
 def main(argv: list[str]):
@@ -1771,6 +1958,7 @@ def main(argv: list[str]):
     # If no internet then just skip the API integration
     if not has_internet():
         args.no_api = True
+        args.cache_ttl = -1
         args.download_datasheets = False
         print(
             "Detected no internet, using APIs and downloading datasheets is unavailable.",
@@ -1796,10 +1984,10 @@ def main(argv: list[str]):
 
     # Search for the parts using the APIs
     primary_supplier_parts = PartsSearch(
-        args.primary_supplier, net_obj, ignore_mpns, config, args.cache_ttl
+        args.primary_supplier, net_obj.grouped, ignore_mpns, config, args.cache_ttl
     )
     secondary_supplier_parts = PartsSearch(
-        args.secondary_supplier, net_obj, ignore_mpns, config, args.cache_ttl
+        args.secondary_supplier, net_obj.grouped, ignore_mpns, config, args.cache_ttl
     )
 
     # Columns to be used for each part.

@@ -756,7 +756,7 @@
     "meta": {
       "version": 1
     },
-    "net_format_name": "aBOM",
+    "net_format_name": "XML",
     "page_layout_descr_file": "Mage KiCad Drawing Sheet Template.kicad_wks",
     "plot_directory": "",
     "space_save_all_events": true,
