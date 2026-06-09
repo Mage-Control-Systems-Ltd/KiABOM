@@ -61,11 +61,15 @@ from mouser import api, base
 import digikey
 from digikey.v4.productinformation import KeywordRequest
 
+# Determine if application is a script file or an executable
+if getattr(sys, "frozen", False):
+    DIR_PATH = Path(sys.executable).resolve().parent
+else:
+    DIR_PATH = Path(__file__).resolve().parent
 
 EPOCH_TIME = epoch_time = int(time.time())
 MAX_GROUP_FIELDS = 7
 QUIET = False
-DIR_PATH = Path(__file__).resolve().parent
 CACHE_PATH = DIR_PATH / "kiabom_cache"
 
 column_preset_dict = {
