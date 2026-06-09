@@ -15,7 +15,7 @@ from kiabom import __author__ as _author
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 project = 'KiABOM'
 author = _author
-copyright = f"2025, {_author}"
+copyright = f"2026, {_author}"
 release = f"v{_version}"
 
 # -- General configuration ---------------------------------------------------
