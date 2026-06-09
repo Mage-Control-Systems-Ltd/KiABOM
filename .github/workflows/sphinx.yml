@@ -20,8 +20,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r src/requirements.txt
           pip install -r docs/requirements.txt
-          pip install setuptools
-          pip install six
 
       - name: Set PYTHONPATH for src/ layout
         run: echo "PYTHONPATH=$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
