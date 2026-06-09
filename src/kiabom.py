@@ -1675,6 +1675,9 @@ def read_config() -> dict:
         with open(config_path, "r") as f:
             try:
                 config = yaml.safe_load(f)
+                print(
+                    "Found config.yaml."
+                )
             except yaml.YAMLError as e:
                 print(
                     f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error reading config.yaml file:",
@@ -1684,7 +1687,7 @@ def read_config() -> dict:
                 sys.exit(1)
     except FileNotFoundError:
         print(
-            f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No config.yaml file found, continuing with hardcoded API credentials."
+            "No config.yaml file found, continuing with hardcoded API credentials."
         )
         config = {
             "Mouser": {"key": MOUSER_API_KEY},
