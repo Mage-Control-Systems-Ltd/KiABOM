@@ -5,3 +5,5 @@ kicad-netlist-reader == 7.0.1
 mouser == 0.1.6
 pyyaml == 6.0.2
 requests == 2.32.3
+setuptools == 82.0.1
+six == 1.17.0
