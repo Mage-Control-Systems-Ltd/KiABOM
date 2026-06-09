@@ -3,7 +3,9 @@ currency-symbols == 2.0.4
 git+https://github.com/hurricaneJoef/digikey-api/ # DigiKey API v4
 kicad-netlist-reader == 7.0.1
 mouser == 0.1.6
+pyOpenSSL == 25.0.0
 pyyaml == 6.0.2
 requests == 2.32.3
 setuptools == 82.0.1
 six == 1.17.0
+
