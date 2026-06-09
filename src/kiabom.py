@@ -28,7 +28,7 @@ Command line:
 
 ###### KiABOM API Config ######
 # These values get used if no config.yaml file is found
-# Set all to None if not used and all values are strings
+# All values are strings and set to None if not used
 MOUSER_API_KEY = None
 
 DIGIKEY_CLIENT_ID = None
@@ -1809,7 +1809,7 @@ def main(argv: list[str]):
     parser.add_argument(
         "-p",
         "--primary-supplier",
-        help="select primary supplier from supplier list. View by executing KiABOM with '--list-suppliers' option.",
+        help="select primary supplier. View by executing KiABOM with '--list-suppliers' option.",
         default="Mouser",
     )
     parser.add_argument(

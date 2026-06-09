@@ -2,7 +2,7 @@ Installation
 ============
 There are two ways of installing and using KiABOM. One is using the executable (either the provided one or building one) and other is using it through Python. For regular users that aren't familiar with Python it is recommended to use the executable as that is a much less involved process. In this case, if it is preferred to not edit Path variables or move files, the executable path can be used instead of the plain ``kiabom`` invocation, i.e. ``C:\Users\USER\Documents\kiabom.exe``.
 
-See the corresponding :ref:`Executable Installation <exec installation>` and :ref:`Python Installation <python installation>` sections for how to install KiABOM. Make sure you also :ref:`Setup KiCost <setup kicost>` with your API keys. 
+See the corresponding :ref:`Executable Installation <exec installation>` and :ref:`Python Installation <python installation>` sections for how to install KiABOM. Make sure you also :ref:`Setup APIs <setup apis>` with your API keys. 
 
 .. _exec installation:
 
@@ -32,8 +32,8 @@ The install script downloads and moves the ``kiabom.exe`` and ``config.yaml`` fi
 
 Manual Installation
 ...................
-1. First clone the repo, to get the executable, config file, and the Python source files.
-2. The ``config.yaml`` file contains the configuration for KiCost and the API keys, and it just needs to be next to where you have the executable. This is different from the usual KiCost installation where it is placed in another folder in the user directory.  
+1. First clone the repo to get the config file, and the Python source files. If required, download the executable from the releases page.
+2. The ``config.yaml`` file contains the API keys, and it just needs to be next to where you have the executable.  
 3. Copy the repo path or place the executable in any folder and make note of its path.
 4. Edit your environment variables by searching ``Edit environment variables for your account`` in the start menu search, and clicking on the first result.
 5. Find the Path variable under User and add the path of the folder containing the executable.
@@ -72,7 +72,7 @@ In this process it is assumed you have Python 3 and ``pip`` installed. For Linux
 Windows
 ^^^^^^^
 1. Clone the repo to a known location.
-2. An optional step would be to move or copy ``kiabom.py`` and ``config.yaml`` files to ``C:\Users\USERNAME\AppData\Local\Programs\KiCad\9.0\bin\scripting\plugins``, which is where the rest of the shipped generator scripts are.
+2. An optional step would be to move or copy ``kiabom.py`` and ``config.yaml`` files to ``C:\Users\USERNAME\AppData\Local\Programs\KiCad\VERSION\bin\scripting\plugins``, which is where the rest of the shipped generator scripts are.
 3. Open the KiCad Command Prompt by searching for it in the start menu.
 4. Navigate to the repo location and go to the ``src/`` directory, and execute the command below to install KiABOM dependencies,
 
@@ -92,21 +92,26 @@ Linux
 
 .. _here: https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/
 
-4. If it fails on `wxPython` you may need an external dependency, so install this below, 
-
-.. code-block:: text
-
-    sudo apt-get install libwebkit2gtk-4.1-dev
-
 macOS
 ^^^^^
 KiABOM has not been tested on macOS but it believed that the Linux instructions should be very similar and familiar to macOS users.
 
-.. _setup kicost:
+.. _setup apis:
 
-Setup KiCost
+Setup APIs
 -----------------------
-To setup KiCost you only need to configure the `config.yaml` file by pasting your API keys in the correct sections. Instructions in this section are based on the current state of the supplier APIs in November of 2025. To get parts data from Mouser you need to sign up for their `Search API`_. For DigiKey you need to go in their developer portal, create an Organisation, then create a Production app using `ProductInformation V4`_.
+To setup the APIs, you can either use the internal variables located at the start of ``kiabom.py`` (only possible when using Python to execute the script), or by setting up a ``config.yaml`` using the template below.
+
+.. code-block:: text
+
+    DigiKey:
+        client_id:
+        client_secret:
+        sandbox: false
+    Mouser:
+        key:
+
+API usage is based on the current state of the supplier APIs in June 2026. To get parts data from Mouser you need to sign up for their `Search API`_. For DigiKey you need to go in their developer portal, create an Organisation, then create a Production app using `ProductInformation V4`_.
 
 .. _Search API: https://www.mouser.co.uk/api-search/
 .. _ProductInformation V4: https://developer.digikey.com/products/product-information-v4

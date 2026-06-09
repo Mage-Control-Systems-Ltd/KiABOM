@@ -4,9 +4,7 @@ KiABOM documentation
 .. raw:: html 
    :file: ../images/kiabom-logo.svg
 
-KiABOM is an automatic Bill Of Materials (BOM) generator script used to extract component information from a KiCad schematic, and use that information with `KiCost`_ to get part details from suppliers like the price, manufacturer, order-code, stock, and more. The currently supported suppliers are Mouser and Digikey.
-
-.. _KiCost: https://github.com/hildogjr/KiCost
+KiABOM is an automatic Bill Of Materials (BOM) generator script used to extract component information from a KiCad schematic, and use that information with supplier APIs to get component details like the price, manufacturer, order-code, stock, and more. Currently supported suppliers are Mouser and Digikey.
 
 .. toctree::
    installation

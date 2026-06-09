@@ -1,3 +1,2 @@
 sphinx==8.2.3
-kicad-netlist-reader == 7.0.1
 
