@@ -1933,6 +1933,9 @@ def main(argv: list[str]):
 
     QUIET = args.quiet
 
+    # Create the cache directory
+    os.makedirs(CACHE_PATH, exist_ok=True)
+
     # Override the component equivalence operator for grouping
     kicad_netlist_reader.comp.__eq__ = get_equ(
         args.group_by, args.group_preset.lower(), args.append_groups
