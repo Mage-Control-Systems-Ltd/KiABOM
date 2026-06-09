@@ -1,6 +1,6 @@
 Usage
 =====
-KiABOM detects the use of an 'MPN' field in the schematic symbols. The field name is **very specific** and **case sensitive**. It also ignores searching for part numbers with the values 'Generic', 'TBD', and 'Manufacturer's Stock' in the MPN field. Therefore, to use KiABOM, create an MPN field in each symbol and add the MPN in that field description.
+KiABOM detects the use of an 'MPN' field in the schematic symbols. The field name is **specific** and **case sensitive**. It also ignores searching for part numbers with the values 'Generic', 'TBD', and 'Manufacturer's Stock' in the MPN field. Therefore, to use KiABOM, create an MPN field in each symbol and add the MPN in that field description.
 
 You can use the generator either through the terminal or through KiCad itself. See the relevant sections below for more information and the :ref:`Example Uses <example_uses>` section for some example command options. Supports all modern KiCad versions using Python v3.9+.
 
@@ -34,7 +34,7 @@ And if using a Python virtual environment you would use,
 
     path/to/python/venv/bin/python /path/to/kiabom.py "%I" [options]
 
-These commands use the current schematic as input to KiABOM and the project name as the CSV name. The `.csv` extension can be changed to `.html` or `.txt` and the output format will be detected and changed by the generator.
+These commands use the current schematic's XML as input to KiABOM.
 
 Via Legacy BOM Generator
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -169,38 +169,41 @@ The ``--help`` page for KiABOM is shown below along with some examples,
       --version             output the KiABOM version.
       --info                append to the output some general info about the generated BOM like, board quantity, schematic name, component count, date, and generator used.
       --no-headers          don't output BOM column headers.
-      -k, --no-kicost       disable the KiCost integration.
-      --preset PRESET       specify both the columns and group presets at the same time with this option. Both '--columns-preset' and '--group-preset' overwrite this option.
+      --no-api              disable using the APIs to retrieve online parts data. Using this option also skips the config check.
+      --preset PRESET       specify both the columns and group presets at the same time with this option. Both '--columns-preset' and '--group-preset' overwrite this option. Use '--list-presets' to list available.
       --columns-preset COLUMNS_PRESET
-                            set a BOM preset for what part data should be outputed. Overwrites '--columns' if it comes after. Use '--append-columns' to append columns to a preset. Choose between 'Default', 'Minimal', 'No-KiCost', and 'Mage'.
+                            set a BOM preset for what part data should be outputed. Overwrites '--columns' if it comes after. Use '--append-columns' to append columns to a preset. Use '--list-column-presets' to list available.
       --group-preset GROUP_PRESET
-                            choose a group preset. Available ones are 'Default', 'Minimal', and 'Mage'. Append to a preset with '--append-groups'.
+                            choose a group preset. Use '--list-group-presets' to list available. Append to a preset with '--append-groups'.
       -g, --group-by GROUP_BY
-                            choose what symbol fields to group by, Grouping by 'Value' and 'Footprint' is mandatory. Choose up to 5 additional fields to group by. Use values separated by commas and place values in quotes if they contain spaces.
+                            choose what symbol fields to group by, Grouping by 'Value' and 'Footprint' is mandatory. Choose up to 5 additional fields to group by. Use values separated by commas and place values in quotes if they contain
+                            spaces.
       -c, --columns COLUMNS
-                            set the columns to be outputed. Place column names inside quotes and separate them using a comma. Quotes are not required if column names don't contain spaces. Overwrites '--preset' if it comes after. Use '--append-columns' to append columns to a preset and `--list-supported-columns' to list valid column values.
+                            set the columns to be outputed. Place column names inside quotes and separate them using a comma. Quotes are not required if column names don't contain spaces. Overwrites '--preset' if it comes after. Use '--
+                            append-columns' to append columns to a preset and `--list-supported-columns' to list valid column values.
       -a, --append-columns APPEND_COLUMNS
                             append columns to the selected preset. Use values separated by commas and place values in quotes in they contain spaces.
       --append-groups APPEND_GROUPS
                             append to a group preset.
       --ignore-mpns IGNORE_MPNS
-                            add more MPN field values to ignore. This option appends the default option of 'Generic','TBD','Manufacturer's Stock', and '' (blank). Use values separated by commas and place values in quotes in they contain spaces.
+                            add more MPN field values to ignore. This option appends the default option of 'Generic','TBD','Manufacturer's Stock', and '' (blank). Use values separated by commas and place values in quotes in they contain
+                            spaces.
       -p, --primary-supplier PRIMARY_SUPPLIER
-                            select primary supplier from supplier list. View by executing KiABOM with '--list-suppliers' option.
+                            select primary supplier. View by executing KiABOM with '--list-suppliers' option.
       -s, --secondary-supplier SECONDARY_SUPPLIER
                             select secondary supplier. View by executing KiABOM with '--list-suppliers' option.
       -d, --download-datasheets
                             optionally donwload the datasheets for the parts with valid URLs in a 'Datasheet' field. Files get downloaded to a 'datasheets' folder in the current working directory.
-      -u, --primary-only    only use the primary supplier.
       -q, --quiet           silence warnings
       --kefbom, --keep-exclude-from-bom
                             include the components with the 'Exclude from BOM' property set.
       --kefboard, --keep-exclude-from-board
                             include the components with the 'Exclude from Board' property set.
+      --remove-dnp          remove DNP components from BOM.
       -b, --board-quantity BOARD_QUANTITY
                             select board quantity, default is 1.
       --sum                 add a summation of the total price to the end of the table.
-      --currency CURRENCY   select the currency, currently supports 'GBP', 'EUR', and 'USD' options.
+      --currency CURRENCY   select the currency using any widely used currency code.
       --remove-ignore-mpn-parts
                             remove parts from the BOM that contain the ignore MPN values. This options was implemented specifically for supplier BOM tools.
       --list-suppliers      list supported suppliers.
@@ -210,12 +213,16 @@ The ``--help`` page for KiABOM is shown below along with some examples,
       --list-group-presets  list built-in group presets.
       --list-supported-columns
                             list supported column values. Any symbol field can also be a column value.
+      --cache-ttl CACHE_TTL
+                            cache time to live (TTL) in seconds. Defaults to 60 * 60 * 24 = 1 day
+      --no-cache            completely ignore any stored cache
+
 
 .. _example_uses:
 
 Example Uses
 ^^^^^^^^^^^^
-The examples listed here will assume the executable is installed on your system but they could easily be replaced with ``python kiabom.py input_xml output_file [options]``.
+The examples listed here will assume the executable is installed on your system but they could easily be replaced with ``python kiabom.py input_xml [options]``.
 
 Default behaviour for the tool is to generate a CSV in the default column and grouping presets. The auto-generated name of the output is 'input.csv' and will contain headers, will be for 1 board of your schematic, use GBP as the currency, and will retrieve the parts data from the suppliers.
 
@@ -223,7 +230,7 @@ Default behaviour for the tool is to generate a CSV in the default column and gr
 
     kiabom input.xml
 
-If you do not specify the output with ``-o/--output`` the format of the generated file can be specified with ``-f/--output-format``. If the output is provided then its extension is used and the output format argument is ignored.
+If you do not specify the output with ``-o/--output`` the format of the generated file can be specified with ``-f/--output-format``. If the output is provided then its extension is used and the output format argument is ignored. The default output file name is the XML input file name.
 
 You can fully customise the outputted columns based on the list shown from the ``--list-supported-columns`` option. For example you can create a BOM with no headers, in HTML format, without parts data, that only has the Designator, DNP, Unit/Reel Price, Footprint, and Value,
 
@@ -231,11 +238,11 @@ You can fully customise the outputted columns based on the list shown from the `
 
     kiabom input.xml -o output.html --no-headers --columns "Designator,DNP,Unit/Reel Price,Footprint,Value" --no-kicost
 
-Adding a symbol field to the BOM can be done by using the appropriate preset and appending columns to that. Grouping can also be done on that field. You can even only output one supplier instead of two,
+Adding a symbol field to the BOM can be done by using the appropriate preset and appending columns to that. Grouping can also be done on that field.
 
 .. code-block:: text
 
-    kiabom input.xml -o output.csv --append-columns Rating --append-groups Rating --primary-only
+    kiabom input.xml -o output.csv --append-columns Rating --append-groups Rating
 
 More information can be outputted than just the parts data like generator info and board quantity by specifying ``--info`` and to get a total price sum by using ``--sum``.
 
@@ -268,6 +275,12 @@ Using the command above you can mix and match columns and group presets,
 .. code-block:: text
 
     kiabom input.xml -o output.csv --columns-preset default --group-preset minimal
+
+Specify if you would like to use cache that is older than the default TTL of one day, e.g. 31 days,
+
+.. code-block:: text
+
+    kiabom input.xml --cache-ttl 2678400
 
 Contributions are welcome for any presets or columns you would like the generator to support!
 
