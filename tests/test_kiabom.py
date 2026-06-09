@@ -321,7 +321,7 @@ def test_write_to_file():
 
     cache_file = CACHE_TEST_DIR / "test_write_to_file_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj, ["Generic"], config, 0)
+        primary_parts = PartsSearch("Mouser", net_obj.grouped, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -330,7 +330,7 @@ def test_write_to_file():
 
     cache_file = CACHE_TEST_DIR / "test_write_to_file_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj, ["Generic"], config, 0)
+        secondary_parts = PartsSearch("DigiKey", net_obj.grouped, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -371,7 +371,7 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project1_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj, ["Generic"], config, 0)
+        primary_parts = PartsSearch("Mouser", net_obj.grouped, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -380,7 +380,7 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project1_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj, ["Generic"], config, 0)
+        secondary_parts = PartsSearch("DigiKey", net_obj.grouped, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -421,13 +421,15 @@ def test_contents():
     assert actual_contents == expected_contents
     os.remove("test-project1.txt")
 
+# Very important test
+def test_contents_nodnp():
     # Test project 3 contains no DNP components which is important to test
     test_project3_path = DIR_PATH / "test-projects" / "test-project3" / "test-project3.xml"
     net_obj = KiCadNetlist(test_project3_path, excludeBoard=True, excludeBOM=True, DNP=False)
 
     cache_file = CACHE_TEST_DIR / "test_contents_project3_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj, ["", "Generic"], config, 0)
+        primary_parts = PartsSearch("Mouser", net_obj.grouped, ["", "Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -436,7 +438,7 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project3_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj, ["", "Generic"], config, 0)
+        secondary_parts = PartsSearch("DigiKey", net_obj.grouped, ["", "Generic"], config, 0)
         with open(cache_file, 'wb') as f:
             pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -530,10 +532,17 @@ def test_read_config():
     rename_path = DIR_PATH / ".." / "src" / "aconfig.yaml"
     os.rename(str(config_path), str(rename_path))
 
-    with pytest.raises(SystemExit) as exc_info:
-        read_config()
+    assert read_config() == {
+            "Mouser" : {
+                "key": None
+                },
+            "DigiKey" : {
+                "client_id": None,
+                "client_secret": None,
+                "sandbox": None
+                },
+            }
 
-    assert exc_info.value.code == 1
     os.rename(str(rename_path), str(config_path))
 
 def test_main():

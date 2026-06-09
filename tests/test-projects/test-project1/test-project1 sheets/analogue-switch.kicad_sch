@@ -4087,7 +4087,7 @@
 				(hide yes)
 			)
 		)
-		(property "MPN" "TMUX1574PW"
+		(property "MPN" "TMUX1574PWR"
 			(at 132.08 162.56 0)
 			(effects
 				(font
@@ -4740,7 +4740,7 @@
 				(hide yes)
 			)
 		)
-		(property "MPN" "TMUX1574PW"
+		(property "MPN" "TMUX1574PWR"
 			(at 132.08 73.66 0)
 			(effects
 				(font
