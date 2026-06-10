@@ -1,6 +1,6 @@
 API
 ===
-KiABOM utilises KiCost to retrieve part data from suppliers, and to use the cache functionalities it provides. The KiCad netlist reader module is used to read the schematic, and the KiCost data is matched to what was read so that it is outputed in the correct order. To retrieve more data, the KiCost query functions are overwritten but made sure to achieve the same functionality for compatibility.
+KiABOM utilises API requests to retrieve part data from suppliers, and saves the parsed data in the cache for the specified duration. The KiCad netlist reader module is used to read the schematic, and the MPN field value is used for the requests using the supplier APIs. The data from both primary and secondary suppliers is the combined into a single object which is then used to generate the BOM.
 
 Summary
 ------------

@@ -71,6 +71,7 @@ EPOCH_TIME = epoch_time = int(time.time())
 MAX_GROUP_FIELDS = 7
 QUIET = False
 CACHE_PATH = DIR_PATH / "kiabom_cache"
+CACHE_DEFAULT_TTL = 60 * 60 * 24
 
 column_preset_dict = {
     "default": [
@@ -1908,7 +1909,7 @@ def main(argv: list[str]):
     parser.add_argument(
         "--cache-ttl",
         help="cache time to live (TTL) in seconds. Defaults to 60 * 60 * 24 = 1 day",
-        default=str(60 * 60 * 24),
+        default=str(CACHE_DEFAULT_TTL),
     )
     parser.add_argument(
         "--no-cache",
