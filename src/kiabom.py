@@ -518,6 +518,21 @@ class MouserAPI(SupplierAPI):
 
         return price_tiers_dict
 
+    def get_currency_code(self, price_tiers_list: list[dict]) -> str:
+        """MouserAPI-specific function to get the currency code
+
+        :param price_tiers_list: Price tiers from API response
+        :return: Dict of the price tiers
+        """
+        if not price_tiers_list:
+            return ""
+
+        if len(price_tiers_list) < 1:
+            return ""
+
+        return price_tiers_list[0].get("Currency", "")
+
+
     def parse(self, parts: list[dict]) -> list[dict]:
         # If no parts were found
         if parts[0] == {}:
@@ -536,8 +551,8 @@ class MouserAPI(SupplierAPI):
             parsed_dict["Price Tiers"] = self.get_price_tiers(
                 part.get("PriceBreaks", [])
             )
-            parsed_dict["Currency Code"] = part.get("PriceBreaks", [{}])[0].get(
-                "Currency"
+            parsed_dict["Currency Code"] = self.get_currency_code(
+                part.get("PriceBreaks", [])
             )
             parsed_parts.append(parsed_dict)
 
@@ -816,6 +831,12 @@ class CurrencyConverter:
         :param to_currency: Currency code to convert to
         :return: Converted currency to 7 decimal places
         """
+        if not to_currency or not from_currency:
+            return 0.0
+
+        if to_currency == from_currency:
+            return price
+
         return round(
             price
             * (self.currency_rates[to_currency] / self.currency_rates[from_currency]),
@@ -886,29 +907,30 @@ class BomData:
         for part in self.filled_res:
             if part.get("Order Code"):
                 price_tiers = part.get("Price Tiers", {})
+                part["Price"] = 0.0 # initialise
                 for key in price_tiers.keys():
-                    if key <= part["Quantity"]:
-                        part["Price"] = float(price_tiers.get(key))
+                    if key <= int(part.get("Quantity", 0)):
+                        part["Price"] = float(price_tiers.get(key, 0))
             else:
                 part["Price"] = ""
 
         if self.currency:
             # Convert from part's currency to requested currency
             for part in self.filled_res:
-                price = part.get("Price")
+                price = part.get("Price", "")
                 if price != "":
                     part["Price"] = self.currency.convert(
                         part.get("Currency Code"),
-                        price,
+                        float(price),
                         self.currency.requested_currency,
                     )
 
         # Calculate total price
-        self.total_price_sum = 0
+        self.total_price_sum = 0.0
         for part in self.filled_res:
-            price = part.get("Price")
-            if price and price != "":
-                self.total_price_sum = self.total_price_sum + price
+            price = part.get("Price", "")
+            if price != "":
+                self.total_price_sum = float(self.total_price_sum) + float(price)
 
     def insert_in_api_response(self, result: list[dict], key: str, val: str):
         """Insert an entry with the same value in all valid API responses
@@ -1781,7 +1803,7 @@ def main(argv: list[str]):
     parser.add_argument(
         "--group-preset",
         help="choose a group preset. Use '--list-group-presets' to list available. Append to a preset with '--append-groups'.",
-        default="default",
+        default="",
     )
     parser.add_argument(
         "-g",
