@@ -87,8 +87,12 @@ column_preset_dict = {
         "MPN",
         "Preferred Supplier",
         "Order Code",
+        "Product Page",
+        "Stock",
         "Alt. Supplier",
         "Alt. Order Code",
+        "Alt. Product Page",
+        "Alt. Stock",
         "Unit/Reel Price",
         "Total Price",
     ],
@@ -114,22 +118,6 @@ column_preset_dict = {
         "Description",
         "Footprint",
         "Value",
-    ],
-    "primary-only": [
-        "Group ID",
-        "Quantity",
-        "Schematic Ref",
-        "DNP",
-        "Description",
-        "Datasheet",
-        "Footprint",
-        "Value",
-        "Manufacturer",
-        "MPN",
-        "Preferred Supplier",
-        "Order Code",
-        "Unit/Reel Price",
-        "Total Price",
     ],
     "mage": [
         "Schematic Ref",
@@ -837,33 +825,33 @@ class CurrencyConverter:
 
 class BomData:
     """Class containing the file data required to create the BOM.
-    Has data from both primary and secondary suppliers.
+    Has data from both preferred and alternative suppliers.
 
-    :param pri_res: Primary supplier API response
-    :param sec_res: Secondary supplier API response
+    :param pref_res: Preferred supplier API response
+    :param alt_res: Alternative supplier API response
     :param currency: CurrencyConverter object
-    :param filled_res: Primary API response with gaps filled from secondary response
+    :param filled_res: Preferred API response with gaps filled from alternative response
     :param total_price_sum: Total price sum of all parts
     """
 
     def __init__(
         self,
-        pri_obj: PartsSearch,
-        sec_obj: PartsSearch,
+        pref_obj: PartsSearch,
+        alt_obj: PartsSearch,
         refdes_groups: list[list[str]],
         board_quantity: int,
         currency: CurrencyConverter | None,
     ) -> None:
         """
 
-        :param pri_obj: PartsSearch object for primary supplier
-        :param sec_obj: PartsSearch object for secondary supplier
+        :param pref_obj: PartsSearch object for preferred supplier
+        :param alt_obj: PartsSearch object for alternative supplier
         :param refdes_groups:
         :param board_quantity:
         :param currency:
         """
-        self.pri_res = pri_obj.parts_list
-        self.sec_res = sec_obj.parts_list
+        self.pref_res = pref_obj.parts_list
+        self.alt_res = alt_obj.parts_list
         self.currency = currency
 
         if self.currency:
@@ -871,11 +859,11 @@ class BomData:
         else:
             self.currency_symbol = ""
 
-        self.insert_in_api_response(self.pri_res, "Supplier", pri_obj.supplier.name)
-        self.insert_in_api_response(self.sec_res, "Supplier", sec_obj.supplier.name)
+        self.insert_in_api_response(self.pref_res, "Supplier", pref_obj.supplier.name)
+        self.insert_in_api_response(self.alt_res, "Supplier", alt_obj.supplier.name)
 
         self.filled_res = []
-        for pri, sec in zip(self.pri_res, self.sec_res):
+        for pri, sec in zip(self.pref_res, self.alt_res):
             if pri:
                 self.filled_res.append(pri)
             else:
@@ -1002,13 +990,21 @@ def get_bom_row(
         elif name == "MPN":
             row.append(c.getField("MPN"))
         elif name == "Preferred Supplier":
-            row.append(bom_data.pri_res[pos].get("Supplier", ""))
+            row.append(bom_data.pref_res[pos].get("Supplier", ""))
         elif name == "Order Code":
-            row.append(bom_data.pri_res[pos].get("Order Code", ""))
+            row.append(bom_data.pref_res[pos].get("Order Code", ""))
+        elif name == "Product Page":
+            row.append(bom_data.pref_res[pos].get("Product Page", ""))
+        elif name == "Stock":
+            row.append(bom_data.pref_res[pos].get("Stock", ""))
         elif name == "Alt. Supplier":
-            row.append(bom_data.sec_res[pos].get("Supplier", ""))
+            row.append(bom_data.alt_res[pos].get("Supplier", ""))
         elif name == "Alt. Order Code":
-            row.append(bom_data.sec_res[pos].get("Order Code", ""))
+            row.append(bom_data.alt_res[pos].get("Order Code", ""))
+        elif name == "Alt. Product Page":
+            row.append(bom_data.alt_res[pos].get("Product Page", ""))
+        elif name == "Alt. Stock":
+            row.append(bom_data.alt_res[pos].get("Stock", ""))
         elif name == "Unit/Reel Price":
             row.append(f"{currency_symbol}{price}")
         elif name == "Total Price":
@@ -1550,8 +1546,12 @@ def check_args(args: argparse.Namespace):
                         "MPN",
                         "Preferred Supplier",
                         "Order Code",
+                        "Product Page",
+                        "Stock",
                         "Alt. Supplier",
                         "Alt. Order Code",
+                        "Alt. Product Page",
+                        "Alt. Stock",
                         "Unit/Reel Price",
                         "Total Price",
                     ]
@@ -1560,20 +1560,20 @@ def check_args(args: argparse.Namespace):
         )
         sys.exit(0)
 
-    if args.primary_supplier.lower() not in [
+    if args.preferred_supplier.lower() not in [
         supplier.lower() for supplier in supported_suppliers
     ]:
         print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Primary supplier '{args.primary_supplier}' not supported.",
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Preferred supplier '{args.preferred_supplier}' not supported.",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    if args.secondary_supplier.lower() not in [
+    if args.alternative_supplier.lower() not in [
         supplier.lower() for supplier in supported_suppliers
     ]:
         print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Secondary supplier '{args.primary_supplier}' not supported.",
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Alternative supplier '{args.preferred_supplier}' not supported.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -1796,7 +1796,6 @@ def main(argv: list[str]):
         default="",
     )
     parser.add_argument(
-        "-a",
         "--append-columns",
         help="append columns to the selected preset. Use values separated by commas and place values in quotes in they contain spaces.",
         default="",
@@ -1813,14 +1812,14 @@ def main(argv: list[str]):
     )
     parser.add_argument(
         "-p",
-        "--primary-supplier",
-        help="select primary supplier. View by executing KiABOM with '--list-suppliers' option.",
+        "--preferred-supplier",
+        help="select preferred supplier. View by executing KiABOM with '--list-suppliers' option.",
         default="Mouser",
     )
     parser.add_argument(
-        "-s",
-        "--secondary-supplier",
-        help="select secondary supplier. View by executing KiABOM with '--list-suppliers' option.",
+        "-a",
+        "--alternative-supplier",
+        help="select alternative supplier. View by executing KiABOM with '--list-suppliers' option.",
         default="DigiKey",
     )
     parser.add_argument(
@@ -1981,8 +1980,8 @@ def main(argv: list[str]):
     if args.no_api:
         print("Disabled API integration.", flush=True)
         config = {
-            args.primary_supplier.lower(): "disabled",
-            args.secondary_supplier.lower(): "disabled",
+            args.preferred_supplier.lower(): "disabled",
+            args.alternative_supplier.lower(): "disabled",
         }
     else:
         config = read_config()
@@ -1994,11 +1993,11 @@ def main(argv: list[str]):
         use_currency_cache = False
 
     # Search for the parts using the APIs
-    primary_supplier_parts = PartsSearch(
-        args.primary_supplier, net_obj.grouped, ignore_mpns, config, args.cache_ttl
+    preferred_supplier_parts = PartsSearch(
+        args.preferred_supplier, net_obj.grouped, ignore_mpns, config, args.cache_ttl
     )
-    secondary_supplier_parts = PartsSearch(
-        args.secondary_supplier, net_obj.grouped, ignore_mpns, config, args.cache_ttl
+    alternative_supplier_parts = PartsSearch(
+        args.alternative_supplier, net_obj.grouped, ignore_mpns, config, args.cache_ttl
     )
 
     # Columns to be used for each part.
@@ -2015,8 +2014,8 @@ def main(argv: list[str]):
 
     # Combine the Parts objects with the quantities to create the BOM data
     bom_data = BomData(
-        primary_supplier_parts,
-        secondary_supplier_parts,
+        preferred_supplier_parts,
+        alternative_supplier_parts,
         net_obj.refdes_groups,
         args.board_quantity,
         currency_obj,

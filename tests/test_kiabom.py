@@ -55,8 +55,8 @@ def test_check_args():
         list_presets = False
         list_column_presets = False
         list_group_presets = False
-        primary_supplier = "Mouser"
-        secondary_supplier = "DigiKey"
+        preferred_supplier = "Mouser"
+        alternative_supplier = "DigiKey"
         board_quantity = "1"
         currency = "GBP"
         input_xml = "test.xml"
@@ -114,13 +114,13 @@ def test_check_args():
     assert exc_info.value.code == 0
     args = Args()
 
-    args.primary_supplier = "Test"
+    args.preferred_supplier = "Test"
     with pytest.raises(SystemExit) as exc_info:
         check_args(args)
     assert exc_info.value.code == 1
     args = Args()
 
-    args.secondary_supplier = "Test"
+    args.alternative_supplier = "Test"
     with pytest.raises(SystemExit) as exc_info:
         check_args(args)
     assert exc_info.value.code == 1
@@ -208,10 +208,6 @@ def test_get_columns():
     preset = "no-apI"
     columns_ret = get_columns(columns, preset)
     assert columns_ret == column_preset_dict["no-api"]
-
-    preset = "primary-only"
-    columns_ret = get_columns(columns, preset)
-    assert columns_ret == column_preset_dict["primary-only"]
 
     preset = "MAGE"
     columns_ret = get_columns(columns, preset)
@@ -321,23 +317,23 @@ def test_write_to_file():
 
     cache_file = CACHE_TEST_DIR / "test_write_to_file_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj.grouped, ["Generic"], config, 0)
+        preferred_parts = PartsSearch("Mouser", net_obj.grouped, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
-            pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(preferred_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         with open(cache_file, "rb") as f:
-            primary_parts = pickle.load(f)
+            preferred_parts = pickle.load(f)
 
     cache_file = CACHE_TEST_DIR / "test_write_to_file_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj.grouped, ["Generic"], config, 0)
+        alternative_parts = PartsSearch("DigiKey", net_obj.grouped, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
-            pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(alternative_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         with open(cache_file, "rb") as f:
-            secondary_parts = pickle.load(f)
+            alternative_parts = pickle.load(f)
 
-    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1, None)
+    file_data = BomData(preferred_parts, alternative_parts, net_obj.refdes_groups, 1, None)
     columns = get_columns("", "default") + ["Rating", "Test"]
 
     test_csv2_path = DIR_PATH / "test-project2.csv"
@@ -371,24 +367,28 @@ def test_contents():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project1_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj.grouped, ["Generic"], config, 0)
+        preferred_parts = PartsSearch("Mouser", net_obj.grouped, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
-            pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(preferred_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         with open(cache_file, "rb") as f:
-            primary_parts = pickle.load(f)
+            preferred_parts = pickle.load(f)
 
     cache_file = CACHE_TEST_DIR / "test_contents_project1_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj.grouped, ["Generic"], config, 0)
+        alternative_parts = PartsSearch("DigiKey", net_obj.grouped, ["Generic"], config, 0)
         with open(cache_file, 'wb') as f:
-            pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(alternative_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         with open(cache_file, "rb") as f:
-            secondary_parts = pickle.load(f)
+            alternative_parts = pickle.load(f)
 
-    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1, None)
+    file_data = BomData(preferred_parts, alternative_parts, net_obj.refdes_groups, 1, None)
     columns = get_columns("", "default") + ["Rating"]
+    columns.remove("Product Page")
+    columns.remove("Stock")
+    columns.remove("Alt. Product Page")
+    columns.remove("Alt. Stock")
     columns.remove("Unit/Reel Price")
     columns.remove("Total Price")
 
@@ -429,26 +429,30 @@ def test_contents_nodnp():
 
     cache_file = CACHE_TEST_DIR / "test_contents_project3_mouser.pickle"
     if not DISABLE_API:
-        primary_parts = PartsSearch("Mouser", net_obj.grouped, ["", "Generic"], config, 0)
+        preferred_parts = PartsSearch("Mouser", net_obj.grouped, ["", "Generic"], config, 0)
         with open(cache_file, 'wb') as f:
-            pickle.dump(primary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(preferred_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         with open(cache_file, "rb") as f:
-            primary_parts = pickle.load(f)
+            preferred_parts = pickle.load(f)
 
     cache_file = CACHE_TEST_DIR / "test_contents_project3_digikey.pickle"
     if not DISABLE_API:
-        secondary_parts = PartsSearch("DigiKey", net_obj.grouped, ["", "Generic"], config, 0)
+        alternative_parts = PartsSearch("DigiKey", net_obj.grouped, ["", "Generic"], config, 0)
         with open(cache_file, 'wb') as f:
-            pickle.dump(secondary_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(alternative_parts, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         with open(cache_file, "rb") as f:
-            secondary_parts = pickle.load(f)
+            alternative_parts = pickle.load(f)
 
-    file_data = BomData(primary_parts, secondary_parts, net_obj.refdes_groups, 1, None)
+    file_data = BomData(preferred_parts, alternative_parts, net_obj.refdes_groups, 1, None)
 
     columns = get_columns("", "default") + ["Rating"]
-    # Prices fluctuate so the test can fail
+    # These fields can change for each request so remove them
+    columns.remove("Product Page")
+    columns.remove("Stock")
+    columns.remove("Alt. Product Page")
+    columns.remove("Alt. Stock")
     columns.remove("Unit/Reel Price")
     columns.remove("Total Price")
 
