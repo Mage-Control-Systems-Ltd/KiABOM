@@ -184,17 +184,17 @@ The ``--help`` page for KiABOM is shown below along with some examples,
       -c, --columns COLUMNS
                             set the columns to be outputed. Place column names inside quotes and separate them using a comma. Quotes are not required if column names don't contain spaces. Overwrites '--preset' if it comes after. Use '--
                             append-columns' to append columns to a preset and `--list-supported-columns' to list valid column values.
-      -a, --append-columns APPEND_COLUMNS
+      --append-columns APPEND_COLUMNS
                             append columns to the selected preset. Use values separated by commas and place values in quotes in they contain spaces.
       --append-groups APPEND_GROUPS
                             append to a group preset.
       --ignore-mpns IGNORE_MPNS
                             add more MPN field values to ignore. This option appends the default option of 'Generic','TBD','Manufacturer's Stock', and '' (blank). Use values separated by commas and place values in quotes in they contain
                             spaces.
-      -p, --primary-supplier PRIMARY_SUPPLIER
-                            select primary supplier. View by executing KiABOM with '--list-suppliers' option.
-      -s, --secondary-supplier SECONDARY_SUPPLIER
-                            select secondary supplier. View by executing KiABOM with '--list-suppliers' option.
+      -p, --preferred-supplier PREFERRED_SUPPLIER
+                            select preferred supplier. View by executing KiABOM with '--list-suppliers' option.
+      -a, --alternative-supplier ATLERNATIVE_SUPPLIER
+                            select alternative supplier. View by executing KiABOM with '--list-suppliers' option.
       -d, --download-datasheets
                             optionally donwload the datasheets for the parts with valid URLs in a 'Datasheet' field. Files get downloaded to a 'datasheets' folder in the current working directory.
       -q, --quiet           silence warnings

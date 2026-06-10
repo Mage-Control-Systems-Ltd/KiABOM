@@ -6,16 +6,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Development &#8212; KiABOM v1.8.0 documentation</title>
+    <title>Development &#8212; KiABOM v2.0.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=c3ca4b69" />
     
-    <script src="_static/documentation_options.js?v=4eaa865d"></script>
+    <script src="_static/documentation_options.js?v=aa039f9c"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API" href="api.html" />
     <link rel="prev" title="Comparisons" href="comparisons.html" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
@@ -29,9 +30,12 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="api.html" title="API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
           <a href="comparisons.html" title="Comparisons"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v1.8.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v2.0.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Development</a></li> 
       </ul>
     </div>  
@@ -44,14 +48,14 @@
   <section id="development">
 <h1>Development<a class="headerlink" href="#development" title="Link to this heading">¶</a></h1>
 <p>To continue development, make sure to install the requirements in <cite>requirements.txt</cite>,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pip install -r requirements.txt
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pip install -r src/requirements.txt
 </pre></div>
 </div>
 <p>and also by using pyintaller (confirmed tested version is v6.12.0) to make it into a single executable using,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pyinstaller .\kiabom.py -F --add-data ../LICENSE:. --icon ..\images\kiabom-icon.ico
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>pyinstaller src/kiabom.py -F --add-data LICENSE:. --icon images/kiabom-icon.ico
 </pre></div>
 </div>
-<p>Lastly, a <cite>config.yaml</cite> file with your API keys would need to be placed next to <cite>kiabom.py</cite>.</p>
+<p>Lastly, a <cite>config.yaml</cite> file with your API keys would need to be placed next to <cite>kiabom.py</cite> to succesfully run the tests. In the future there may be changes in the supplier’s API data structures or part numbers could mean different things. This will affect the ‘expected’ results from the testing, and therefore would have to be updated accordingly.</p>
 <p>Using <a class="reference external" href="https://github.com/astral-sh/ruff">Ruff</a> as the linter and formatter, pytest for testing and coverage, and pyright as the static type checker.</p>
 <section id="philosophy">
 <h2>Philosophy<a class="headerlink" href="#philosophy" title="Link to this heading">¶</a></h2>
@@ -87,6 +91,11 @@
     <p class="topless"><a href="comparisons.html"
                           title="previous chapter">Comparisons</a></p>
   </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="api.html"
+                          title="next chapter">API</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -115,14 +124,17 @@
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
+          <a href="api.html" title="API"
+             >next</a> |</li>
+        <li class="right" >
           <a href="comparisons.html" title="Comparisons"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v1.8.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v2.0.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Development</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-    &#169; Copyright 2025, Yiannis Michael.
+    &#169; Copyright 2026, Yiannis Michael (ymic9963).
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
     </div>
   </body>
