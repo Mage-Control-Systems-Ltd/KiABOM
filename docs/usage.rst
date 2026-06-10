@@ -10,7 +10,7 @@ KiABOM can be treated (depending on your installation) as an executable applicat
 
 Using Through KiCad
 ---------------------
-There are three ways of using KiABOM through KiCad. One is via the Legacy BOM generator menu, the second one is the netlist exporter, and the third one is with a jobset file. All methods use the Generator command line format as specified in the `KiCad documentation`_. The options used with each method also get saved by KiCad, so you only need to set your configuration once.
+There are three ways of using KiABOM through KiCad. One is via the Legacy BOM generator menu, the second one is the netlist exporter, and the third one is with a jobset file. First two methods use the Generator command line format as specified in the `KiCad documentation`_. The options used with each method also get saved by KiCad, so you only need to set your configuration once.
 
 .. _KiCad Documentation: https://docs.kicad.org/9.0/en/eeschema/eeschema.html#generator-command-line-format
 
@@ -21,6 +21,8 @@ Depending on how KiABOM was installed, you may want to use different commands. I
 .. code-block:: text
 
     kiabom "%I" [options]
+
+It also could be an absolute path to the ``kiabom.exe``.
 
 If using a Python installation you would use,
 
@@ -83,9 +85,10 @@ Some suppliers offer BOM tools that assist with ordering parts if you already ha
 .. _Mouser's BOM Tool: https://www.mouser.co.uk/bom/
 .. _DigiKey myLists: https://www.digikey.co.uk/en/mylists/
 
-Go to the Mouser BOM tool and upload your BOM CSV file. In the next page you will set the column types. Assuming you are using the `default` column preset, set the `Quantity` column as `Quantity 1`, `Description` as `Description`, `Manufacturer` as `Mfr Name`, `MPN` as `Mfr Part Number`, and the `Order Code` as the `Mouser Part Number`. In the next page set the appropriate settings and once done proceed to the next page. From here you can add the parts listed to your basket and submit an order. Multiples of the same BOM can be added to basket for multiple boards using the same BOM for a single board.
+KiABOM provides some options to help with this process specifically. For example, the ``--no-headers`` column might need to be used to get rid of the column headers before inputting to a BOM tool. Also using ``--remove-ignore-mpn-parts`` will remove parts with the ignore MPN values from the BOM, thus saving you time removing these from the result list.
 
-Some tips for this process is that the ``--no-headers`` column might need to be used to get rid of the column headers before inputting to a BOM tool. Also using ``--remove-ignore-mpn-parts`` will remove parts with the ignore MPN values from the BOM, thus saving you time removing these from the result list.
+For example, if using Mouser as your supplier, first you generate a BOM using Mouser as one of the suppliers. Go to the Mouser BOM tool and upload your BOM CSV file. In the next page you will set the column types. Assuming you are using the `default` column preset, set the `Quantity` column as `Quantity 1`, `Description` as `Description`, `Manufacturer` as `Mfr Name`, `MPN` as `Mfr Part Number`, and the `Order Code` as the `Mouser Part Number`. In the next page set the appropriate settings and once done proceed to the next page. From here you can add the parts listed to your basket and submit an order. Multiples of the same BOM can be added to basket for multiple boards using the same BOM for a single board.
+
 
 .. _advanced customisations:
 
@@ -95,7 +98,7 @@ KiABOM is written such that it is as portable and as easy to understand as possi
 
 .. code-block:: text
 
-    pyinstaller .\kiabom.py -F --add-data ../LICENSE:. --icon ..\images\kiabom-icon.ico
+    pyinstaller src/kiabom.py -F --add-data LICENSE:. --icon images/kiabom-icon.ico
 
 Adding User Custom Presets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -144,7 +147,7 @@ Then your custom preset can be used with,
 
 .. code-block:: text
 
-    kiabom input_xml output.csv --preset custom
+    kiabom input_xml --preset custom
 
 .. _options:
 
@@ -276,12 +279,12 @@ Using the command above you can mix and match columns and group presets,
 
     kiabom input.xml -o output.csv --columns-preset default --group-preset minimal
 
-Specify if you would like to use cache that is older than the default TTL of one day, e.g. 31 days,
+Contributions are welcome for any presets or columns you would like the generator to support!
+
+To customise cache behaviour, you can specify if you would like to use cache that is older than the default TTL of 1 day, e.g. 31 days,
 
 .. code-block:: text
 
     kiabom input.xml --cache-ttl 2678400
 
-Contributions are welcome for any presets or columns you would like the generator to support!
-
-Lastly, editing the generator file is encouraged to create your own presets. See the  :ref:`Advanced Customisations <advanced customisations>` section for how to customise KiABOM's source code to get more out of the generator. 
+Lastly, editing the generator file is encouraged to fully customise your BOM generation. See the  :ref:`Advanced Customisations <advanced customisations>` section for how to customise KiABOM's source code to get more out of the generator. 

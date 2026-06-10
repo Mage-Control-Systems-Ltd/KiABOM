@@ -4,7 +4,7 @@ To continue development, make sure to install the requirements in `requirements.
 
 .. code-block:: text
 
-    pip install -r requirements.txt
+    pip install -r src/requirements.txt
 
 and also by using pyintaller (confirmed tested version is v6.12.0) to make it into a single executable using,
 
