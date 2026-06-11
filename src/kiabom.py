@@ -1406,7 +1406,7 @@ def print_title_screen():
             {colorama.Style.RESET_ALL}
 
     KiABOM is licensed under GPL v3, and comes with ABSOLUTELY NO WARRANTY.
-    Use '-h'/'--help' option for the full list of comnmands. Use '-q'/'--quiet' to silence warnings.
+    Use the '-h'/'--help' option for the full list of possible comnmands.
             """,
         file=sys.stdout,
     )
