@@ -199,7 +199,7 @@ The ``--help`` page for KiABOM is shown below along with some examples,
                             select alternative supplier. View by executing KiABOM with '--list-suppliers' option.
       -d, --download-datasheets
                             optionally donwload the datasheets for the parts with valid URLs in a 'Datasheet' field. Files get downloaded to a 'datasheets' folder in the current working directory.
-      -q, --quiet           silence warnings
+      -q, --quiet           silence all messages except errors
       --kefbom, --keep-exclude-from-bom
                             include the components with the 'Exclude from BOM' property set.
       --kefboard, --keep-exclude-from-board
