@@ -761,17 +761,21 @@ class PartsSearch:
                     break
 
     def search_parts(self, grouped: list[list[comp]], ignore_mpns: list) -> list[dict]:
-        """Search the parts from the KiCad netlist groups
+        """Search the parts from the KiCad netlist groups and print status messages
 
         :param grouped: KiCad netlist reader grouped parts
         :param ignore_mpns: List of MPN values to ignore
         :return: List of dictionaries of the parsed API results
         """
         parts = []
-        for group in grouped:
+        amount = len(grouped)
+        for count, group in enumerate(grouped):
             component = group[0]
             mpn = component.getField("MPN")
-            parts.append(self.supplier.get_part(mpn, ignore_mpns))
+            status = f"Searching for {colorama.Fore.LIGHTYELLOW_EX}{mpn}{colorama.Style.RESET_ALL} ({count} out of {amount})"
+            print(status, end = "\r", flush = True)
+            parts.append(self.supplier.get_part(mpn, ignore_mpns)) # a try-except here might be a good idea
+            print(" " * len(status), end = "\r", flush = True)
 
         return parts
 
