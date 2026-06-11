@@ -228,18 +228,20 @@ class KiCadNetlist:
             excludeBOM=excludeBOM, excludeBoard=excludeBoard, DNP=DNP
         )
 
-        print(
-            f"Received {colorama.Fore.LIGHTYELLOW_EX}{len(self.components)}{colorama.Style.RESET_ALL} components from netlist.",
-            flush=True,
-        )
+        if not QUIET:
+            print(
+                f"Received {colorama.Fore.LIGHTYELLOW_EX}{len(self.components)}{colorama.Style.RESET_ALL} components from netlist.",
+                flush=True,
+            )
 
         # Get all of the components in groups of matching parts + values
         self.grouped = self.net.groupComponents(self.components)
 
-        print(
-            f"Grouped netlist components into {colorama.Fore.LIGHTYELLOW_EX}{len(self.grouped)}{colorama.Style.RESET_ALL} component groups.",
-            flush=True,
-        )
+        if not QUIET:
+            print(
+                f"Grouped netlist components into {colorama.Fore.LIGHTYELLOW_EX}{len(self.grouped)}{colorama.Style.RESET_ALL} component groups.",
+                flush=True,
+            )
 
         self.refdes_groups = []
         self.get_refdes_from_net()
@@ -420,10 +422,11 @@ class SupplierAPI:
 
     def print_stats(self):
         """Print some stats to see how many parts from cache were used"""
-        print(
-            f"Searched {self.name}, requested {colorama.Fore.LIGHTYELLOW_EX}{self.comp_count}{colorama.Style.RESET_ALL} parts and retrieved {colorama.Fore.LIGHTYELLOW_EX}{self.cache_comp_count}{colorama.Style.RESET_ALL} from cache.",
-            flush=True,
-        )
+        if not QUIET:
+            print(
+                f"Searched {self.name}, requested {colorama.Fore.LIGHTYELLOW_EX}{self.comp_count}{colorama.Style.RESET_ALL} parts and retrieved {colorama.Fore.LIGHTYELLOW_EX}{self.cache_comp_count}{colorama.Style.RESET_ALL} from cache.",
+                flush=True,
+            )
 
 
 class MouserAPI(SupplierAPI):
@@ -744,14 +747,16 @@ class PartsSearch:
 
             # Update class members with API results if initialisation was succesful
             if self.supplier.api_status == "success":
-                print(f"Searching {self.supplier.name}...")
+                if not QUIET:
+                    print(f"Searching {self.supplier.name}...")
                 self.parts_list = self.search_parts(grouped, ignore_mpns)
                 self.supplier.print_stats()
             else:
-                print(
-                    f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} {self.supplier.name} API not initialised: {self.supplier.api_status}.",
-                    flush=True,
-                )
+                if not QUIET:
+                    print(
+                        f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} {self.supplier.name} API not initialised: {self.supplier.api_status}.",
+                        flush=True,
+                    )
 
             # Get the currency code from the parsed response
             for part in self.parts_list:
@@ -773,9 +778,11 @@ class PartsSearch:
             component = group[0]
             mpn = component.getField("MPN")
             status = f"Searching for {colorama.Fore.LIGHTYELLOW_EX}{mpn}{colorama.Style.RESET_ALL} ({count} out of {amount})"
-            print(status, end = "\r", flush = True)
+            if not QUIET:
+                print(status, end = "\r", flush = True)
             parts.append(self.supplier.get_part(mpn, ignore_mpns)) # a try-except here might be a good idea
-            print(" " * len(status), end = "\r", flush = True)
+            if not QUIET:
+                print(" " * len(status), end = "\r", flush = True)
 
         return parts
 
@@ -815,7 +822,8 @@ class CurrencyConverter:
                 with open(filename, "w") as f:
                     json.dump(self.response_usd, f)
 
-            print("Retrieved currency rates.")
+            if not QUIET:
+                print("Retrieved currency rates.")
 
             if self.response_usd.get("time_next_update_unix", 0) < EPOCH_TIME:
                 self.response_usd = requests.get(
@@ -823,7 +831,8 @@ class CurrencyConverter:
                 ).json()
                 with open(filename, "w") as f:
                     json.dump(self.response_usd, f)
-                print("Updated retrieved currency rates.")
+                if not QUIET:
+                    print("Updated retrieved currency rates.")
 
             self.currency_rates = self.response_usd["rates"]
 
@@ -1355,9 +1364,11 @@ def get_equ(group_fields: str, group_preset: str, append_groups: str):
     else:
         equ = kiabom_equ
 
-    print(
-        f"Grouping components by: '{colorama.Fore.LIGHTYELLOW_EX}{global_group_fields_text}{colorama.Style.RESET_ALL}'."
-    )
+    if not QUIET:
+        print(
+            f"Grouping components by: '{colorama.Fore.LIGHTYELLOW_EX}{global_group_fields_text}{colorama.Style.RESET_ALL}'."
+        )
+
     return equ
 
 
@@ -1394,8 +1405,8 @@ def print_title_screen():
             \_| \_/_\_| |_/\____/  \___/\_|  |_/
             {colorama.Style.RESET_ALL}
 
-            KiABOM is licensed under GPL v3, and comes with ABSOLUTELY NO WARRANTY.
-            Use '-h'/'--help' option for the full list of comnmands. Use '-q'/'--quiet' to silence warnings.
+    KiABOM is licensed under GPL v3, and comes with ABSOLUTELY NO WARRANTY.
+    Use '-h'/'--help' option for the full list of comnmands. Use '-q'/'--quiet' to silence warnings.
             """,
         file=sys.stdout,
     )
@@ -1502,13 +1513,15 @@ def download_datasheets(
         with open(path, "wb") as f:
             f.write(r.content)
         full_filename = url.split("/")[-1]
-        print(
-            f"Downloaded '{colorama.Fore.LIGHTYELLOW_EX}{full_filename}{colorama.Style.RESET_ALL}'."
-        )
+        if not QUIET:
+            print(
+                f"Downloaded '{colorama.Fore.LIGHTYELLOW_EX}{full_filename}{colorama.Style.RESET_ALL}'."
+            )
 
-    print(
-        f"Datasheets downloaded in '{colorama.Fore.LIGHTYELLOW_EX}{downloads_path}{colorama.Style.RESET_ALL}'."
-    )
+    if not QUIET:
+        print(
+            f"Datasheets downloaded in '{colorama.Fore.LIGHTYELLOW_EX}{downloads_path}{colorama.Style.RESET_ALL}'."
+        )
 
 
 def check_args(args: argparse.Namespace):
@@ -1706,9 +1719,10 @@ def read_config() -> dict:
         with open(config_path, "r") as f:
             try:
                 config = yaml.safe_load(f)
-                print(
-                    "Found config.yaml."
-                )
+                if not QUIET:
+                    print(
+                        "Found config.yaml."
+                    )
             except yaml.YAMLError as e:
                 print(
                     f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error reading config.yaml file:",
@@ -1717,9 +1731,10 @@ def read_config() -> dict:
                 )
                 sys.exit(1)
     except FileNotFoundError:
-        print(
-            "No config.yaml file found, continuing with hardcoded API credentials."
-        )
+        if not QUIET:
+            print(
+                "No config.yaml file found, continuing with hardcoded API credentials."
+            )
         config = {
             "Mouser": {"key": MOUSER_API_KEY},
             "DigiKey": {
@@ -1744,9 +1759,6 @@ def main(argv: list[str]):
     :param argv: Argument vector containing command line options.
     """
     global QUIET
-
-    # Print some nice ASCII art
-    print_title_screen()
 
     parser = argparse.ArgumentParser(
         usage="%(prog)s input_xml [options]",
@@ -1856,7 +1868,7 @@ def main(argv: list[str]):
         default=False,
     )
     parser.add_argument(
-        "-q", "--quiet", help="silence warnings", action="store_true", default=False
+        "-q", "--quiet", help="silence all messages except errors", action="store_true", default=False
     )
     parser.add_argument(
         "--kefbom",
@@ -1947,6 +1959,12 @@ def main(argv: list[str]):
 
     check_args(args)
 
+    QUIET = args.quiet
+
+    # Print some nice ASCII art
+    if not QUIET:
+        print_title_screen()
+
     # If no output file name create it from the input file name
     if args.output == "":
         args.output = (
@@ -1961,8 +1979,6 @@ def main(argv: list[str]):
     # Open the file before anything else to check if it is writeable
     f = open_output_file(args.output)
 
-    QUIET = args.quiet
-
     # Create the cache directory
     os.makedirs(CACHE_PATH, exist_ok=True)
 
@@ -1972,7 +1988,9 @@ def main(argv: list[str]):
     )
 
     # Initialise Net object to read everything from the XML file
-    print("Reading schematic XML file...", flush=True)
+    if not QUIET:
+        print("Reading schematic XML file...", flush=True)
+
     net_obj = KiCadNetlist(
         args.input_xml,
         excludeBOM=args.kefbom,
@@ -1996,15 +2014,17 @@ def main(argv: list[str]):
         args.no_api = True
         args.cache_ttl = -1
         args.download_datasheets = False
-        print(
-            "Detected no internet, using APIs and downloading datasheets is unavailable.",
-            flush=True,
-        )
+        if not QUIET:
+            print(
+                "Detected no internet, using APIs and downloading datasheets is unavailable.",
+                flush=True,
+            )
 
     # Read config to initialise APIs
     config = {}
     if args.no_api:
-        print("Disabled API integration.", flush=True)
+        if not QUIET:
+            print("Disabled API integration.", flush=True)
         config = {
             args.preferred_supplier.lower(): "disabled",
             args.alternative_supplier.lower(): "disabled",
@@ -2014,7 +2034,8 @@ def main(argv: list[str]):
 
     use_currency_cache = True
     if args.no_cache:
-        print("Disabled cache for parts and currencies.", flush=True)
+        if not QUIET:
+            print("Disabled cache for parts and currencies.", flush=True)
         args.cache_ttl = -1
         use_currency_cache = False
 
@@ -2031,10 +2052,11 @@ def main(argv: list[str]):
         args.columns, args.columns_preset
     ) + args.append_columns.split(",")
     columns = [column for column in columns if column != ""]  # Remove blank entries
-    print(
-        f"Columns for the BOM will be: {colorama.Fore.LIGHTYELLOW_EX}{','.join(columns)}{colorama.Style.RESET_ALL}.",
-        flush=True,
-    )
+    if not QUIET:
+        print(
+            f"Columns for the BOM will be: {colorama.Fore.LIGHTYELLOW_EX}{','.join(columns)}{colorama.Style.RESET_ALL}.",
+            flush=True,
+        )
 
     currency_obj = CurrencyConverter(args.currency, use_currency_cache)
 
@@ -2060,16 +2082,19 @@ def main(argv: list[str]):
         bom_data,
     )
 
-    print(
-        f"Wrote results to '{colorama.Fore.LIGHTYELLOW_EX}{args.output}{colorama.Style.RESET_ALL}'.",
-    )
+    if not QUIET:
+        print(
+            f"Wrote results to '{colorama.Fore.LIGHTYELLOW_EX}{args.output}{colorama.Style.RESET_ALL}'.",
+        )
 
     if args.download_datasheets:
-        print("Downloading datasheets...")
+        if not QUIET:
+            print("Downloading datasheets...")
         datasheets_folder = "datasheets"
         download_datasheets(net_obj.grouped, downloads_folder=datasheets_folder)
 
-    print("\nKiABOM finished!\n")
+    if not QUIET:
+        print("\nKiABOM finished!\n")
 
     f.close()
 
