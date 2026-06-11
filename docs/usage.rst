@@ -2,7 +2,9 @@ Usage
 =====
 KiABOM detects the use of an 'MPN' field in the schematic symbols. The field name is **specific** and **case sensitive**. It also ignores searching for part numbers with the values 'Generic', 'TBD', and 'Manufacturer's Stock' in the MPN field. Therefore, to use KiABOM, create an MPN field in each symbol and add the MPN in that field description.
 
-You can use the generator either through the terminal or through KiCad itself. See the relevant sections below for more information and the :ref:`Example Uses <example_uses>` section for some example command options. Supports all modern KiCad versions using Python v3.9+.
+You can use the generator either through the terminal or through KiCad itself. It is **recommended** to use it through a terminal application because of the real-time feedback the script provides. If done through KiCad the script output will only be visible once done. See the relevant sections below for more information and the :ref:`Example Uses <example_uses>` section for some example command options.
+
+Supports all modern KiCad versions using Python v3.11+. If any issues arise please see the :ref:`Troubleshooting <troubleshooting>` section below first, then if your issue persists please create an issue on the repository.
 
 Using Through a Terminal
 -------------------------
@@ -287,4 +289,16 @@ To customise cache behaviour, you can specify if you would like to use cache tha
 
     kiabom input.xml --cache-ttl 2678400
 
+If you would like to refresh the cache for this run you can set the cache TTL to 0.
+
 Lastly, editing the generator file is encouraged to fully customise your BOM generation. See the  :ref:`Advanced Customisations <advanced customisations>` section for how to customise KiABOM's source code to get more out of the generator. 
+
+.. _troubleshooting:
+
+Troubleshooting
+^^^^^^^^^^^^
+If the script hangs at any point, simply force-stop its execution in any way possible and retry. This was noted in some cases where the DigiKey API keys had to be authenticated, and the tool did not resume normal function until a restart. However, the tool still continued to cache the parts normally, so the subsequent run was much faster.
+
+Restarting its execution in some cases might mean to exit the terminal or to end the running KiCad process. Therefore it's important to save your work before running KiABOM, especially before the first run so that all APIs have been authenticated and are functional.
+
+
