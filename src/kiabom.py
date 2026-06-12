@@ -2031,8 +2031,16 @@ def main(argv: list[str]):
                 flush=True,
             )
 
+    use_currency_cache = True
+    if args.no_cache:
+        if not QUIET:
+            print("Disabled cache for parts and currencies.", flush=True)
+        args.cache_ttl = -1
+        use_currency_cache = False
+
     # Read config to initialise APIs
     config = {}
+    currency_obj = None
     if args.no_api:
         if not QUIET:
             print("Disabled API integration.", flush=True)
@@ -2042,13 +2050,7 @@ def main(argv: list[str]):
         }
     else:
         config = read_config()
-
-    use_currency_cache = True
-    if args.no_cache:
-        if not QUIET:
-            print("Disabled cache for parts and currencies.", flush=True)
-        args.cache_ttl = -1
-        use_currency_cache = False
+        currency_obj = CurrencyConverter(args.currency, use_currency_cache)
 
     # Search for the parts using the APIs
     preferred_supplier_parts = PartsSearch(
@@ -2068,8 +2070,6 @@ def main(argv: list[str]):
             f"Columns for the BOM will be: {colorama.Fore.LIGHTYELLOW_EX}{','.join(columns)}{colorama.Style.RESET_ALL}.",
             flush=True,
         )
-
-    currency_obj = CurrencyConverter(args.currency, use_currency_cache)
 
     # Combine the Parts objects with the quantities to create the BOM data
     bom_data = BomData(
