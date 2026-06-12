@@ -69,7 +69,6 @@ else:
     DIR_PATH = Path(__file__).resolve().parent
 
 EPOCH_TIME = int(time.time())
-MAX_GROUP_FIELDS = 7
 QUIET = False
 CACHE_PATH = DIR_PATH / "kiabom_cache"
 CACHE_DEFAULT_TTL = 60 * 60 * 24
@@ -1270,7 +1269,7 @@ def write_to_file(
         f.write(html)
 
 
-def get_equ(group_fields: str, group_preset: str, append_groups: str):
+def get_equ(group_fields_list: list[str]):
     """Return the selected equivalence function to be used in grouping
 
     :param group_fields: String of comma separated group values.
@@ -1279,8 +1278,6 @@ def get_equ(group_fields: str, group_preset: str, append_groups: str):
     :return: Equivalence (__equ__) function.
     :rtype: Function returning True or False.
     """
-    global global_group_fields
-
     # Define the equivalence functions to be returned
     def kiabom_equ_dnp(self, other):
         result = False
@@ -1324,16 +1321,7 @@ def get_equ(group_fields: str, group_preset: str, append_groups: str):
                                     result = True
         return result
 
-    if group_fields:
-        group_fields_list = group_fields.split(",")
-    else:
-        group_preset = group_preset.lower()
-        group_fields_list = group_preset_dict.get(group_preset, [""])
-
-    group_fields_list = group_fields_list + append_groups.split(",")
-    group_fields_list = [
-        group_field for group_field in group_fields_list if group_field != ""
-    ]  # Remove blank entries
+    MAX_GROUP_FIELDS = 7
 
     if len(group_fields_list) > MAX_GROUP_FIELDS:
         print(
@@ -1342,30 +1330,26 @@ def get_equ(group_fields: str, group_preset: str, append_groups: str):
         )
         sys.exit(1)
 
-    # Initialise all group fields to be the last group field because the API doesn't like blank strings
+    # Initialise all group fields to be the last group field
     global_group_fields = [group_fields_list[-1]] * MAX_GROUP_FIELDS
 
-    # Populate with the inputted group fields
+    # Populate with the specified group fields
     for index, group_field in enumerate(group_fields_list):
         global_group_fields[index] = group_field
 
-    # Get the text before removal to output to terminal
-    global_group_fields_text = ",".join(list(dict.fromkeys(global_group_fields)))
-
-    # Remove the mandatory fields so the rest can be user defined
-    detected = 0
-    mandatory_fields = ["Value", "Footprint"]
-    for mandatory_field in mandatory_fields:
-        if mandatory_field in global_group_fields:
-            detected = detected + 1
-            global_group_fields.remove(mandatory_field)
-
-    if detected < len(mandatory_fields):
+    if "Value" not in global_group_fields or "Footprint" not in global_group_fields:
         print(
             f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Grouping by 'Value' and 'Footprint' is mandatory.",
             file=sys.stderr,
         )
         sys.exit(1)
+
+    text = ",".join(list(dict.fromkeys(global_group_fields)))
+
+    # These are mandatory but they use kicad_netlist_reader functions
+    # to get their values. Therefore they must be removed from the list
+    global_group_fields.remove("Value")
+    global_group_fields.remove("Footprint")
 
     if "DNP" in global_group_fields:
         global_group_fields.remove("DNP")
@@ -1375,7 +1359,7 @@ def get_equ(group_fields: str, group_preset: str, append_groups: str):
 
     if not QUIET:
         print(
-            f"Grouping components by: '{colorama.Fore.LIGHTYELLOW_EX}{global_group_fields_text}{colorama.Style.RESET_ALL}'."
+            f"Grouping components by: '{colorama.Fore.LIGHTYELLOW_EX}{text}{colorama.Style.RESET_ALL}'."
         )
 
     return equ
@@ -1421,7 +1405,7 @@ def print_title_screen():
     )
 
 
-def get_columns(columns: str, preset: str) -> list[str]:
+def get_columns(columns: str, preset: str, preset_dict: dict) -> list[str]:
     """Get the specified columns for use during BOM generation.
 
     :param columns: Comma separated string of the columns names.
@@ -1433,11 +1417,14 @@ def get_columns(columns: str, preset: str) -> list[str]:
         columns_ret = columns.split(",")
     else:
         preset = preset.lower()
-        columns_ret = column_preset_dict.get(preset, [""])
+        columns_ret = preset_dict.get(preset, [""])
 
     columns_ret = [col.strip() for col in columns_ret]
     return columns_ret
 
+def get_group_by(group_by: str, preset: str, preset_dict: dict) -> list[str]:
+    """Calls get_columns() to get the groups for BOM generation"""
+    return get_columns(group_by, preset, preset_dict)
 
 def has_internet(test_address: str = "8.8.8.8", timeout: int = 3) -> bool:
     """Check if there is a valid internet connection.
@@ -1992,10 +1979,14 @@ def main(argv: list[str]):
     # Create the cache directory
     os.makedirs(CACHE_PATH, exist_ok=True)
 
+    # Get the groups to group components by
+    group_by = get_group_by(
+        args.group_by, args.group_preset, group_preset_dict
+    ) + args.append_columns.split(",")
+    group_by = [group for group in group_by if group != ""]  # Remove blank entries
+
     # Override the component equivalence operator for grouping
-    kicad_netlist_reader.comp.__eq__ = get_equ(
-        args.group_by, args.group_preset.lower(), args.append_groups
-    )
+    kicad_netlist_reader.comp.__eq__ = get_equ(group_by)
 
     # Initialise Net object to read everything from the XML file
     if not QUIET:
@@ -2061,7 +2052,7 @@ def main(argv: list[str]):
 
     # Columns to be used for each part.
     columns = get_columns(
-        args.columns, args.columns_preset
+        args.columns, args.columns_preset, column_preset_dict
     ) + args.append_columns.split(",")
     columns = [column for column in columns if column != ""]  # Remove blank entries
     if not QUIET:
