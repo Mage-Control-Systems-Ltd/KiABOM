@@ -60,6 +60,7 @@ from kicad_netlist_reader import comp, netlist
 from mouser import api, base
 import digikey
 from digikey.v4.productinformation import KeywordRequest
+from digikey.exceptions import DigikeyOauthException
 
 # Determine if application is a script file or an executable
 if getattr(sys, "frozen", False):
@@ -612,12 +613,22 @@ class DigiKeyAPI(SupplierAPI):
         # x_digikey_locale_currency: Three letter code for Currency to return part pricing for. Currency must be supported by the selected site. Acceptable values include: USD, CAD, JPY, GBP, EUR, HKD, SGD, TWD, KRW, AUD, NZD, INR, DKK, NOK, SEK, ILS, CNY, PLN, CHF, CZK, HUF, RON, ZAR, MYR, THB, PHP.
         # Search for parts
         search_request = KeywordRequest(keywords=mpn, offset=0)
-        res = digikey.keyword_search(
-            body=search_request,
-            x_digikey_locale_site=site,
-            x_digikey_locale_language=language,
-            x_digikey_locale_currency=currency,
-        )
+        try:
+            res = digikey.keyword_search(
+                body=search_request,
+                x_digikey_locale_site=site,
+                x_digikey_locale_language=language,
+                x_digikey_locale_currency=currency,
+            )
+        except DigikeyOauthException as e:
+            print(e)
+            print(
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Ensure the DigiKey API is authenticated by checking your browser for any prompts.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+
         if res is None:
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request",
