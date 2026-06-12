@@ -929,7 +929,7 @@ class BomData:
             if part.get("Order Code"):
                 price_tiers = part.get("Price Tiers", {})
                 part["Price"] = 0.0 # initialise
-                for key in price_tiers.keys():
+                for key in sorted(price_tiers.keys()):
                     if key <= int(part.get("Quantity", 0)):
                         part["Price"] = float(price_tiers.get(key, 0))
             else:
