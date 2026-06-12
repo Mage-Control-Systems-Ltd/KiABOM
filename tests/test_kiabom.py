@@ -194,27 +194,27 @@ def test_get_columns():
     columns = ""
     preset = "default"
 
-    columns_ret = get_columns(columns, preset)
+    columns_ret = get_columns(columns, preset, column_preset_dict)
     assert columns_ret == column_preset_dict["default"]
 
     preset = "test"
-    columns_ret = get_columns(columns, preset)
+    columns_ret = get_columns(columns, preset, column_preset_dict)
     assert columns_ret == [""]
 
     preset = "Minimal"
-    columns_ret = get_columns(columns, preset)
+    columns_ret = get_columns(columns, preset, column_preset_dict)
     assert columns_ret == column_preset_dict["minimal"]
 
     preset = "no-apI"
-    columns_ret = get_columns(columns, preset)
+    columns_ret = get_columns(columns, preset, column_preset_dict)
     assert columns_ret == column_preset_dict["no-api"]
 
     preset = "MAGE"
-    columns_ret = get_columns(columns, preset)
+    columns_ret = get_columns(columns, preset, column_preset_dict)
     assert columns_ret == column_preset_dict["mage"]
 
     columns = "a,b,c"
-    columns_ret = get_columns(columns, preset)
+    columns_ret = get_columns(columns, preset, column_preset_dict)
     assert columns_ret == ["a", "b", "c"]
 
 
@@ -310,7 +310,7 @@ def test_class_currencyconverter():
     assert round(price, 2) == 1.16
 
 def test_write_to_file():
-    kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
+    kicad_netlist_reader.comp.__eq__ = get_equ(["Value","Footprint","MPN","DNP","Rating"])
 
     test_project2_path = DIR_PATH / "test-projects" / "test-project2" / "test-project2.xml"
     net_obj = KiCadNetlist(test_project2_path, excludeBoard=True, excludeBOM=True, DNP=False)
@@ -334,7 +334,7 @@ def test_write_to_file():
             alternative_parts = pickle.load(f)
 
     file_data = BomData(preferred_parts, alternative_parts, net_obj.refdes_groups, 1, None)
-    columns = get_columns("", "default") + ["Rating", "Test"]
+    columns = get_columns("", "default", column_preset_dict) + ["Rating", "Test"]
 
     test_csv2_path = DIR_PATH / "test-project2.csv"
     f = open_output_file(str(test_csv2_path))
@@ -359,7 +359,7 @@ def test_write_to_file():
 
 # Very important test
 def test_contents():
-    kicad_netlist_reader.comp.__eq__ = get_equ("Value,Footprint,MPN,DNP,Rating", "", "")
+    kicad_netlist_reader.comp.__eq__ = get_equ(["Value","Footprint","MPN","DNP","Rating"])
 
     # Test the file content with test-project1 which is a bigger project
     test_project1_path = DIR_PATH / "test-projects" / "test-project1" / "test-project1.xml"
@@ -384,7 +384,7 @@ def test_contents():
             alternative_parts = pickle.load(f)
 
     file_data = BomData(preferred_parts, alternative_parts, net_obj.refdes_groups, 1, None)
-    columns = get_columns("", "default") + ["Rating"]
+    columns = get_columns("", "default", column_preset_dict) + ["Rating"]
     columns.remove("Product Page")
     columns.remove("Stock")
     columns.remove("Alt. Product Page")
@@ -447,7 +447,7 @@ def test_contents_nodnp():
 
     file_data = BomData(preferred_parts, alternative_parts, net_obj.refdes_groups, 1, None)
 
-    columns = get_columns("", "default") + ["Rating"]
+    columns = get_columns("", "default", column_preset_dict) + ["Rating"]
     # These fields can change for each request so remove them
     columns.remove("Product Page")
     columns.remove("Stock")
@@ -471,8 +471,8 @@ def test_get_equ():
     test_project_path = DIR_PATH / "test-projects" / "test-project2" / "test-project2.xml"
 
     net_obj = KiCadNetlist(test_project_path, excludeBoard=False, excludeBOM=False, DNP=False)
-    group_fields = "Value,Footprint,DNP,MPN,Rating,Test"
-    equ = get_equ(group_fields, "", "")
+    group_fields = ["Value","Footprint","DNP","MPN","Rating","Test"]
+    equ = get_equ(group_fields)
 
     # False means the components are not equal and therefore should not be grouped.
     # True means they are equal and therefore group them
@@ -482,8 +482,8 @@ def test_get_equ():
     assert equ(net_obj.components[4], net_obj.components[5]) == False
     assert equ(net_obj.components[0], net_obj.components[2]) == False
 
-    group_fields = "Value,Footprint,MPN,Rating,Test"
-    equ = get_equ(group_fields, "", "")
+    group_fields = ["Value","Footprint","MPN","Rating","Test"]
+    equ = get_equ(group_fields)
 
     assert equ(net_obj.components[0], net_obj.components[1]) == True
     assert equ(net_obj.components[2], net_obj.components[3]) == True
@@ -491,28 +491,28 @@ def test_get_equ():
     assert equ(net_obj.components[1], net_obj.components[3]) == False
 
     # Check if it fails properly when inputting >MAX_GROUP_FIELDS
-    group_fields = "Value,Footprint,MPN,Rating,Test,Test,Test,Test,Test,Test"
+    group_fields = ["Value","Footprint","MPN","Rating","Test","Test","Test","Test","Test","Test"]
     with pytest.raises(SystemExit) as exc_info:
-        get_equ(group_fields, "", "")
+        get_equ(group_fields)
 
     assert exc_info.value.code == 1
 
     # Check if it fails properly when not inputting Value or Footprint
-    group_fields = "MPN,Rating,Test"
+    group_fields = ["MPN","Rating","Test"]
     with pytest.raises(SystemExit) as exc_info:
-        get_equ(group_fields, "", "")
+        get_equ(group_fields)
 
     assert exc_info.value.code == 1
 
-    group_fields = "Footprint,MPN,Rating,Test"
+    group_fields = ["Footprint","MPN","Rating","Test"]
     with pytest.raises(SystemExit) as exc_info:
-        get_equ(group_fields, "", "")
+        get_equ(group_fields)
 
     assert exc_info.value.code == 1
 
-    group_fields = "Value,MPN,Rating,Test"
+    group_fields = ["Value","MPN","Rating","Test"]
     with pytest.raises(SystemExit) as exc_info:
-        get_equ(group_fields, "", "")
+        get_equ(group_fields)
 
     assert exc_info.value.code == 1
 
