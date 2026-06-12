@@ -763,7 +763,7 @@ class PartsSearch:
                 self.parts_list = self.search_parts(grouped, ignore_mpns)
                 self.supplier.print_stats()
             else:
-                if not QUIET:
+                if not QUIET and self.supplier.name != "":
                     print(
                         f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} {self.supplier.name} API not initialised: {self.supplier.api_status}.",
                         flush=True,
@@ -1557,6 +1557,7 @@ def check_args(args: argparse.Namespace):
 
     if args.list_suppliers:
         print("Supported suppliers are:\n\n\t", "\n\t".join(supported_suppliers))
+        print("\nDisable either the preferred or alternative supplier by setting their option as 'disabled', e.g. kiabom input.xml -p disabled")
         sys.exit(0)
 
     if args.list_presets:
@@ -1612,7 +1613,7 @@ def check_args(args: argparse.Namespace):
 
     if args.preferred_supplier.lower() not in [
         supplier.lower() for supplier in supported_suppliers
-    ]:
+    ] and args.preferred_supplier.lower() != "disabled":
         print(
             f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Preferred supplier '{args.preferred_supplier}' not supported.",
             file=sys.stderr,
@@ -1862,13 +1863,13 @@ def main(argv: list[str]):
     parser.add_argument(
         "-p",
         "--preferred-supplier",
-        help="select preferred supplier. View by executing KiABOM with '--list-suppliers' option.",
+        help="select preferred supplier. View supported suppliers with the '--list-suppliers' option.",
         default="Mouser",
     )
     parser.add_argument(
         "-a",
         "--alternative-supplier",
-        help="select alternative supplier. View by executing KiABOM with '--list-suppliers' option.",
+        help="select alternative supplier. View supported suppliers with the '--list-suppliers' option.",
         default="DigiKey",
     )
     parser.add_argument(

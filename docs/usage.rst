@@ -194,9 +194,9 @@ The ``--help`` page for KiABOM is shown below along with some examples,
                             add more MPN field values to ignore. This option appends the default option of 'Generic','TBD','Manufacturer's Stock', and '' (blank). Use values separated by commas and place values in quotes in they contain
                             spaces.
       -p, --preferred-supplier PREFERRED_SUPPLIER
-                            select preferred supplier. View by executing KiABOM with '--list-suppliers' option.
+                            select preferred supplier. View supported suppliers with the '--list-suppliers' option.
       -a, --alternative-supplier ATLERNATIVE_SUPPLIER
-                            select alternative supplier. View by executing KiABOM with '--list-suppliers' option.
+                            select alternative supplier. View supported suppliers with the '--list-suppliers' option.
       -d, --download-datasheets
                             optionally donwload the datasheets for the parts with valid URLs in a 'Datasheet' field. Files get downloaded to a 'datasheets' folder in the current working directory.
       -q, --quiet           silence all messages except errors
