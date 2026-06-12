@@ -772,12 +772,6 @@ class PartsSearch:
                         flush=True,
                     )
 
-            # Get the currency code from the parsed response
-            for part in self.parts_list:
-                currency_code = part.get("Currency Code")
-                if currency_code:
-                    self.currency_code = currency_code
-                    break
 
     def search_parts(self, grouped: list[list[comp]], ignore_mpns: list) -> list[dict]:
         """Search the parts from the KiCad netlist groups and print status messages
