@@ -325,7 +325,7 @@ class SupplierAPI:
         """
         raise NotImplementedError("Must implement in derived subclass")
 
-    def get_part(self, mpn: str, ignore_mpns: list[str] = [""]) -> dict:
+    def get_part(self, mpn: str, ignore_mpns: list[str] | None) -> dict:
         """Get the specified part MPN for KiABOM. Calls the search and parser functions.
         Also handles the required caching for each part.
 
@@ -333,6 +333,9 @@ class SupplierAPI:
         :param ignore_mpns: List of ignore MPN strings
         :return:
         """
+        if ignore_mpns is None:
+            ignore_mpns = [""]
+
         if mpn in ignore_mpns:
             return {}
 
@@ -407,7 +410,7 @@ class SupplierAPI:
         try:
             with open(cached_file, "rb") as f:
                 return pickle.load(f)
-        except FileNotFoundError or IOError:
+        except (FileNotFoundError, IOError):
             return None
 
     def cache_part(self, mpn: str, data: dict):
