@@ -68,7 +68,7 @@ if getattr(sys, "frozen", False):
 else:
     DIR_PATH = Path(__file__).resolve().parent
 
-EPOCH_TIME = epoch_time = int(time.time())
+EPOCH_TIME = int(time.time())
 MAX_GROUP_FIELDS = 7
 QUIET = False
 CACHE_PATH = DIR_PATH / "kiabom_cache"
@@ -387,7 +387,7 @@ class SupplierAPI:
         cached_file = None
         for _, _, files in os.walk(self.cache_path):
             for f in files:
-                if mpn in f:
+                if mpn + "___" in f:
                     cached_file = self.cache_path / f
                     break
 
@@ -825,7 +825,8 @@ class CurrencyConverter:
                     self.response_usd = json.load(f)
             except FileNotFoundError:
                 self.response_usd = requests.get(
-                    "https://open.er-api.com/v6/latest/USD"
+                    "https://open.er-api.com/v6/latest/USD",
+                    timeout=2
                 ).json()
                 with open(filename, "w") as f:
                     json.dump(self.response_usd, f)
@@ -1001,7 +1002,7 @@ def get_bom_row(
     # can be filled in once per group
     refs = ", ".join(component.getRef() for component in group)
 
-    quantity = bom_data.filled_res[pos].get("Quantity", "")
+    quantity = bom_data.filled_res[pos].get("Quantity", 0)
     price = bom_data.filled_res[pos].get("Price", "")
     currency_symbol = bom_data.filled_res[pos].get("Currency", "")
 
@@ -1052,7 +1053,7 @@ def get_bom_row(
             row.append(f"{currency_symbol}{price}")
         elif name == "Total Price":
             if price != "":
-                row.append(f"{currency_symbol}{quantity * float(price)}")
+                row.append(f"{currency_symbol}{int(quantity) * float(price)}")
             else:
                 row.append("")
         elif c.getField(name):
