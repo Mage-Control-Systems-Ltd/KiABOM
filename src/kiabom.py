@@ -360,7 +360,7 @@ class SupplierAPI:
 
         :param mpn: MPN value
         :param ignore_mpns: List of ignore MPN strings
-        :return:
+        :return: Parsed API response in a PartsInfo() object
         """
         if ignore_mpns is None:
             ignore_mpns = [""]
@@ -899,10 +899,15 @@ class CurrencyConverter:
 class BomData:
     """Class containing the file data required to create the BOM.
     Has data from both preferred and alternative suppliers.
+    Part quantity is resolved based on requested board quantity and group
+    component count. Using the quantity, the price is retrieved based on
+    the price tiers in the response. This price is then converted to the
+    requested currency.
+    
 
     :param pref: Preferred supplier object
     :param alt: Alternative supplier object
-    :param currency: CurrencyConverter object
+    :param currency_conv: CurrencyConverter object
     :param filled_res: Preferred API response with gaps filled from alternative response
     :param total_price_sum: Total price sum of all parts
     """
@@ -913,7 +918,7 @@ class BomData:
         alt_obj: PartsSearch,
         refdes_groups: list[list[str]],
         board_quantity: int,
-        currency: CurrencyConverter | None,
+        currency_conv: CurrencyConverter | None,
     ) -> None:
         """
 
@@ -921,14 +926,14 @@ class BomData:
         :param alt_obj: PartsSearch object for alternative supplier
         :param refdes_groups: Reference designator groups from KiCad netlist
         :param board_quantity: Board quantity in BOM
-        :param currency:
+        :param currency_conv: CurrencyConverter object
         """
         self.pref = pref_obj
         self.alt = alt_obj
-        self.currency = currency
+        self.currency_conv = currency_conv
 
-        if self.currency:
-            self.currency_symbol = self.currency.symbol
+        if self.currency_conv:
+            self.currency_symbol = self.currency_conv.symbol
         else:
             self.currency_symbol = ""
 
@@ -966,15 +971,15 @@ class BomData:
                     if key <= part.quantity:
                         part.price = float(price_tiers.get(key, 0))
 
-        if self.currency:
+        if self.currency_conv:
             # Convert from part's currency to requested currency
             for part in self.merged:
                 price = part.price
                 if price != PRICE_DEFAULT:
-                    part.price = self.currency.convert(
+                    part.price = self.currency_conv.convert(
                         part.currency_code,
                         float(price),
-                        self.currency.requested_currency,
+                        self.currency_conv.requested_currency,
                     )
 
         # Calculate total price
