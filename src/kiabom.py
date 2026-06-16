@@ -1152,7 +1152,7 @@ def html_output_general_info(html: str, net: netlist, board_quantity: int) -> st
     return html
 
 
-def writerow(acsvwriter, columns: list[str]):
+def csv_writerow(acsvwriter, columns: list[str]):
     """Override csv.writer's writerow() to support encoding conversion (initial encoding is utf8)
 
     :param acsvwriter: A csv.writer object used to write the columns list.
@@ -1177,7 +1177,7 @@ def csv_write_bom(
     :param bom_data: BomData object
     """
     for pos, group in enumerate(grouped):
-        writerow(out, get_bom_row(pos, group, columns, bom_data))
+        csv_writerow(out, get_bom_row(pos, group, columns, bom_data))
 
 
 def csv_output_general_info(out, net: netlist, board_quantity: int):
@@ -1188,13 +1188,13 @@ def csv_output_general_info(out, net: netlist, board_quantity: int):
     :param net: The netlist object created by opening the XML with kicad_netlist_reader.
     :param board_quantity: Board quantity.
     """
-    writerow(out, [""])
-    writerow(out, ["Board Quantity:", str(board_quantity)])
-    writerow(out, ["Schematic:", str(net.getSource())])
-    writerow(out, ["Component Count:", str(len(net.components))])
-    writerow(out, ["Date:", str(net.getDate())])
-    writerow(out, ["Generator:", sys.argv[0], " KiABOM v", __version__])
-    writerow(out, ["Link: https://github.com/Mage-Control-Systems/kiabom"])
+    csv_writerow(out, [""])
+    csv_writerow(out, ["Board Quantity:", str(board_quantity)])
+    csv_writerow(out, ["Schematic:", str(net.getSource())])
+    csv_writerow(out, ["Component Count:", str(len(net.components))])
+    csv_writerow(out, ["Date:", str(net.getDate())])
+    csv_writerow(out, ["Generator:", sys.argv[0], " KiABOM v", __version__])
+    csv_writerow(out, ["Link: https://github.com/Mage-Control-Systems/kiabom"])
 
 
 def write_to_file(
@@ -1228,14 +1228,14 @@ def write_to_file(
 
         # Output column headings
         if headers_flag:
-            writerow(out, columns)
+            csv_writerow(out, columns)
 
         # Write each row to file
         csv_write_bom(out, columns, net_obj.grouped, bom_data)
 
         if sum_flag:
-            writerow(out, [""])
-            writerow(
+            csv_writerow(out, [""])
+            csv_writerow(
                 out,
                 [
                     "Total Price Sum:",

@@ -15,7 +15,7 @@ Summary
         html_get_td_string
         html_get_table
         html_output_general_info
-        writerow
+        csv_writerow
         csv_write_bom
         csv_output_general_info
         write_to_file
@@ -23,6 +23,7 @@ Summary
         open_output_file
         print_title_screen
         get_columns
+        get_group_by
         has_internet
         download_datasheets
         check_args
@@ -35,6 +36,8 @@ Summary
 .. autosummary::
 
         KiCadNetlist
+        PartsInfo
+        BomPartsInfo
         SupplierAPI
         MouserAPI
         DigiKeyAPI
@@ -53,7 +56,7 @@ Functions
 .. autofunction:: html_get_td_string
 .. autofunction:: html_get_table
 .. autofunction:: html_output_general_info
-.. autofunction:: writerow
+.. autofunction:: csv_writerow
 .. autofunction:: csv_write_bom
 .. autofunction:: csv_output_general_info
 .. autofunction:: write_to_file
@@ -61,6 +64,7 @@ Functions
 .. autofunction:: open_output_file
 .. autofunction:: print_title_screen
 .. autofunction:: get_columns
+.. autofunction:: get_group_by
 .. autofunction:: has_internet
 .. autofunction:: download_datasheets
 .. autofunction:: check_args
@@ -71,6 +75,12 @@ Functions
 Classes
 `````````````
 .. autoclass:: KiCadNetlist
+    :members:
+
+.. autoclass:: PartsInfo
+    :members:
+
+.. autoclass:: BomPartsInfo
     :members:
 
 .. autoclass:: SupplierAPI
