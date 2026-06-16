@@ -441,6 +441,12 @@ class SupplierAPI:
                 return pickle.load(f)
         except (FileNotFoundError, IOError):
             return None
+        except ModuleNotFoundError:
+            print(
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during cache retrieval for MPN: {mpn}. Try to refresh your cache by doing '--cache-ttl 0'",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
     def cache_part(self, mpn: str, part_info: PartsInfo):
         """Store the specified part in the cache
@@ -903,7 +909,7 @@ class BomData:
     component count. Using the quantity, the price is retrieved based on
     the price tiers in the response. This price is then converted to the
     requested currency.
-    
+
 
     :param pref: Preferred supplier object
     :param alt: Alternative supplier object
@@ -1423,9 +1429,9 @@ def print_title_screen():
             \_| \_/_\_| |_/\____/  \___/\_|  |_/
             {colorama.Style.RESET_ALL}
 
-            KiABOM is licensed under GPL v3, and comes with ABSOLUTELY NO WARRANTY.
-            Use the '-h'/'--help' option for the full list of possible comnmands.
-            """,
+    KiABOM is licensed under GPL v3, and comes with ABSOLUTELY NO WARRANTY.
+    Use the '-h'/'--help' option for the full list of possible comnmands.
+    """,
         file=sys.stdout,
     )
 
