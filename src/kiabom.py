@@ -441,7 +441,8 @@ class SupplierAPI:
                 return pickle.load(f)
         except (FileNotFoundError, IOError):
             return None
-        except ModuleNotFoundError:
+        except ModuleNotFoundError as e:
+            print(e)
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during cache retrieval for MPN: {mpn}. Try to refresh your cache by doing '--cache-ttl 0'",
                 file=sys.stderr,
