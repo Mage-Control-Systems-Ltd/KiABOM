@@ -53,9 +53,10 @@ import time
 import pickle
 import re
 import json
+from pathlib import Path
+from dataclasses import dataclass, field
 from currency_symbols import CurrencySymbols
 import kicad_netlist_reader
-from pathlib import Path
 from kicad_netlist_reader import comp, netlist
 from mouser import api, base
 import digikey
@@ -72,6 +73,7 @@ EPOCH_TIME = int(time.time())
 QUIET = False
 CACHE_PATH = DIR_PATH / "kiabom_cache"
 CACHE_DEFAULT_TTL = 60 * 60 * 24
+PRICE_DEFAULT = 0
 
 column_preset_dict = {
     "default": [
@@ -260,17 +262,45 @@ class KiCadNetlist:
 
         :param ignore_mpns: List containing MPN values to ignore
         """
-        new_grouped = []
         for group in self.grouped:
-            # First component in group
-            component = group[0]
-            mpn = component.getField("MPN")
-            if mpn not in ignore_mpns:
-                new_grouped.append(group)
-        self.grouped = new_grouped
+            for comp in group:
+                mpn = comp.getField("MPN")
+                if mpn in ignore_mpns:
+                    group.remove(comp)
+            if not group:
+                self.grouped.remove(group)
 
         # Update reference designator list and group count
         self.get_refdes_from_net()
+
+
+@dataclass
+class PartsInfo:
+    """Information for each part parsed from the API which is then cached.
+    Class members are based only on API result.
+    Full parts info is split into two classes to minimise cache.
+    """
+
+    datasheet: str = ""
+    description: str = ""
+    manufacturer: str = ""
+    mpn: str = ""
+    order_code: str = ""
+    stock: str = ""
+    supplier: str = ""
+    product_page: str = ""
+    price_tiers: dict = field(default_factory=dict)
+    currency_code: str = ""
+
+
+@dataclass
+class BomPartsInfo(PartsInfo):
+    """Derived information from parts info.
+    Done to minimise cache.
+    """
+
+    price: float = -1
+    quantity: int = -1
 
 
 class SupplierAPI:
@@ -314,7 +344,7 @@ class SupplierAPI:
         """
         raise NotImplementedError("Must implement in derived subclass")
 
-    def parse(self, parts: list[dict]) -> list[dict]:
+    def parse(self, parts: list[dict]) -> list[PartsInfo]:
         """Parse the API result into the dictionary KiABOM uses for BOM generation.
         Look at the other parse functions for examples.
 
@@ -324,7 +354,7 @@ class SupplierAPI:
         """
         raise NotImplementedError("Must implement in derived subclass")
 
-    def get_part(self, mpn: str, ignore_mpns: list[str] | None) -> dict:
+    def get_part(self, mpn: str, ignore_mpns: list[str] | None) -> PartsInfo:
         """Get the specified part MPN for KiABOM. Calls the search and parser functions.
         Also handles the required caching for each part.
 
@@ -336,7 +366,7 @@ class SupplierAPI:
             ignore_mpns = [""]
 
         if mpn in ignore_mpns:
-            return {}
+            return PartsInfo()
 
         mpn = self.cache_mpn_normalise(mpn)
         cached_part = self.cache_query(mpn)
@@ -355,7 +385,7 @@ class SupplierAPI:
 
         # If there is an exact MPN match use that instead
         for part in parts:
-            if part.get("MPN") == mpn:
+            if part.mpn == mpn:
                 found_part = part
                 break
 
@@ -377,7 +407,7 @@ class SupplierAPI:
 
         return mpn
 
-    def cache_query(self, mpn: str) -> dict | None:
+    def cache_query(self, mpn: str) -> PartsInfo | None:
         """Query the cache for the requested MPN
 
         :param mpn: requested MPN
@@ -412,7 +442,7 @@ class SupplierAPI:
         except (FileNotFoundError, IOError):
             return None
 
-    def cache_part(self, mpn: str, data: dict):
+    def cache_part(self, mpn: str, part_info: PartsInfo):
         """Store the specified part in the cache
 
         :param mpn: MPN value
@@ -421,7 +451,7 @@ class SupplierAPI:
         filename = mpn + "___" + str(self.time) + ".pickle"
         cache_file = self.cache_path / filename
         with open(cache_file, "wb") as f:
-            pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(part_info, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     def print_stats(self):
         """Print some stats to see how many parts from cache were used"""
@@ -538,29 +568,27 @@ class MouserAPI(SupplierAPI):
 
         return price_tiers_list[0].get("Currency", "")
 
-
-    def parse(self, parts: list[dict]) -> list[dict]:
+    def parse(self, parts: list[dict]) -> list[PartsInfo]:
         # If no parts were found
         if parts[0] == {}:
-            return [{}]
+            return [PartsInfo()]
 
         parsed_parts = []
         for part in parts:
-            parsed_dict = {}
-            parsed_dict["Datasheet"] = part.get("DataSheetUrl", "")
-            parsed_dict["Description"] = part.get("Description", "")
-            parsed_dict["Manufacturer"] = part.get("Manufacturer", "")
-            parsed_dict["MPN"] = part.get("ManufacturerPartNumber", "")
-            parsed_dict["Order Code"] = part.get("MouserPartNumber", "")
-            parsed_dict["Stock"] = part.get("AvailabilityInStock", "")
-            parsed_dict["Product Page"] = part.get("ProductDetailUrl", "")
-            parsed_dict["Price Tiers"] = self.get_price_tiers(
+            parts_info = PartsInfo()
+            parts_info.datasheet = part.get("DataSheetUrl", "")
+            parts_info.description = part.get("Description", "")
+            parts_info.manufacturer = part.get("Manufacturer", "")
+            parts_info.mpn = part.get("ManufacturerPartNumber", "")
+            parts_info.order_code = part.get("MouserPartNumber", "")
+            parts_info.stock = part.get("AvailabilityInStock", "")
+            parts_info.supplier = self.name
+            parts_info.product_page = part.get("ProductDetailUrl", "")
+            parts_info.price_tiers = self.get_price_tiers(part.get("PriceBreaks", []))
+            parts_info.currency_code = self.get_currency_code(
                 part.get("PriceBreaks", [])
             )
-            parsed_dict["Currency Code"] = self.get_currency_code(
-                part.get("PriceBreaks", [])
-            )
-            parsed_parts.append(parsed_dict)
+            parsed_parts.append(parts_info)
 
         return parsed_parts
 
@@ -630,7 +658,6 @@ class DigiKeyAPI(SupplierAPI):
             )
             sys.exit(1)
 
-
         if res is None:
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request",
@@ -699,29 +726,31 @@ class DigiKeyAPI(SupplierAPI):
 
         return price_tiers_dict
 
-    def parse(self, parts: list[dict]) -> list[dict]:
+    def parse(self, parts: list[dict]) -> list[PartsInfo]:
         # If no parts were found
         if parts[0] == {}:
-            return [{}]
+            return [PartsInfo()]
 
         parsed_parts = []
         for part in parts:
-            parsed_dict = {}
-            parsed_dict["Datasheet"] = part.get("datasheet_url", "")
-            parsed_dict["Description"] = part.get("description", {}).get(
+            parts_info = PartsInfo()
+            parts_info.datasheet = part.get("datasheet_url", "")
+            parts_info.description = part.get("description", {}).get(
                 "product_description", ""
             )
-            parsed_dict["Manufacturer"] = part.get("manufacturer", {}).get("name", "")
-            parsed_dict["MPN"] = part.get("manufacturer_product_number", "")
-            parsed_dict["Order Code"] = self.get_order_code(
+            parts_info.manufacturer = part.get("manufacturer", {}).get("name", "")
+            parts_info.mpn = part.get("manufacturer_product_number", "")
+            parts_info.order_code = self.get_order_code(
                 part.get("product_variations", [])
             )
-            parsed_dict["Stock"] = part.get("quantity_available", "")
-            parsed_dict["Price Tiers"] = self.get_order_code_price_tiers(
-                parsed_dict["Order Code"], part.get("product_variations", [])
+            parts_info.product_page = part.get("product_url", "")
+            parts_info.stock = part.get("quantity_available", "")
+            parts_info.supplier = self.name
+            parts_info.price_tiers = self.get_order_code_price_tiers(
+                parts_info.order_code, part.get("product_variations", [])
             )
-            parsed_dict["Currency Code"] = "USD"
-            parsed_parts.append(parsed_dict)
+            parts_info.currency_code = "USD"
+            parsed_parts.append(parts_info)
 
         return parsed_parts
 
@@ -749,7 +778,7 @@ class PartsSearch:
         :param config: Config dictionary
         :param cache_ttl: Cache time-to-live value in seconds
         """
-        self.parts_list = [{} for _ in range(len(grouped))]
+        self.parts_list = [PartsInfo() for _ in range(len(grouped))]
         self.supplier = SupplierAPI(-1)
 
         if config.get(supplier.lower()) != "disabled":
@@ -771,8 +800,9 @@ class PartsSearch:
                         flush=True,
                     )
 
-
-    def search_parts(self, grouped: list[list[comp]], ignore_mpns: list) -> list[dict]:
+    def search_parts(
+        self, grouped: list[list[comp]], ignore_mpns: list
+    ) -> list[PartsInfo]:
         """Search the parts from the KiCad netlist groups and print status messages
 
         :param grouped: KiCad netlist reader grouped parts
@@ -786,10 +816,12 @@ class PartsSearch:
             mpn = component.getField("MPN")
             status = f"Searching for {colorama.Fore.LIGHTYELLOW_EX}{mpn}{colorama.Style.RESET_ALL} ({count} out of {amount})"
             if not QUIET:
-                print(status, end = "\r", flush = True)
-            parts.append(self.supplier.get_part(mpn, ignore_mpns)) # a try-except here might be a good idea
+                print(status, end="\r", flush=True)
+            parts.append(
+                self.supplier.get_part(mpn, ignore_mpns)
+            )  # a try-except here might be a good idea
             if not QUIET:
-                print(" " * len(status), end = "\r", flush = True)
+                print(" " * len(status), end="\r", flush=True)
 
         return parts
 
@@ -811,7 +843,7 @@ class CurrencyConverter:
         if symbol:
             self.symbol = symbol
         else:
-            self.symbol = ""
+            self.symbol = currency_code
 
         self.requested_currency = currency_code
 
@@ -824,8 +856,7 @@ class CurrencyConverter:
                     self.response_usd = json.load(f)
             except FileNotFoundError:
                 self.response_usd = requests.get(
-                    "https://open.er-api.com/v6/latest/USD",
-                    timeout=2
+                    "https://open.er-api.com/v6/latest/USD", timeout=2
                 ).json()
                 with open(filename, "w") as f:
                     json.dump(self.response_usd, f)
@@ -853,7 +884,7 @@ class CurrencyConverter:
         :return: Converted currency to 7 decimal places
         """
         if not to_currency or not from_currency:
-            return 0.0
+            return PRICE_DEFAULT
 
         if to_currency == from_currency:
             return price
@@ -869,8 +900,8 @@ class BomData:
     """Class containing the file data required to create the BOM.
     Has data from both preferred and alternative suppliers.
 
-    :param pref_res: Preferred supplier API response
-    :param alt_res: Alternative supplier API response
+    :param pref: Preferred supplier object
+    :param alt: Alternative supplier object
     :param currency: CurrencyConverter object
     :param filled_res: Preferred API response with gaps filled from alternative response
     :param total_price_sum: Total price sum of all parts
@@ -888,12 +919,12 @@ class BomData:
 
         :param pref_obj: PartsSearch object for preferred supplier
         :param alt_obj: PartsSearch object for alternative supplier
-        :param refdes_groups:
-        :param board_quantity:
+        :param refdes_groups: Reference designator groups from KiCad netlist
+        :param board_quantity: Board quantity in BOM
         :param currency:
         """
-        self.pref_res = pref_obj.parts_list
-        self.alt_res = alt_obj.parts_list
+        self.pref = pref_obj
+        self.alt = alt_obj
         self.currency = currency
 
         if self.currency:
@@ -901,19 +932,22 @@ class BomData:
         else:
             self.currency_symbol = ""
 
-        self.insert_in_api_response(self.pref_res, "Supplier", pref_obj.supplier.name)
-        self.insert_in_api_response(self.alt_res, "Supplier", alt_obj.supplier.name)
+        # Replace the objects with the child class
+        # to store data that is to be derived from the API result
+        for i, part in enumerate(self.pref.parts_list):
+            self.pref.parts_list[i] = BomPartsInfo(**vars(part))
+        for i, part in enumerate(self.alt.parts_list):
+            self.alt.parts_list[i] = BomPartsInfo(**vars(part))
 
-        self.filled_res = []
-        for pri, sec in zip(self.pref_res, self.alt_res):
-            if pri:
-                self.filled_res.append(pri)
+        self.merged = []
+        empty_partsinfo = BomPartsInfo()
+        for pref, alt in zip(self.pref.parts_list, self.alt.parts_list):
+            if pref != empty_partsinfo:
+                self.merged.append(pref)
             else:
-                self.filled_res.append(sec)
+                self.merged.append(alt)
 
-        self.insert_in_api_response(self.filled_res, "Currency", self.currency_symbol)
-
-        if len(refdes_groups) != len(self.filled_res):
+        if len(refdes_groups) != len(self.merged):
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} The length of the reference designator groups and API result must match because the index is used to match API result with the netlist. Aborting BOM generation...",
                 file=sys.stderr,
@@ -921,49 +955,32 @@ class BomData:
             sys.exit(1)
 
         # Get the quantities for each part and insert into common result
-        for group, part in zip(refdes_groups, self.filled_res):
-            part["Quantity"] = int(len(group) * board_quantity)
+        for group, part in zip(refdes_groups, self.merged):
+            part.quantity = int(len(group) * board_quantity)
 
         # Get the price for each part and insert into common result
-        for part in self.filled_res:
-            if part.get("Order Code"):
-                price_tiers = part.get("Price Tiers", {})
-                part["Price"] = 0.0 # initialise
+        for part in self.merged:
+            if part.order_code:
+                price_tiers = part.price_tiers
                 for key in sorted(price_tiers.keys()):
-                    if key <= int(part.get("Quantity", 0)):
-                        part["Price"] = float(price_tiers.get(key, 0))
-            else:
-                part["Price"] = ""
+                    if key <= part.quantity:
+                        part.price = float(price_tiers.get(key, 0))
 
         if self.currency:
             # Convert from part's currency to requested currency
-            for part in self.filled_res:
-                price = part.get("Price", "")
-                if price != "":
-                    part["Price"] = self.currency.convert(
-                        part.get("Currency Code"),
+            for part in self.merged:
+                price = part.price
+                if price != PRICE_DEFAULT:
+                    part.price = self.currency.convert(
+                        part.currency_code,
                         float(price),
                         self.currency.requested_currency,
                     )
 
         # Calculate total price
         self.total_price_sum = 0.0
-        for part in self.filled_res:
-            price = part.get("Price", "")
-            if price != "":
-                self.total_price_sum = float(self.total_price_sum) + float(price)
-
-    def insert_in_api_response(self, result: list[dict], key: str, val: str):
-        """Insert an entry with the same value in all valid API responses
-
-        :param result: API result dictionary
-        :param key: New key for the dictionary
-        :param val: New value for the dictionary
-        """
-        for part in result:
-            # Check if a result for the part was been found. Could be any API field
-            if part.get("Order Code"):
-                part.update({key: val})
+        for part in self.merged:
+            self.total_price_sum = self.total_price_sum + float(part.price)
 
 
 def get_footprint_name(text: str) -> str:
@@ -1001,9 +1018,8 @@ def get_bom_row(
     # can be filled in once per group
     refs = ", ".join(component.getRef() for component in group)
 
-    quantity = bom_data.filled_res[pos].get("Quantity", 0)
-    price = bom_data.filled_res[pos].get("Price", "")
-    currency_symbol = bom_data.filled_res[pos].get("Currency", "")
+    quantity = bom_data.merged[pos].quantity
+    price = bom_data.merged[pos].price
 
     row = []
 
@@ -1029,30 +1045,33 @@ def get_bom_row(
         elif name == "Rating":
             row.append(c.getField("Rating"))
         elif name == "Manufacturer":
-            row.append(bom_data.filled_res[pos].get("Manufacturer", ""))
+            row.append(bom_data.merged[pos].manufacturer)
         elif name == "MPN":
             row.append(c.getField("MPN"))
         elif name == "Preferred Supplier":
-            row.append(bom_data.pref_res[pos].get("Supplier", ""))
+            row.append(bom_data.pref.parts_list[pos].supplier)
         elif name == "Order Code":
-            row.append(bom_data.pref_res[pos].get("Order Code", ""))
+            row.append(bom_data.pref.parts_list[pos].order_code)
         elif name == "Product Page":
-            row.append(bom_data.pref_res[pos].get("Product Page", ""))
+            row.append(bom_data.pref.parts_list[pos].product_page)
         elif name == "Stock":
-            row.append(bom_data.pref_res[pos].get("Stock", ""))
+            row.append(bom_data.pref.parts_list[pos].stock)
         elif name == "Alt. Supplier":
-            row.append(bom_data.alt_res[pos].get("Supplier", ""))
+            row.append(bom_data.alt.parts_list[pos].supplier)
         elif name == "Alt. Order Code":
-            row.append(bom_data.alt_res[pos].get("Order Code", ""))
+            row.append(bom_data.alt.parts_list[pos].order_code)
         elif name == "Alt. Product Page":
-            row.append(bom_data.alt_res[pos].get("Product Page", ""))
+            row.append(bom_data.alt.parts_list[pos].product_page)
         elif name == "Alt. Stock":
-            row.append(bom_data.alt_res[pos].get("Stock", ""))
+            row.append(bom_data.alt.parts_list[pos].stock)
         elif name == "Unit/Reel Price":
-            row.append(f"{currency_symbol}{price}")
+            if price != PRICE_DEFAULT:
+                row.append(f"{bom_data.currency_symbol}{price}")
+            else:
+                row.append("")
         elif name == "Total Price":
-            if price != "":
-                row.append(f"{currency_symbol}{int(quantity) * float(price)}")
+            if price != PRICE_DEFAULT:
+                row.append(f"{bom_data.currency_symbol}{quantity * price}")
             else:
                 row.append("")
         elif c.getField(name):
@@ -1073,7 +1092,7 @@ def html_get_td_string(string: str) -> str:
 
 
 def html_get_table(
-    html_text: str, columns: list[str], grouped: list[list[comp]], bomd_data: BomData
+    html_text: str, columns: list[str], grouped: list[list[comp]], bom_data: BomData
 ) -> str:
     """Get the HTML table containing the BOM data
 
@@ -1084,7 +1103,7 @@ def html_get_table(
     :return: HTML string
     """
     for pos, group in enumerate(grouped):
-        values = get_bom_row(pos, group, columns, bomd_data)
+        values = get_bom_row(pos, group, columns, bom_data)
         row = (
             "\t<tr>"
             + "".join(html_get_td_string(str(v)) for v in values)
@@ -1278,6 +1297,7 @@ def get_equ(group_fields_list: list[str]):
     :return: Equivalence (__equ__) function.
     :rtype: Function returning True or False.
     """
+
     # Define the equivalence functions to be returned
     def kiabom_equ_dnp(self, other):
         result = False
@@ -1398,8 +1418,8 @@ def print_title_screen():
             \_| \_/_\_| |_/\____/  \___/\_|  |_/
             {colorama.Style.RESET_ALL}
 
-    KiABOM is licensed under GPL v3, and comes with ABSOLUTELY NO WARRANTY.
-    Use the '-h'/'--help' option for the full list of possible comnmands.
+            KiABOM is licensed under GPL v3, and comes with ABSOLUTELY NO WARRANTY.
+            Use the '-h'/'--help' option for the full list of possible comnmands.
             """,
         file=sys.stdout,
     )
@@ -1422,9 +1442,11 @@ def get_columns(columns: str, preset: str, preset_dict: dict) -> list[str]:
     columns_ret = [col.strip() for col in columns_ret]
     return columns_ret
 
+
 def get_group_by(group_by: str, preset: str, preset_dict: dict) -> list[str]:
     """Calls get_columns() to get the groups for BOM generation"""
     return get_columns(group_by, preset, preset_dict)
+
 
 def has_internet(test_address: str = "8.8.8.8", timeout: int = 3) -> bool:
     """Check if there is a valid internet connection.
@@ -1542,7 +1564,9 @@ def check_args(args: argparse.Namespace):
 
     if args.list_suppliers:
         print("Supported suppliers are:\n\n\t", "\n\t".join(supported_suppliers))
-        print("\nDisable either the preferred or alternative supplier by setting their option as 'disabled', e.g. kiabom input.xml -p disabled")
+        print(
+            "\nDisable either the preferred or alternative supplier by setting their option as 'disabled', e.g. kiabom input.xml -p disabled"
+        )
         sys.exit(0)
 
     if args.list_presets:
@@ -1596,9 +1620,11 @@ def check_args(args: argparse.Namespace):
         )
         sys.exit(0)
 
-    if args.preferred_supplier.lower() not in [
-        supplier.lower() for supplier in supported_suppliers
-    ] and args.preferred_supplier.lower() != "disabled":
+    if (
+        args.preferred_supplier.lower()
+        not in [supplier.lower() for supplier in supported_suppliers]
+        and args.preferred_supplier.lower() != "disabled"
+    ):
         print(
             f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Preferred supplier '{args.preferred_supplier}' not supported.",
             file=sys.stderr,
@@ -1717,9 +1743,7 @@ def read_config() -> dict:
             try:
                 config = yaml.safe_load(f)
                 if not QUIET:
-                    print(
-                        "Found config.yaml."
-                    )
+                    print("Found config.yaml.")
             except yaml.YAMLError as e:
                 print(
                     f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error reading config.yaml file:",
@@ -1865,7 +1889,11 @@ def main(argv: list[str]):
         default=False,
     )
     parser.add_argument(
-        "-q", "--quiet", help="silence all messages except errors", action="store_true", default=False
+        "-q",
+        "--quiet",
+        help="silence all messages except errors",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
         "--kefbom",

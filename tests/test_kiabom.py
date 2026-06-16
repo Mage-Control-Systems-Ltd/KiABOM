@@ -263,7 +263,7 @@ def test_class_supplierapi():
 
     assert "TEST--MPN" == test_mpn
 
-    supplier.cache_part(test_mpn, test_mpn)
+    supplier.cache_part(test_mpn, PartsInfo(mpn=test_mpn))
 
     filename = test_mpn + "___" + str(1) + ".pickle"
     filepath = CACHE_TEST_DIR / filename
@@ -271,7 +271,8 @@ def test_class_supplierapi():
 
     data = supplier.cache_query(test_mpn)
 
-    assert test_mpn == data
+    assert data
+    assert test_mpn == data.mpn
 
 @pytest.mark.skipif(DISABLE_API is not None,reason="API keys required")
 def test_class_mouserapi():
@@ -282,8 +283,8 @@ def test_class_mouserapi():
     part = part[0] # just in case multiple are retrieved
 
     # Values here are taken from Mouser directly
-    assert part.get("Order Code") == "630-HSMW-C170-U0000"
-    assert part.get("Manufacturer") == "Broadcom / Avago"
+    assert part.order_code == "630-HSMW-C170-U0000"
+    assert part.manufacturer == "Broadcom / Avago"
 
 @pytest.mark.skipif(DISABLE_API is not None,reason="API keys required")
 def test_class_digikeyapi():
@@ -294,8 +295,8 @@ def test_class_digikeyapi():
     part = part[0] # just in case multiple are retrieved
 
     # Values here are taken from DigiKey directly
-    assert part.get("Order Code") == "516-3993-1-ND"
-    assert part.get("Manufacturer") == "Broadcom Limited"
+    assert part.order_code == "516-3993-1-ND"
+    assert part.manufacturer == "Broadcom Limited"
 
 # This is only to test the conversion function within the class
 def test_class_currencyconverter():
