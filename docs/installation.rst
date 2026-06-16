@@ -56,6 +56,8 @@ If you would like to call the Python script directly, the the instructions here 
 
 Windows
 ^^^^^^^
+The process below is for using KiABOM through KiCad via Python. The tool can be treated as a regular Python script which does not require this process.
+
 1. Clone the repo to a known location.
 2. Open the KiCad <VERSION> Command Prompt by searching for it in the start menu **OR** if you don't want to use it through KiCad, open any terminal.
 3. Navigate to the repo location and install dependecies with,
