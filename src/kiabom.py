@@ -2024,7 +2024,7 @@ def main(argv: list[str]):
     # Get the groups to group components by
     group_by = get_group_by(
         args.group_by, args.group_preset, group_preset_dict
-    ) + args.append_columns.split(",")
+    ) + args.append_groups.split(",")
     group_by = [group for group in group_by if group != ""]  # Remove blank entries
 
     # Override the component equivalence operator for grouping
