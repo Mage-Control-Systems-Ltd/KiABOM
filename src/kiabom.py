@@ -1643,11 +1643,13 @@ def check_args(args: argparse.Namespace):
         )
         sys.exit(1)
 
-    if args.alternative_supplier.lower() not in [
-        supplier.lower() for supplier in supported_suppliers
-    ]:
+    if (
+        args.alternative_supplier.lower()
+        not in [supplier.lower() for supplier in supported_suppliers]
+        and args.alternative_supplier.lower() != "disabled"
+    ):
         print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Alternative supplier '{args.preferred_supplier}' not supported.",
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Alternative supplier '{args.alternative_supplier}' not supported.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -1705,7 +1707,7 @@ def check_args(args: argparse.Namespace):
 
     if not args.cache_ttl.isdigit():
         print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Detected non-integer board quantity, please input an integer as the quantity.",
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Detected non-integer cache TTL, please input an integer as the quantity.",
             file=sys.stderr,
         )
         sys.exit(1)
