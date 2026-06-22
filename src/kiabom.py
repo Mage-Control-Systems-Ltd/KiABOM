@@ -991,7 +991,8 @@ class BomData:
         # Calculate total price
         self.total_price_sum = 0.0
         for part in self.merged:
-            self.total_price_sum = self.total_price_sum + float(part.price)
+            if part.price != PRICE_DEFAULT:
+                self.total_price_sum = self.total_price_sum + float(part.price)
 
 
 def get_footprint_name(text: str) -> str:
