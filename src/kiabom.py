@@ -1691,14 +1691,14 @@ def check_args(args: argparse.Namespace):
 
     if args.group_preset not in group_preset_dict:
         print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Selected group preset '{args.columns_preset}' not supported. Please do '--list-group-presets' to show the valid inputs.",
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Selected group preset '{args.group_preset}' not supported. Please do '--list-group-presets' to show the valid inputs.",
             file=sys.stderr,
         )
         sys.exit(1)
 
     if args.output_format.lower() not in supported_formats:
         print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Selected output format '{args.output_format}' not supported.",
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Selected output format '{args.output_format}' not supported. Supported ones are: {", ".join(supported_formats)}",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -1735,7 +1735,7 @@ def set_format_from_output_file_extension(output_file: str) -> str:
 
     if output_format == "":
         print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Output format '{output_format}' not supported. Supported ones are 'CSV', 'HTML', and 'TXT'.",
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Output format '{ext}' not supported.",
             file=sys.stderr,
         )
         sys.exit(1)
