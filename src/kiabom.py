@@ -262,13 +262,12 @@ class KiCadNetlist:
 
         :param ignore_mpns: List containing MPN values to ignore
         """
+        new_grouped = []
         for group in self.grouped:
-            for comp in group:
-                mpn = comp.getField("MPN")
-                if mpn in ignore_mpns:
-                    group.remove(comp)
-            if not group:
-                self.grouped.remove(group)
+            new_group = [c for c in group if c.getField("MPN") not in ignore_mpns]
+            if new_group:
+                new_grouped.append(new_group)
+        self.grouped = new_grouped
 
         # Update reference designator list and group count
         self.get_refdes_from_net()
