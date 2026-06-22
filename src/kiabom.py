@@ -977,8 +977,8 @@ class BomData:
                     if key <= part.quantity:
                         part.price = float(price_tiers.get(key, 0))
 
+        # Convert from part's currency to requested currency
         if self.currency_conv:
-            # Convert from part's currency to requested currency
             for part in self.merged:
                 price = part.price
                 if price != PRICE_DEFAULT:
@@ -988,7 +988,7 @@ class BomData:
                         self.currency_conv.requested_currency,
                     )
 
-        # Calculate total price
+        # Calculate total price sum
         self.total_price_sum = 0.0
         for part in self.merged:
             if part.price != PRICE_DEFAULT:
