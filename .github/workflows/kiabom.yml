@@ -24,10 +24,11 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
 
-      - name: Autoformat
+      - name: Ruff
         run: |
           pip3 install ruff
           ruff format src/kiabom.py
+          ruff check src/kiabom.py
           ruff format tests/test_kiabom.py
 
       - name: Install deps
