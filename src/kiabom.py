@@ -298,8 +298,8 @@ class BomPartsInfo(PartsInfo):
     Done to minimise cache.
     """
 
-    price: float = -1
-    quantity: int = -1
+    price: float = PRICE_DEFAULT
+    quantity: int = 0
 
 
 class SupplierAPI:
@@ -323,6 +323,9 @@ class SupplierAPI:
         self.cache_path = Path()
         self.cache_ttl = cache_ttl
         self.time = time
+        self.req_counter = 0
+        self.last_sleep = EPOCH_TIME
+        self.rate_limit = 999
 
     def api_init(self, config: dict) -> str:
         """Supplier API initialisation function.
@@ -355,7 +358,8 @@ class SupplierAPI:
 
     def get_part(self, mpn: str, ignore_mpns: list[str] | None) -> PartsInfo:
         """Get the specified part MPN for KiABOM. Calls the search and parser functions.
-        Also handles the required caching for each part.
+        Also handles the required caching for each part and checking if the rate limit has
+        been reached.
 
         :param mpn: MPN value
         :param ignore_mpns: List of ignore MPN strings
@@ -377,6 +381,7 @@ class SupplierAPI:
                 return cached_part
 
         parts = self.search(mpn)
+        self.check_rate_limit()
         parts = self.parse(parts)
 
         # Use the first entry by default
@@ -467,6 +472,17 @@ class SupplierAPI:
                 flush=True,
             )
 
+    def check_rate_limit(self):
+        """Check if the requests have reached the per minute rate limit and sleep the script if they have"""
+        self.req_counter += 1
+        if (int(time.time()) - self.last_sleep) < 60 and self.req_counter > self.rate_limit:
+            self.req_counter = 0
+            self.last_sleep = int(time.time())
+            print(
+                f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} Reached max calls per minute for {self.name}. Waiting for 1 minute before continuing..."
+            )
+            time.sleep(60)
+
 
 class MouserAPI(SupplierAPI):
     """Class for Mouser API.
@@ -480,6 +496,7 @@ class MouserAPI(SupplierAPI):
         self.name = "Mouser"
         self.currency_code = ""  # for Mouser it gets retrieved from the API result
         self.api_status = self.api_init(config)
+        self.rate_limit = 30
 
     def api_init(self, config: dict) -> str:
         mouser_entry = config.get("Mouser", {})
@@ -514,7 +531,15 @@ class MouserAPI(SupplierAPI):
         # Check for errors or print the returned results
         if res is None or res == {}:
             print(
-                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}.",
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}. Skipping...",
+                file=sys.stderr,
+            )
+            return [{}]
+
+        errors = res.get("Errors")
+        if errors:
+            print(
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}. {errors}",
                 file=sys.stderr,
             )
             return [{}]
@@ -528,11 +553,7 @@ class MouserAPI(SupplierAPI):
             )
             sys.exit(1)
 
-        if not search_results:
-            return [{}]
-
-        result_count = search_results.get("NumberOfResult", 0)
-        if result_count == 0:
+        if search_results is None or search_results.get("NumberOfResult", 0) == 0:
             if not QUIET:
                 print(
                     f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on Mouser for part number '{mpn}' "
@@ -611,6 +632,7 @@ class DigiKeyAPI(SupplierAPI):
         self.name = "DigiKey"
         self.currency_code = "USD"  # hard coded for DigiKey
         self.api_status = self.api_init(config)
+        self.rate_limit = 120
 
     def api_init(self, config: dict) -> str:
         digikey_entry = config.get("DigiKey", {})
@@ -672,6 +694,15 @@ class DigiKeyAPI(SupplierAPI):
             return [{}]
 
         res_dict = res.to_dict()
+
+        status = res_dict.get("status", 1)
+        if status == 0:
+            print(
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}. {res}",
+                file=sys.stderr,
+            )
+            return [{}]
+
         result_count = res_dict.get("products_count", 0)
         if result_count == 0:
             if not QUIET:
@@ -895,6 +926,11 @@ class CurrencyConverter:
         if to_currency == from_currency:
             return price
 
+        # In the case where it gets called without any rates
+        # but this shouldn't happen
+        if not self.currency_rates:
+            return PRICE_DEFAULT
+
         return round(
             price
             * (self.currency_rates[to_currency] / self.currency_rates[from_currency]),
@@ -951,12 +987,13 @@ class BomData:
             self.alt.parts_list[i] = BomPartsInfo(**vars(part))
 
         self.merged = []
-        empty_partsinfo = BomPartsInfo()
         for pref, alt in zip(self.pref.parts_list, self.alt.parts_list):
-            if pref != empty_partsinfo:
+            if pref.order_code:
                 self.merged.append(pref)
-            else:
+            elif alt.order_code:
                 self.merged.append(alt)
+            else:
+                self.merged.append(BomPartsInfo())
 
         if len(refdes_groups) != len(self.merged):
             print(
@@ -1506,13 +1543,16 @@ def download_datasheets(
     urls = []
     for group in grouped:
         for component in group:
-            urls.append(component.getField("Datasheet"))
+            datasheet = component.getField("Datasheet")
+            if datasheet not in urls:
+                urls.append(datasheet)
 
     # Remove the ones with "~" values
     urls = [url for url in urls if url != "~"]
 
     # Split the urls and the last list entry is the filename
     file_paths = []
+    valid_urls = []
     for url in urls:
         full_filename = url.split("/")[-1]
         name, ext = os.path.splitext(full_filename)
@@ -1520,15 +1560,15 @@ def download_datasheets(
             if ext == "":
                 full_filename = full_filename + ".pdf"
             file_paths.append(os.path.join(downloads_path, full_filename))
+            valid_urls.append(url)
         else:
             if not QUIET:
                 print(
                     f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} URL '{url}' is not valid - skipping."
                 )
-            urls.remove(url)
 
     # Combine the URLs and the file paths to make them more easily iterable
-    datasheet_dict = dict(zip(file_paths, urls))
+    datasheet_dict = dict(zip(file_paths, valid_urls))
 
     # Download
     for path, url in datasheet_dict.items():
