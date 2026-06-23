@@ -196,10 +196,6 @@ preset_dict = {
     ],
 }
 
-# Global variable to be used in the equ functions
-global_group_fields = []
-
-
 class KiCadNetlist:
     """Class containing KiCad netlist data
 
@@ -313,6 +309,9 @@ class SupplierAPI:
     :param cache_path: Supplier cache path
     :param cache_ttl: Cache time-to-live
     :param time: Time used for cache_ttl comparison
+    :param req_counter: Requests counter
+    :param last_sleep: Store the last sleep time since epoch
+    :param rate_limi: Number of requests per minute allowed by the API
     """
 
     def __init__(self, cache_ttl: int, time: int = EPOCH_TIME):
@@ -325,7 +324,7 @@ class SupplierAPI:
         self.time = time
         self.req_counter = 0
         self.last_sleep = EPOCH_TIME
-        self.rate_limit = 999
+        self.rate_limit = 9999
 
     def api_init(self, config: dict) -> str:
         """Supplier API initialisation function.
@@ -338,7 +337,8 @@ class SupplierAPI:
         raise NotImplementedError("Must implement in derived subclass")
 
     def search(self, mpn: str) -> list[dict]:
-        """Search the MPN with the Supplier API
+        """Search the MPN with the Supplier API. Also outputs any errors
+        from the request.
 
         :param mpn: MPN value
         :raises NotImplementedError:
@@ -487,7 +487,11 @@ class SupplierAPI:
 class MouserAPI(SupplierAPI):
     """Class for Mouser API.
 
+    :param cache_path: Cache path
+    :param name: Name of supplier
     :param currency_code: Currency code for/from parts search
+    :param api_status: API status string
+    :param rate_limi: Number of requests per minute allowed by the supplier's API
     """
 
     def __init__(self, config: dict, cache_ttl: int):
@@ -623,9 +627,12 @@ class MouserAPI(SupplierAPI):
 class DigiKeyAPI(SupplierAPI):
     """Class for DigiKey API.
 
+    :param cache_path: Cache path
+    :param name: Name of supplier
     :param currency_code: Currency code for/from parts search
+    :param api_status: API status string
+    :param rate_limi: Number of requests per minute allowed by the supplier's API
     """
-
     def __init__(self, config: dict, cache_ttl: int):
         super().__init__(cache_ttl)
         self.cache_path = CACHE_PATH / "digikey_cache"
@@ -946,7 +953,6 @@ class BomData:
     the price tiers in the response. This price is then converted to the
     requested currency.
 
-
     :param pref: Preferred supplier object
     :param alt: Alternative supplier object
     :param currency_conv: CurrencyConverter object
@@ -963,7 +969,6 @@ class BomData:
         currency_conv: CurrencyConverter | None,
     ) -> None:
         """
-
         :param pref_obj: PartsSearch object for preferred supplier
         :param alt_obj: PartsSearch object for alternative supplier
         :param refdes_groups: Reference designator groups from KiCad netlist
@@ -1056,7 +1061,7 @@ def get_bom_row(
     :param pos: Index position
     :param group: List of comp() objects from the KiCad netlist reader indicating the component group
     :param columns: Columns list to use
-    :param opdata: BomData object
+    :param bom_data: BomData object
     :return: List of strings indicating the BOM row of the component group
     """
 
@@ -1148,7 +1153,7 @@ def html_get_table(
     :param html_text: Text containing HTML template
     :param columns: Columns list
     :param grouped: A list containing lists of grouped parts
-    :param opdata: BomData object
+    :param bom_data: BomData object
     :return: HTML string
     """
     for pos, group in enumerate(grouped):
@@ -1340,9 +1345,7 @@ def write_to_file(
 def get_equ(group_fields_list: list[str]):
     """Return the selected equivalence function to be used in grouping
 
-    :param group_fields: String of comma separated group values.
-    :param group_preset: Specified group preset.
-    :param append_groups: String of comma separated values to append to a preset.
+    :param group_fields_list: List of group fields to group by
     :return: Equivalence (__equ__) function.
     :rtype: Function returning True or False.
     """
@@ -1478,6 +1481,7 @@ def get_columns(columns: str, preset: str, preset_dict: dict) -> list[str]:
 
     :param columns: Comma separated string of the columns names.
     :param preset: Specified column list preset.
+    :param preset_dict: Preset dictionary to get columns from
     :return: A column string list.
     """
 
@@ -1496,7 +1500,7 @@ def get_group_by(group_by: str, preset: str, preset_dict: dict) -> list[str]:
     return get_columns(group_by, preset, preset_dict)
 
 
-def has_internet(test_address: str = "8.8.8.8", timeout: int = 3) -> bool:
+def has_internet(test_address: str = "8.8.8.8", timeout: int = 2) -> bool:
     """Check if there is a valid internet connection.
 
     :param test_address: Address used to test for internet connection.
