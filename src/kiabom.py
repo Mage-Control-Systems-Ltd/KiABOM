@@ -1346,6 +1346,17 @@ def get_equ(group_fields_list: list[str]):
     :return: Equivalence (__equ__) function.
     :rtype: Function returning True or False.
     """
+    MAX_GROUP_FIELDS = 7
+
+    # Initialise all group fields to be the last group field
+    global_group_fields = [group_fields_list[-1]] * MAX_GROUP_FIELDS
+
+    if len(group_fields_list) > MAX_GROUP_FIELDS:
+        print(
+            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} More than {MAX_GROUP_FIELDS} group fields are not supported.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     # Define the equivalence functions to be returned
     def kiabom_equ_dnp(self, other):
@@ -1389,18 +1400,6 @@ def get_equ(group_fields_list: list[str]):
                                 ) == other.getField(global_group_fields[4]):
                                     result = True
         return result
-
-    MAX_GROUP_FIELDS = 7
-
-    if len(group_fields_list) > MAX_GROUP_FIELDS:
-        print(
-            f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} More than {MAX_GROUP_FIELDS} group fields are not supported.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    # Initialise all group fields to be the last group field
-    global_group_fields = [group_fields_list[-1]] * MAX_GROUP_FIELDS
 
     # Populate with the specified group fields
     for index, group_field in enumerate(group_fields_list):
