@@ -858,7 +858,7 @@ class PartsSearch:
                 self.supplier.get_part(mpn, ignore_mpns)
             )  # a try-except here might be a good idea
             if not QUIET:
-                print(" " * len(status), end="\r", flush=True)
+                print("", end="\r\033[K", flush=True)
 
         return parts
 
