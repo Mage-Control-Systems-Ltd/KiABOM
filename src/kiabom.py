@@ -1623,7 +1623,7 @@ def check_args(args: argparse.Namespace):
 
     if args.list_presets:
         print("Built in presets are:\n")
-        for key, val in column_preset_dict.items():
+        for key, val in preset_dict.items():
             print("{key}:\n\t{val}\n".format(key=key, val="\n\t".join(val)))
         sys.exit(0)
 
