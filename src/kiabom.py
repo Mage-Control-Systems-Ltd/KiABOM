@@ -25,21 +25,6 @@ KiABOM, Automatic Bill Of Materials generator for KiCAD.
 Command line:
     python "path/to/kiabom.py" "%I" [options]
 """
-
-###### KiABOM API Config ######
-# These values get used if no config.yaml file is found
-# All values are strings and set to None if not used
-MOUSER_API_KEY = None
-
-DIGIKEY_CLIENT_ID = None
-DIGIKEY_CLIENT_SECRET = None
-DIGIKEY_CLIENT_SANDBOX = None
-###############################
-
-__version__ = "2.0.0"
-__author__ = "Yiannis Michael (ymic9963)"
-__license__ = "GNU General Public License v3.0 only"
-
 import csv
 import io
 import sys
@@ -62,6 +47,20 @@ from mouser import api, base
 import digikey
 from digikey.v4.productinformation import KeywordRequest
 from digikey.exceptions import DigikeyOauthException
+
+###### KiABOM API Config ######
+# These values get used if no config.yaml file is found
+# All values are strings and set to None if not used
+MOUSER_API_KEY = None
+
+DIGIKEY_CLIENT_ID = None
+DIGIKEY_CLIENT_SECRET = None
+DIGIKEY_CLIENT_SANDBOX = None
+###############################
+
+__version__ = "2.0.0"
+__author__ = "Yiannis Michael (ymic9963)"
+__license__ = "GNU General Public License v3.0 only"
 
 # Determine if application is a script file or an executable
 if getattr(sys, "frozen", False):
@@ -376,7 +375,7 @@ class SupplierAPI:
 
         if self.cache_ttl >= 0:
             # Important to accept empty dicts
-            if cached_part != None:
+            if cached_part is not None:
                 self.cache_comp_count = self.cache_comp_count + 1
                 return cached_part
 
