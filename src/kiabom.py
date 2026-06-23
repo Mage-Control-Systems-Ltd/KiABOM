@@ -698,7 +698,7 @@ class DigiKeyAPI(SupplierAPI):
         status = res_dict.get("status", 1)
         if status == 0:
             print(
-                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}. {res}",
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}. {res_dict}",
                 file=sys.stderr,
             )
             return [{}]
