@@ -176,22 +176,23 @@ group_preset_dict = {
 preset_dict = {
     "default": [
         "default",
-        "default",
+        "default"
     ],
     "minimal": [
         "minimal",
-        "minimal",
+        "minimal"
     ],
     "mage": [
         "mage",
-        "mage",
+        "mage"
     ],
     "jlcpcb": [
         "jlcpcb",
-        "jlcpcb",
+        "jlcpcb"
     ],
     "custom": [
         "",
+        ""
     ],
 }
 
