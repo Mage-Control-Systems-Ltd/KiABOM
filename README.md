@@ -2,7 +2,7 @@
 
 ![logo](images/kiabom-logo.svg)
 
-See documentation at https://mage-control-systems-ltd.github.io/KiABOM/ for full description of the tool, including installation instructions, and how to use.
+See documentation at https://mage-control-systems-ltd.github.io/KiABOM/ for full description of the tool, including installation instructions, and how to use. An example output with the default configuration is given in [example.csv](example.csv).
 
 ## Features
 - 🧘‍♂️ Small, simple, portable, unformatted BOM generation for KiCad
