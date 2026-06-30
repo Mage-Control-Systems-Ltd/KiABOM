@@ -38,6 +38,7 @@ import time
 import pickle
 import re
 import json
+from openpyxl import Workbook
 from pathlib import Path
 from dataclasses import dataclass, field
 from currency_symbols import CurrencySymbols
@@ -1239,6 +1240,22 @@ def csv_output_general_info(out, net: netlist, board_quantity: int):
     csv_writerow(out, ["Generator:", sys.argv[0], " KiABOM v", __version__])
     csv_writerow(out, ["Link: https://github.com/Mage-Control-Systems/kiabom"])
 
+def xlsx_output_general_info(ws, net: netlist, board_quantity: int):
+    """Write the general info to the XLSX
+
+    :param ws: Openpyxl Workbook.active sheet
+    :type ws: wb.active
+    :param net: The netlist object created by opening the XML with kicad_netlist_reader.
+    :param board_quantity: Board quantity.
+    """
+    ws.append([""])
+    ws.append(["Board Quantity:", str(board_quantity)])
+    ws.append(["Schematic:", str(net.getSource())])
+    ws.append(["Component Count:", str(len(net.components))])
+    ws.append(["Date:", str(net.getDate())])
+    ws.append(["Generator:", sys.argv[0], " KiABOM v", __version__])
+    ws.append(["Link: https://github.com/Mage-Control-Systems/kiabom"])
+
 
 def write_to_file(
     f: io.TextIOWrapper,
@@ -1340,6 +1357,40 @@ def write_to_file(
 
         # Write to file
         f.write(html)
+    elif output_format == "xlsx":
+        wb = Workbook()
+        ws = wb.active
+
+        if not ws:
+            print(
+                f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error creating XLSX file...",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        if headers_flag:
+            ws.append(columns)
+
+        # wb.save("sample.xlsx")
+
+        for pos, group in enumerate(net_obj.grouped):
+            ws.append(get_bom_row(pos, group, columns, bom_data))
+
+        if sum_flag:
+            ws.append([""])
+            ws.append(
+                [
+                    "Total Price Sum:",
+                    bom_data.currency_symbol + str(bom_data.total_price_sum),
+                ],
+            )
+
+        # Output column headings and some info about the generator/script
+        if info_flag:
+            csv_output_general_info(ws, net_obj.net, board_quantity)
+
+        wb.save(f.name)
+
 
 
 def get_equ(group_fields_list: list[str]):
@@ -1603,7 +1654,7 @@ def check_args(args: argparse.Namespace):
     :param args: Input arguments.
     """
     supported_suppliers = ["Mouser", "DigiKey"]
-    supported_formats = ["csv", "html", "txt"]
+    supported_formats = ["csv", "html", "txt", "xlsx"]
 
     if args.preset.lower() in preset_dict:
         if args.columns_preset == "":
