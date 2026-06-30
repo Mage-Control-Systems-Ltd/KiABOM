@@ -2,6 +2,7 @@ from src.kiabom import *
 from unittest.mock import mock_open, patch
 import pytest
 import os
+import openpyxl
 from pathlib import Path
 import pickle
 
@@ -179,6 +180,7 @@ def test_set_format_from_output_file_extension():
     assert set_format_from_output_file_extension("test.html") == "html"
     assert set_format_from_output_file_extension("test.txt") == "txt"
     assert set_format_from_output_file_extension("test.CSV") == "csv"
+    assert set_format_from_output_file_extension("test.XLSX") == "xlsx"
 
     with pytest.raises(SystemExit) as exc_info:
         set_format_from_output_file_extension("test.test")
@@ -358,6 +360,13 @@ def test_write_to_file():
     assert os.path.isfile(test_txt2_path) == True
     os.remove(test_txt2_path)
 
+    test_xlsx2_path = DIR_PATH / "test-project2.xlsx"
+    f = open_output_file(str(test_xlsx2_path))
+    write_to_file(f, "xlsx", True, True, True, 1, columns, net_obj, file_data)
+    f.close()
+    assert os.path.isfile(test_xlsx2_path) == True
+    os.remove(test_xlsx2_path)
+
 # Very important test
 def test_contents():
     kicad_netlist_reader.comp.__eq__ = get_equ(["Value","Footprint","MPN","DNP","Rating"])
@@ -421,6 +430,22 @@ def test_contents():
     expected_contents = open("tests/test-project1-expected.txt").read()
     assert actual_contents == expected_contents
     os.remove("test-project1.txt")
+
+    f = open_output_file("test-project1.xlsx")
+    write_to_file(f, "xlsx", True, False, False, 2, columns, net_obj, file_data)
+    f.close()
+    actual_ws = openpyxl.load_workbook("test-project1.xlsx").active
+    actual_ws_lst = []
+    for row in actual_ws.values:
+        for v in row:
+            actual_ws_lst.append(v)
+    expected_ws = openpyxl.load_workbook("tests/test-project1-expected.xlsx").active
+    expected_ws_lst = []
+    for row in expected_ws.values:
+        for v in row:
+            expected_ws_lst.append(v)
+    assert actual_ws_lst == expected_ws_lst
+    os.remove("test-project1.xlsx")
 
 # Very important test
 def test_contents_nodnp():
