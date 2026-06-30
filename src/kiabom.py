@@ -1080,9 +1080,9 @@ def get_bom_row(
 
     for name in columns:
         if name == "Group ID":
-            row.append(str(pos + 1))
+            row.append(pos + 1)
         elif name == "Quantity":
-            row.append(str(quantity))
+            row.append(quantity)
         elif name in ("Schematic Ref", "Designator"):
             row.append(refs)
         elif name == "DNP":
@@ -1137,15 +1137,6 @@ def get_bom_row(
     return row
 
 
-def html_get_td_string(string: str) -> str:
-    """Get a string as a table data cell HTML element.
-
-    :param string: Text to be placed between the <td> and </td>.
-    :return: String encloded by <td> and </td>.
-    """
-    return "<td>" + string + "</td>"
-
-
 def html_get_table(
     html_text: str, columns: list[str], grouped: list[list[comp]], bom_data: BomData
 ) -> str:
@@ -1161,7 +1152,7 @@ def html_get_table(
         values = get_bom_row(pos, group, columns, bom_data)
         row = (
             "\t<tr>"
-            + "".join(html_get_td_string(str(v)) for v in values)
+            + "".join("<td>" + str(v) + "</td>" for v in values)
             + "</tr>\n\t\t\t"
         )
         html_text = html_text.replace(
@@ -1207,21 +1198,6 @@ def csv_writerow(acsvwriter, columns: list[str]):
     for col in columns:
         utf8row.append(str(col))
     acsvwriter.writerow(utf8row)
-
-
-def csv_write_bom(
-    out, columns: list[str], grouped: list[list[comp]], bom_data: BomData
-):
-    """Write the rows for the CSV BOM
-
-    :param out: A csv.writer object created with csv.writer().
-    :type out: csv.writer object
-    :param columns:  Columns list
-    :param grouped: A list containing lists of grouped parts
-    :param bom_data: BomData object
-    """
-    for pos, group in enumerate(grouped):
-        csv_writerow(out, get_bom_row(pos, group, columns, bom_data))
 
 
 def csv_output_general_info(out, net: netlist, board_quantity: int):
@@ -1291,7 +1267,8 @@ def write_to_file(
             csv_writerow(out, columns)
 
         # Write each row to file
-        csv_write_bom(out, columns, net_obj.grouped, bom_data)
+        for pos, group in enumerate(net_obj.grouped):
+            csv_writerow(out, get_bom_row(pos, group, columns, bom_data))
 
         if sum_flag:
             csv_writerow(out, [""])
@@ -1344,10 +1321,8 @@ def write_to_file(
 
         if sum_flag:
             row = "\t<tr>"
-            row += html_get_td_string("Total Price Sum:")
-            row += html_get_td_string(
-                bom_data.currency_symbol + str(bom_data.total_price_sum)
-            )
+            row += "<td>Total Price Sum:</td>"
+            row += f"<td>{bom_data.currency_symbol}{str(bom_data.total_price_sum)}</td>"
             row += "</tr>\n\t\t\t"
             html = html.replace("<!--TABLEROW-->", row + "<!--TABLEROW-->")
 
@@ -1370,8 +1345,6 @@ def write_to_file(
 
         if headers_flag:
             ws.append(columns)
-
-        # wb.save("sample.xlsx")
 
         for pos, group in enumerate(net_obj.grouped):
             ws.append(get_bom_row(pos, group, columns, bom_data))
