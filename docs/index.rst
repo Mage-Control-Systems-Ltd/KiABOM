@@ -12,7 +12,7 @@ Features
 - 🖥 Command-line interface. See the available :ref:`Options <options>` and :ref:`Example Uses <example_uses>`.
 - 🛠 Retrieves parts data from major distributors in the specified currency.
 - 💰 Uses caching for parts data and currency rates.
-- 📑 Supports multiple output formats: CSV, HTML, and TXT.
+- 📑 Supports multiple output formats: CSV, HTML, TXT, and XLSX.
 - 🧹 Uses KiCad’s provided ``kicad_netlist_reader`` module.
 - 🧠 Understands schematic property fields like *DNP*, *Exclude from Board*, and *Exclude from BOM*.
 - 🚀 Skips specific MPN values for faster API requests.

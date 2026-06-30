@@ -6,7 +6,7 @@ KiABOM
 ------
 - KiCad only.
 - Simple unformatted BOM generation, which also retrieves part data from suppliers.
-- Supported output formats are CSV, HTML, and TXT.
+- Supported output formats are CSV, HTML, TXT, and XLSX.
 - Uses the ``kicad_netlist_reader`` module that ships with KiCad and does not do its own XML parsing.
 - Optional config file for API keys, and has command line options for further configuration.
 - Handles schematic property fields like 'DNP', 'Exclude from Board', and 'Exclude from BOM', as they appear on the schematic.
