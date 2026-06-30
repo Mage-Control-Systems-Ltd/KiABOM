@@ -6,11 +6,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API &#8212; KiABOM v2.0.0 documentation</title>
+    <title>API &#8212; KiABOM v2.1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=c3ca4b69" />
     
-    <script src="_static/documentation_options.js?v=aa039f9c"></script>
+    <script src="_static/documentation_options.js?v=dbd6d5c5"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/bizstyle.js"></script>
@@ -31,7 +31,7 @@
         <li class="right" >
           <a href="development.html" title="Development"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v2.1.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API</a></li> 
       </ul>
     </div>  
@@ -55,20 +55,14 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#kiabom.get_bom_row" title="kiabom.get_bom_row"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bom_row</span></code></a>(pos, group, columns, bom_data)</p></td>
 <td><p>Generate a BOM row as a list of strings.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.html_get_td_string" title="kiabom.html_get_td_string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">html_get_td_string</span></code></a>(string)</p></td>
-<td><p>Get a string as a table data cell HTML element.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.html_get_table" title="kiabom.html_get_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">html_get_table</span></code></a>(html_text, columns, grouped, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.html_get_table" title="kiabom.html_get_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">html_get_table</span></code></a>(html_text, columns, grouped, ...)</p></td>
 <td><p>Get the HTML table containing the BOM data</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.html_output_general_info" title="kiabom.html_output_general_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">html_output_general_info</span></code></a>(html, net, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.html_output_general_info" title="kiabom.html_output_general_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">html_output_general_info</span></code></a>(html, net, ...)</p></td>
 <td><p>Output some general info afte the HTML BOM table.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#kiabom.csv_writerow" title="kiabom.csv_writerow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">csv_writerow</span></code></a>(acsvwriter, columns)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.csv_writerow" title="kiabom.csv_writerow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">csv_writerow</span></code></a>(acsvwriter, columns)</p></td>
 <td><p>Override csv.writer's writerow() to support encoding conversion (initial encoding is utf8)</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#kiabom.csv_write_bom" title="kiabom.csv_write_bom"><code class="xref py py-obj docutils literal notranslate"><span class="pre">csv_write_bom</span></code></a>(out, columns, grouped, bom_data)</p></td>
-<td><p>Write the rows for the CSV BOM</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#kiabom.csv_output_general_info" title="kiabom.csv_output_general_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">csv_output_general_info</span></code></a>(out, net, board_quantity)</p></td>
 <td><p>Write the general info to the CSV</p></td>
@@ -183,20 +177,6 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="kiabom.html_get_td_string">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">html_get_td_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#kiabom.html_get_td_string" title="Link to this definition">¶</a></dt>
-<dd><p>Get a string as a table data cell HTML element.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>string</strong> – Text to be placed between the &lt;td&gt; and &lt;/td&gt;.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>String encloded by &lt;td&gt; and &lt;/td&gt;.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="kiabom.html_get_table">
 <span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">html_get_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">html_text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grouped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bom_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.BomData" title="kiabom.BomData"><span class="pre">BomData</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#kiabom.html_get_table" title="Link to this definition">¶</a></dt>
 <dd><p>Get the HTML table containing the BOM data</p>
@@ -242,22 +222,6 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>acsvwriter</strong> (<em>csv.writer object</em>) – A csv.writer object used to write the columns list.</p></li>
 <li><p><strong>columns</strong> – A list of string values to write as a row.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="kiabom.csv_write_bom">
-<span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">csv_write_bom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grouped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">comp</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bom_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#kiabom.BomData" title="kiabom.BomData"><span class="pre">BomData</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.csv_write_bom" title="Link to this definition">¶</a></dt>
-<dd><p>Write the rows for the CSV BOM</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>out</strong> (<em>csv.writer object</em>) – A csv.writer object created with csv.writer().</p></li>
-<li><p><strong>columns</strong> – Columns list</p></li>
-<li><p><strong>grouped</strong> – A list containing lists of grouped parts</p></li>
-<li><p><strong>bom_data</strong> – BomData object</p></li>
 </ul>
 </dd>
 </dl>
@@ -493,7 +457,7 @@ Done to minimise cache.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="kiabom.SupplierAPI">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">SupplierAPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_ttl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1782462890</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.SupplierAPI" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">SupplierAPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_ttl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1782838917</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.SupplierAPI" title="Link to this definition">¶</a></dt>
 <dd><p>Base SupplierAPI class to be used by all supported
 supplier APIs</p>
 <dl class="field-list simple">
@@ -948,11 +912,9 @@ requested currency.</p>
 <li><a class="reference internal" href="#functions">Functions</a><ul>
 <li><a class="reference internal" href="#kiabom.get_footprint_name"><code class="docutils literal notranslate"><span class="pre">get_footprint_name()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.get_bom_row"><code class="docutils literal notranslate"><span class="pre">get_bom_row()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.html_get_td_string"><code class="docutils literal notranslate"><span class="pre">html_get_td_string()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.html_get_table"><code class="docutils literal notranslate"><span class="pre">html_get_table()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.html_output_general_info"><code class="docutils literal notranslate"><span class="pre">html_output_general_info()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.csv_writerow"><code class="docutils literal notranslate"><span class="pre">csv_writerow()</span></code></a></li>
-<li><a class="reference internal" href="#kiabom.csv_write_bom"><code class="docutils literal notranslate"><span class="pre">csv_write_bom()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.csv_output_general_info"><code class="docutils literal notranslate"><span class="pre">csv_output_general_info()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.write_to_file"><code class="docutils literal notranslate"><span class="pre">write_to_file()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.get_equ"><code class="docutils literal notranslate"><span class="pre">get_equ()</span></code></a></li>
@@ -1057,7 +1019,7 @@ requested currency.</p>
         <li class="right" >
           <a href="development.html" title="Development"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v2.1.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API</a></li> 
       </ul>
     </div>
