@@ -9,7 +9,7 @@ See documentation at https://mage-control-systems-ltd.github.io/KiABOM/ for full
 - 🖥 Command-line interface. See the available [Options](https://mage-control-systems-ltd.github.io/KiABOM/usage.html#options) and [Example Uses](https://mage-control-systems-ltd.github.io/KiABOM/usage.html#example-uses)
 - 🛠 Retrieves parts data from major distributors in the specified currency
 - 💰 Uses caching for parts data and currency rates
-- 📑 Supports multiple output formats: CSV, HTML, and TXT
+- 📑 Supports multiple output formats: CSV, HTML, TXT, and XLSX.
 - 🧹 Uses KiCad’s provided `kicad_netlist_reader` module
 - 🧠 Understands schematic property fields like *DNP*, *Exclude from Board*, and *Exclude from BOM*
 - 🚀 Skips specific MPN values for faster API requests
