@@ -1360,7 +1360,7 @@ def write_to_file(
 
         # Output column headings and some info about the generator/script
         if info_flag:
-            csv_output_general_info(ws, net_obj.net, board_quantity)
+            xlsx_output_general_info(ws, net_obj.net, board_quantity)
 
         wb.save(f.name)
 
@@ -1796,7 +1796,7 @@ def set_format_from_output_file_extension(output_file: str) -> str:
     :return: Output file format.
     """
     output_format = ""
-    supported_formats = ["csv", "html", "txt"]
+    supported_formats = ["csv", "html", "txt", "xlsx"]
     ext = output_file.split(".")[-1]
 
     if ext.lower() in supported_formats:
