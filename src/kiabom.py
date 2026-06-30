@@ -16,7 +16,7 @@
 
 """
 @package
-Output: CSV, HTML, and TXT.
+Output: CSV, HTML, TXT, and XLSX.
 Grouped By: Value, Footprint, DNP, MPN, and Rating (Default preset)
 Sorted By: Ref
 
