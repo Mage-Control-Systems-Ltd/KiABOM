@@ -6,7 +6,7 @@ mouser == 0.1.6
 openpyxl == 3.1.5
 pyOpenSSL == 25.0.0 # for DigiKey API dependency
 pyyaml == 6.0.2
-requests == 2.32.3
+requests == 2.33.0
 setuptools == 82.0.1 # for DigiKey API dependency
 six == 1.17.0 # for DigiKey API dependency
 
