@@ -59,8 +59,8 @@ DIGIKEY_CLIENT_SECRET = None
 DIGIKEY_CLIENT_SANDBOX = None
 ###############################
 
-__version__ = "2.1.1"
-__author__ = "Yiannis Michael (ymic9963)"
+__version__ = "2.2.0"
+__author__ = "Yiannis Michael (ymic9963), Christopher Thomas (ChrisTekk)"
 __license__ = "GNU General Public License v3.0 only"
 
 # Determine if application is a script file or an executable
@@ -602,7 +602,7 @@ class MouserAPI(SupplierAPI):
 
     def parse(self, parts: list[dict]) -> list[PartsInfo]:
         # If no parts were found
-        if parts[0] == {}:
+        if not parts or parts[0] == {}:
             return [PartsInfo()]
 
         parsed_parts = []
@@ -712,18 +712,17 @@ class DigiKeyAPI(SupplierAPI):
             return [{}]
 
         result_count = res_dict.get("products_count", 0)
-        if result_count == 0:
+        products = res_dict.get("products") or []
+
+        if result_count == 0 or not products:
             if not QUIET:
                 print(
-                    f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on DigiKey for part number '{mpn}' "
+                    f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} "
+                    f"No usable results on DigiKey for part number '{mpn}'"
                 )
             return [{}]
 
-        parts = []
-        for product in res_dict["products"]:
-            parts.append(product)
-
-        return parts
+        return products
 
     def get_order_code(self, product_variations: list[dict]) -> str:
         """DigiKeyAPI-specific function to get the order code.
@@ -744,7 +743,7 @@ class DigiKeyAPI(SupplierAPI):
                 selected_product_variations = prod_var
                 break
 
-        return selected_product_variations["digi_key_product_number"]
+        return selected_product_variations.get("digi_key_product_number", "")
 
     def get_order_code_price_tiers(
         self, order_code: str, product_variations: list[dict]
@@ -755,16 +754,22 @@ class DigiKeyAPI(SupplierAPI):
         :param product_variations: Product variations entry from API response
         :return: Dict of the price tiers
         """
-        if not product_variations:
+        if not product_variations or not order_code:
             return {}
 
-        found_product = {}
+        found_product = None
+
         for product in product_variations:
-            if product["digi_key_product_number"] == order_code:
+            if product.get("digi_key_product_number") == order_code:
                 found_product = product
+                break
+
+        if not found_product:
+            return {}
 
         price_tiers_dict = {}
-        for price_tier in found_product["standard_pricing"]:
+
+        for price_tier in found_product.get("standard_pricing", []):
             price_tiers_dict[price_tier["break_quantity"]] = float(
                 price_tier["unit_price"]
             )
@@ -862,9 +867,17 @@ class PartsSearch:
             status = f"Searching for {colorama.Fore.LIGHTYELLOW_EX}{mpn}{colorama.Style.RESET_ALL} ({count} out of {amount})"
             if not QUIET:
                 print(status, end="\r", flush=True)
-            parts.append(
-                self.supplier.get_part(mpn, ignore_mpns)
-            )  # a try-except here might be a good idea
+            try:
+                parts.append(
+                    self.supplier.get_part(mpn, ignore_mpns)
+                )
+            except Exception as e:
+                print(
+                    f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} "
+                    f"DigiKey lookup failed for MPN '{mpn}': {type(e).__name__}: {e}",
+                    file=sys.stderr,
+                )
+                raise
             if not QUIET:
                 print("", end="\r\033[K", flush=True)
 
