@@ -6,11 +6,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage &#8212; KiABOM v2.1.1 documentation</title>
+    <title>Usage &#8212; KiABOM v2.2.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=c3ca4b69" />
     
-    <script src="_static/documentation_options.js?v=7fae51dc"></script>
+    <script src="_static/documentation_options.js?v=49a90b2e"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/bizstyle.js"></script>
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v2.1.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v2.2.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>  
@@ -58,16 +58,16 @@
 <h2>Using Through KiCad<a class="headerlink" href="#using-through-kicad" title="Link to this heading">¶</a></h2>
 <p>There are three ways of using KiABOM through KiCad. One is via the Legacy BOM generator menu, the second one is the netlist exporter, and the third one is with a jobset file. First two methods use the Generator command line format as specified in the <a class="reference external" href="https://docs.kicad.org/9.0/en/eeschema/eeschema.html#generator-command-line-format">KiCad documentation</a>. The options used with each method also get saved by KiCad, so you only need to set your configuration once.</p>
 <p id="commands">Depending on how KiABOM was installed, you may want to use different commands. If using the executable you would use,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom &quot;%I&quot; [options]
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom "%I" [options]
 </pre></div>
 </div>
 <p>It also could be an absolute path to the <code class="docutils literal notranslate"><span class="pre">kiabom.exe</span></code>.</p>
 <p>If using a Python installation you would use,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>python path/to/kiabom.py &quot;%I&quot; [options]
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>python path/to/kiabom.py "%I" [options]
 </pre></div>
 </div>
 <p>And if using a Python virtual environment you would use,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>path/to/python/venv/bin/python /path/to/kiabom.py &quot;%I&quot; [options]
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>path/to/python/venv/bin/python /path/to/kiabom.py "%I" [options]
 </pre></div>
 </div>
 <p>These commands use the current schematic’s XML as input to KiABOM.</p>
@@ -95,13 +95,13 @@
 <ol class="arabic simple">
 <li><p>To use KiABOM with a jobsets file, the schematic XML must also be generated. To accomplish this, in a jobsets file create a <code class="docutils literal notranslate"><span class="pre">Special:</span> <span class="pre">Execute</span> <span class="pre">Command</span></code> job type and in the <code class="docutils literal notranslate"><span class="pre">Command:</span></code> text box, enter the following to generate the schematic XML file,</p></li>
 </ol>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kicad-cli sch export netlist -o &quot;${JOBSET_OUTPUT_WORK_PATH}/${PROJECTNAME}-bom.xml&quot; --format kicadxml &quot;${PROJECTNAME}.kicad_sch&quot;
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kicad-cli sch export netlist -o "${JOBSET_OUTPUT_WORK_PATH}/${PROJECTNAME}-bom.xml" --format kicadxml "${PROJECTNAME}.kicad_sch"
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
 <li><p>Then create another job of the same type and input your KiABOM command with your options, as given in the previous two sections. Depending on your installation the command in the text box will change. See the  <a class="reference internal" href="#commands"><span class="std std-ref">commands</span></a> listed above for which commands to use. Shown below is an example command,</p></li>
 </ol>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom &quot;${JOBSET_OUTPUT_WORK_PATH}${PROJECTNAME}-bom.xml&quot; -o &quot;${JOBSET_OUTPUT_WORK_PATH}${PROJECTNAME}-bom.csv&quot;
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom "${JOBSET_OUTPUT_WORK_PATH}${PROJECTNAME}-bom.xml" -o "${JOBSET_OUTPUT_WORK_PATH}${PROJECTNAME}-bom.csv"
 </pre></div>
 </div>
 <p><strong>Note:</strong> Due to jobsets not using format specifiers, instead of <code class="docutils literal notranslate"><span class="pre">%I</span></code> you would use <code class="docutils literal notranslate"><span class="pre">${PROJECTNAME}</span></code> as used in step 1 above.</p>
@@ -131,11 +131,11 @@
     <span class="o">.</span>
     <span class="o">.</span>
     <span class="o">.</span>
-    <span class="s2">&quot;custom-columns&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="s2">&quot;Value&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Footprint&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;MPN&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Custom Field&quot;</span><span class="p">,</span>
+    <span class="s2">"custom-columns"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">"Value"</span><span class="p">,</span>
+        <span class="s2">"Footprint"</span><span class="p">,</span>
+        <span class="s2">"MPN"</span><span class="p">,</span>
+        <span class="s2">"Custom Field"</span><span class="p">,</span>
     <span class="p">],</span>
 <span class="p">}</span>
 
@@ -143,10 +143,10 @@
     <span class="o">.</span>
     <span class="o">.</span>
     <span class="o">.</span>
-    <span class="s2">&quot;custom-group&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="s2">&quot;Value&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Footprint&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Custom Field&quot;</span><span class="p">,</span>
+    <span class="s2">"custom-group"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">"Value"</span><span class="p">,</span>
+        <span class="s2">"Footprint"</span><span class="p">,</span>
+        <span class="s2">"Custom Field"</span><span class="p">,</span>
     <span class="p">],</span>
 <span class="p">}</span>
 
@@ -154,9 +154,9 @@
     <span class="o">.</span>
     <span class="o">.</span>
     <span class="o">.</span>
-    <span class="s2">&quot;custom&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="s2">&quot;custom-columns&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;custom-groups&quot;</span><span class="p">,</span>
+    <span class="s2">"custom"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">"custom-columns"</span><span class="p">,</span>
+        <span class="s2">"custom-groups"</span><span class="p">,</span>
     <span class="p">],</span>
 <span class="p">}</span>
 </pre></div>
@@ -179,42 +179,42 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output OUTPUT   file path to output the BOM file, e.g. &#39;BOM.csv&#39; or &#39;exports/BOM.csv&#39;
+  -o, --output OUTPUT   file path to output the BOM file, e.g. 'BOM.csv' or 'exports/BOM.csv'
   -f, --output-format OUTPUT_FORMAT
                         specify the output format. If an output file name is provided this argument is ignored
   --version             output the KiABOM version.
   --info                append to the output some general info about the generated BOM like, board quantity, schematic name, component count, date, and generator used.
-  --no-headers          don&#39;t output BOM column headers.
+  --no-headers          don't output BOM column headers.
   --no-api              disable using the APIs to retrieve online parts data. Using this option also skips the config check.
-  --preset PRESET       specify both the columns and group presets at the same time with this option. Both &#39;--columns-preset&#39; and &#39;--group-preset&#39; overwrite this option. Use &#39;--list-presets&#39; to list available.
+  --preset PRESET       specify both the columns and group presets at the same time with this option. Both '--columns-preset' and '--group-preset' overwrite this option. Use '--list-presets' to list available.
   --columns-preset COLUMNS_PRESET
-                        set a BOM preset for what part data should be outputed. Overwrites &#39;--columns&#39; if it comes after. Use &#39;--append-columns&#39; to append columns to a preset. Use &#39;--list-column-presets&#39; to list available.
+                        set a BOM preset for what part data should be outputed. Overwrites '--columns' if it comes after. Use '--append-columns' to append columns to a preset. Use '--list-column-presets' to list available.
   --group-preset GROUP_PRESET
-                        choose a group preset. Use &#39;--list-group-presets&#39; to list available. Append to a preset with &#39;--append-groups&#39;.
+                        choose a group preset. Use '--list-group-presets' to list available. Append to a preset with '--append-groups'.
   -g, --group-by GROUP_BY
-                        choose what symbol fields to group by, Grouping by &#39;Value&#39; and &#39;Footprint&#39; is mandatory. Choose up to 5 additional fields to group by. Use values separated by commas and place values in quotes if they contain
+                        choose what symbol fields to group by, Grouping by 'Value' and 'Footprint' is mandatory. Choose up to 5 additional fields to group by. Use values separated by commas and place values in quotes if they contain
                         spaces.
   -c, --columns COLUMNS
-                        set the columns to be outputed. Place column names inside quotes and separate them using a comma. Quotes are not required if column names don&#39;t contain spaces. Overwrites &#39;--preset&#39; if it comes after. Use &#39;--
-                        append-columns&#39; to append columns to a preset and `--list-supported-columns&#39; to list valid column values.
+                        set the columns to be outputed. Place column names inside quotes and separate them using a comma. Quotes are not required if column names don't contain spaces. Overwrites '--preset' if it comes after. Use '--
+                        append-columns' to append columns to a preset and `--list-supported-columns' to list valid column values.
   --append-columns APPEND_COLUMNS
                         append columns to the selected preset. Use values separated by commas and place values in quotes in they contain spaces.
   --append-groups APPEND_GROUPS
                         append to a group preset.
   --ignore-mpns IGNORE_MPNS
-                        add more MPN field values to ignore. This option appends the default option of &#39;Generic&#39;,&#39;TBD&#39;,&#39;Manufacturer&#39;s Stock&#39;, and &#39;&#39; (blank). Use values separated by commas and place values in quotes in they contain
+                        add more MPN field values to ignore. This option appends the default option of 'Generic','TBD','Manufacturer's Stock', and '' (blank). Use values separated by commas and place values in quotes in they contain
                         spaces.
   -p, --preferred-supplier PREFERRED_SUPPLIER
-                        select preferred supplier. View supported suppliers with the &#39;--list-suppliers&#39; option.
+                        select preferred supplier. View supported suppliers with the '--list-suppliers' option.
   -a, --alternative-supplier ATLERNATIVE_SUPPLIER
-                        select alternative supplier. View supported suppliers with the &#39;--list-suppliers&#39; option.
+                        select alternative supplier. View supported suppliers with the '--list-suppliers' option.
   -d, --download-datasheets
-                        optionally donwload the datasheets for the parts with valid URLs in a &#39;Datasheet&#39; field. Files get downloaded to a &#39;datasheets&#39; folder in the current working directory.
+                        optionally donwload the datasheets for the parts with valid URLs in a 'Datasheet' field. Files get downloaded to a 'datasheets' folder in the current working directory.
   -q, --quiet           silence all messages except errors
   --kefbom, --keep-exclude-from-bom
-                        include the components with the &#39;Exclude from BOM&#39; property set.
+                        include the components with the 'Exclude from BOM' property set.
   --kefboard, --keep-exclude-from-board
-                        include the components with the &#39;Exclude from Board&#39; property set.
+                        include the components with the 'Exclude from Board' property set.
   --remove-dnp          remove DNP components from BOM.
   -b, --board-quantity BOARD_QUANTITY
                         select board quantity, default is 1.
@@ -243,7 +243,7 @@ options:
 </div>
 <p>If you do not specify the output with <code class="docutils literal notranslate"><span class="pre">-o/--output</span></code> the format of the generated file can be specified with <code class="docutils literal notranslate"><span class="pre">-f/--output-format</span></code>. If the output is provided then its extension is used and the output format argument is ignored. The default output file name is the XML input file name.</p>
 <p>You can fully customise the outputted columns based on the list shown from the <code class="docutils literal notranslate"><span class="pre">--list-supported-columns</span></code> option. For example you can create a BOM with no headers, in HTML format, without parts data, that only has the Designator, DNP, Unit/Reel Price, Footprint, and Value,</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.html --no-headers --columns &quot;Designator,DNP,Unit/Reel Price,Footprint,Value&quot; --no-kicost
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.html --no-headers --columns "Designator,DNP,Unit/Reel Price,Footprint,Value" --no-kicost
 </pre></div>
 </div>
 <p>Adding a symbol field to the BOM can be done by using the appropriate preset and appending columns to that. Grouping can also be done on that field.</p>
@@ -363,12 +363,12 @@ options:
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v2.1.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KiABOM v2.2.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-    &#169; Copyright 2026, Yiannis Michael (ymic9963).
+    &#169; Copyright 2026, Yiannis Michael (ymic9963), Christopher Thomas (ChrisTekk).
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
     </div>
   </body>
