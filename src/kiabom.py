@@ -1,5 +1,5 @@
 # KiABOM, Automatic Bill Of Materials generator for KiCAD.
-# Copyright (C) 2025 Mage Control Systems Ltd.
+# Copyright (C) 2026 Mage Control Systems Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
