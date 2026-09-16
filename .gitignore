@@ -17,3 +17,7 @@ dist/
 
 # Private API keys
 src/config.yaml
+
+# Config file
+# if project philosphy changes may be needed in the future
+pyproject.toml
