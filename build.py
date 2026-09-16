@@ -72,7 +72,7 @@ def verify_build():
 
     print(f"Built: {EXE}")
 
-def create_zip(version):
+def create_zip(version: str):
     """Create the versioned release ZIP."""
 
     zip_path = DIST / f"kiabom-{version}.zip"
