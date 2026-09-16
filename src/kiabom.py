@@ -60,7 +60,8 @@ DIGIKEY_CLIENT_SANDBOX = None
 ###############################
 
 __version__ = "2.2.0"
-__author__ = "Yiannis Michael (ymic9963), Christopher Thomas (ChrisTekk)"
+__author__ = "Yiannis Michael (ymic9963)"
+__maintainer__ = "Christopher Thomas (ChrisTekk)"
 __license__ = "GNU General Public License v3.0 only"
 
 # Determine if application is a script file or an executable
