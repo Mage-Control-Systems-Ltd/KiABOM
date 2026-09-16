@@ -296,7 +296,7 @@ Lastly, editing the generator file is encouraged to fully customise your BOM gen
 .. _troubleshooting:
 
 Troubleshooting
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^
 If the script hangs at any point, simply force-stop its execution in any way possible and retry. This was noted in some cases where the DigiKey API keys had to be authenticated, and the tool did not resume normal function until a restart. However, the tool still continued to cache the parts normally, so the subsequent run was much faster.
 
 Restarting its execution in some cases might mean to exit the terminal or to end the running KiCad process. Therefore it's important to save your work before running KiABOM, especially before the first run so that all APIs have been authenticated and are functional.
