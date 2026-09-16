@@ -539,7 +539,7 @@ class MouserAPI(SupplierAPI):
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}. Skipping...",
                 file=sys.stderr,
             )
-            return [{}]
+            return []
 
         errors = res.get("Errors")
         if errors:
@@ -547,10 +547,10 @@ class MouserAPI(SupplierAPI):
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}. {errors}",
                 file=sys.stderr,
             )
-            return [{}]
+            return []
 
         try:
-            search_results = res.get("SearchResults")
+            search_results = res.get("SearchResults", {})
         except AttributeError:
             print(
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error with API response: {res}\n\nEnsure supplier website is live...",
@@ -558,16 +558,13 @@ class MouserAPI(SupplierAPI):
             )
             sys.exit(1)
 
-        if search_results is None or search_results.get("NumberOfResult", 0) == 0:
+        parts = search_results.get("Parts", [])
+        if search_results.get("NumberOfResult", 0) == 0 or not parts:
             if not QUIET:
                 print(
-                    f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on Mouser for part number '{mpn}' "
+                    f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on Mouser for part number '{mpn}'"
                 )
-            return [{}]
-
-        parts = []
-        for part in search_results.get("Parts", [""]):
-            parts.append(part)
+            return []
 
         return parts
 
@@ -602,7 +599,7 @@ class MouserAPI(SupplierAPI):
 
     def parse(self, parts: list[dict]) -> list[PartsInfo]:
         # If no parts were found
-        if not parts or parts[0] == {}:
+        if not parts:
             return [PartsInfo()]
 
         parsed_parts = []
@@ -699,7 +696,7 @@ class DigiKeyAPI(SupplierAPI):
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request",
                 file=sys.stderr,
             )
-            return [{}]
+            return []
 
         res_dict = res.to_dict()
 
@@ -709,18 +706,17 @@ class DigiKeyAPI(SupplierAPI):
                 f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} Error during request for MPN: {mpn}. {res_dict}",
                 file=sys.stderr,
             )
-            return [{}]
+            return []
 
-        result_count = res_dict.get("products_count", 0)
-        products = res_dict.get("products") or []
+        result_count = res_dict.get("products_count")
+        products = res_dict.get("products", [])
 
-        if result_count == 0 or not products:
+        if result_count is None or not products:
             if not QUIET:
                 print(
-                    f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} "
-                    f"No usable results on DigiKey for part number '{mpn}'"
+                    f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} No results on DigiKey for part number '{mpn}'"
                 )
-            return [{}]
+            return []
 
         return products
 
@@ -778,7 +774,7 @@ class DigiKeyAPI(SupplierAPI):
 
     def parse(self, parts: list[dict]) -> list[PartsInfo]:
         # If no parts were found
-        if parts[0] == {}:
+        if not parts:
             return [PartsInfo()]
 
         parsed_parts = []
