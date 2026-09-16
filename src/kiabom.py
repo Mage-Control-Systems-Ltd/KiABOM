@@ -874,7 +874,7 @@ class PartsSearch:
             except Exception as e:
                 print(
                     f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} "
-                    f"DigiKey lookup failed for MPN '{mpn}': {type(e).__name__}: {e}",
+                    f"{self.supplier.name} lookup failed for MPN '{mpn}': {type(e).__name__}: {e}",
                     file=sys.stderr,
                 )
                 raise
