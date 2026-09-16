@@ -1,15 +1,19 @@
 templates/
 old-outputs/
-src/config.yaml
 __pycache__/
 .pytest_cache/
 .coverage
 kiabom-cov/
 .ruff_cache
-build/
-dist/
-*.spec
 kiabom_cache/
 src/test-project1.csv
 src/test-project1.xml
 _build/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Private API keys
+src/config.yaml
