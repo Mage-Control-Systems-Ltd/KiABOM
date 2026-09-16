@@ -768,9 +768,12 @@ class DigiKeyAPI(SupplierAPI):
         if not found_product:
             return {}
 
-        price_tiers_dict = {}
+        price_tiers = found_product.get("standard_pricing", [])
+        if not price_tiers:
+            return {}
 
-        for price_tier in found_product.get("standard_pricing", []):
+        price_tiers_dict = {}
+        for price_tier in price_tiers:
             price_tiers_dict[price_tier["break_quantity"]] = float(
                 price_tier["unit_price"]
             )
