@@ -1,0 +1,26 @@
+# Extra packages required for development
+[dependency-groups]
+lint = [
+    "ruff==0.16.8",
+    "pyright==1.1.414",
+]
+test = [
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+]
+build = [
+    "pyinstaller==6.12.0",
+]
+docs = [
+    "sphinx-build==9.1.0",
+]
+dev = [
+    {include-group = "lint"},
+    {include-group = "build"},
+    {include-group = "test"},
+    {include-group = "docs"},
+]
+
+# Config for Esbonio extension for VS Code (previews .rst files)
+[tool.esbonio.sphinx]
+buildCommand = ["sphinx-build", "-C", "-b", "html", "docs", "${defaultBuildDir}"]

@@ -1,0 +1,118 @@
+name: "Build KiABOM"
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13.2"
+          cache: "pip"
+          cache-dependency-path: |
+            src/requirements.txt
+            pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r src/requirements.txt
+          python -m pip install --group build
+
+      - name: Check version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: python
+        run: |
+          import ast
+          import os
+          from pathlib import Path
+
+          source = Path("src/kiabom.py")
+          expected_version = os.environ["GITHUB_REF_NAME"].removeprefix("v")
+
+          tree = ast.parse(source.read_text(encoding="utf-8"))
+
+          version = None
+
+          for node in tree.body:
+              if isinstance(node, ast.Assign):
+                  for target in node.targets:
+                      if (
+                          isinstance(target, ast.Name)
+                          and target.id == "__version__"
+                          and isinstance(node.value, ast.Constant)
+                          and isinstance(node.value.value, str)
+                      ):
+                          version = node.value.value
+
+          if version is None:
+              raise RuntimeError("Could not find __version__")
+
+          print(f"Repository version: {version}")
+          print(f"Tag version:        {expected_version}")
+
+          if version != expected_version:
+              raise RuntimeError(
+                  f"Version mismatch: __version__={version}, "
+                  f"tag={expected_version}"
+              )
+
+      - name: Build
+        run: python buildtools/build.py
+
+      - name: Package release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".Substring(1)
+          $zip = "dist/kiabom-$version.zip"
+
+          Compress-Archive `
+            -Path "dist/kiabom.exe", "LICENSE" `
+            -DestinationPath $zip
+
+          Write-Host "Created $zip"
+
+      - name: Verify release ZIP
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+
+          version = os.environ["GITHUB_REF_NAME"].removeprefix("v")
+          zip_path = Path("dist") / f"kiabom-{version}.zip"
+
+          if not zip_path.exists():
+              raise RuntimeError(f"Expected release ZIP not found: {zip_path}")
+
+          print(f"Release: {zip_path}")
+
+      - name: Upload release artifact
+        if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+        uses: actions/upload-artifact@v7
+        with:
+          name: KiABOM-${{ github.ref_name }}
+          path: dist/kiabom-*.zip
+          if-no-files-found: error
+
+      - name: Upload manual build
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v7
+        with:
+          name: KiABOM-manual-${{ github.run_number }}
+          path: dist/kiabom.exe
+          if-no-files-found: error
