@@ -8,13 +8,26 @@ To continue development, make sure to install the requirements in ``requirements
 
     pip install -r src/requirements.txt
 
-Test
------
+If you want to build, test, lint and update documentation - or you want to do some of those things and are fine installing all extra packages - install the extra requirements (defined in ``pyproject.toml``):
+
+.. code-block:: console
+
+    pip install --group dev
+
+Test and lint
+--------------
 The project uses  `Ruff`_ as the linter and formatter, pytest for testing and coverage, and pyright as the static type checker.
 
 .. _Ruff: https://github.com/astral-sh/ruff
 
 A ``config.yaml`` file with your API keys placed next to ``kiabom.py`` is required to run the tests. In the future there may be changes in the supplier's API data structures or part numbers could mean different things. This will affect the 'expected' results from the testing, and therefore would have to be updated accordingly.
+
+To run the testing and linting, the extra packages required should be installed (not necessary if you have installed the ``dev`` group):
+
+.. code-block:: console
+
+    pip install --group lint
+    pip install --group test
 
 All tests can be run from the root folder using:
 
@@ -24,15 +37,30 @@ All tests can be run from the root folder using:
 
 Build
 ------
-Running ``build.py`` from the project root generates ``kiabom.exe`` in ``/dist`` and a .zip folder with the version number appended containing ``kiabom.exe`` and ``LICENSE`` files.
 
-To just build the .exe, use:
+You can also manually run the ``build.yml`` workflow on GitHub:
+    https://github.com/Mage-Control-Systems-Ltd/KiABOM/actions/workflows/build.yml
+
+To build locally, the extra packages required should be installed (not necessary if you have installed the ``dev`` group):
+
+.. code-block:: console
+
+    pip install --group build
+
+Running ``buildtools/build.py`` from the project root generates ``kiabom.exe`` in ``/dist``.  You can also run pyinstaller to do the same thing:
 
 .. code-block:: console
 
     pyinstaller src/kiabom.py -F --add-data LICENSE:. --icon images/kiabom-icon.ico
 
-*Confirmed working pyinstaller version is v6.12.0*
+Document
+----------
+
+One method to view .rst file previews locally is the Esbonio extension for VSCode. This requires the ``sphinx-build`` package which you can install (not necessary if you have installed the ``dev`` group):
+
+.. code-block:: console
+
+    pip install --group docs
 
 Philosophy
 ===========

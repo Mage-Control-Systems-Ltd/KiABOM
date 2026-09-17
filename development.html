@@ -53,11 +53,20 @@
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install -r src/requirements.txt</span>
 </pre></div>
 </div>
+<p>If you want to build, test, lint and update documentation - or you want to do some of those things and are fine installing all extra packages - install the extra requirements (defined in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install --group dev</span>
+</pre></div>
+</div>
 </section>
-<section id="test">
-<h2>Test<a class="headerlink" href="#test" title="Link to this heading">¶</a></h2>
+<section id="test-and-lint">
+<h2>Test and lint<a class="headerlink" href="#test-and-lint" title="Link to this heading">¶</a></h2>
 <p>The project uses  <a class="reference external" href="https://github.com/astral-sh/ruff">Ruff</a> as the linter and formatter, pytest for testing and coverage, and pyright as the static type checker.</p>
 <p>A <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> file with your API keys placed next to <code class="docutils literal notranslate"><span class="pre">kiabom.py</span></code> is required to run the tests. In the future there may be changes in the supplier’s API data structures or part numbers could mean different things. This will affect the ‘expected’ results from the testing, and therefore would have to be updated accordingly.</p>
+<p>To run the testing and linting, the extra packages required should be installed (not necessary if you have installed the <code class="docutils literal notranslate"><span class="pre">dev</span></code> group):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install --group lint</span>
+<span class="go">pip install --group test</span>
+</pre></div>
+</div>
 <p>All tests can be run from the root folder using:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -m pytest</span>
 </pre></div>
@@ -65,12 +74,25 @@
 </section>
 <section id="build">
 <h2>Build<a class="headerlink" href="#build" title="Link to this heading">¶</a></h2>
-<p>Running <code class="docutils literal notranslate"><span class="pre">build.py</span></code> from the project root generates <code class="docutils literal notranslate"><span class="pre">kiabom.exe</span></code> in <code class="docutils literal notranslate"><span class="pre">/dist</span></code> and a .zip folder with the version number appended containing <code class="docutils literal notranslate"><span class="pre">kiabom.exe</span></code> and <code class="docutils literal notranslate"><span class="pre">LICENSE</span></code> files.</p>
-<p>To just build the .exe, use:</p>
+<dl class="simple">
+<dt>You can also manually run the <code class="docutils literal notranslate"><span class="pre">build.yml</span></code> workflow on GitHub:</dt><dd><p><a class="reference external" href="https://github.com/Mage-Control-Systems-Ltd/KiABOM/actions/workflows/build.yml">https://github.com/Mage-Control-Systems-Ltd/KiABOM/actions/workflows/build.yml</a></p>
+</dd>
+</dl>
+<p>To build locally, the extra packages required should be installed (not necessary if you have installed the <code class="docutils literal notranslate"><span class="pre">dev</span></code> group):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install --group build</span>
+</pre></div>
+</div>
+<p>Running <code class="docutils literal notranslate"><span class="pre">buildtools/build.py</span></code> from the project root generates <code class="docutils literal notranslate"><span class="pre">kiabom.exe</span></code> in <code class="docutils literal notranslate"><span class="pre">/dist</span></code>.  You can also run pyinstaller to do the same thing:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pyinstaller src/kiabom.py -F --add-data LICENSE:. --icon images/kiabom-icon.ico</span>
 </pre></div>
 </div>
-<p><em>Confirmed working pyinstaller version is v6.12.0</em></p>
+</section>
+<section id="document">
+<h2>Document<a class="headerlink" href="#document" title="Link to this heading">¶</a></h2>
+<p>One method to view .rst file previews locally is the Esbonio extension for VSCode. This requires the <code class="docutils literal notranslate"><span class="pre">sphinx-build</span></code> package which you can install (not necessary if you have installed the <code class="docutils literal notranslate"><span class="pre">dev</span></code> group):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install --group docs</span>
+</pre></div>
+</div>
 </section>
 </section>
 <section id="philosophy">
@@ -96,8 +118,9 @@
     <ul>
 <li><a class="reference internal" href="#">Development</a><ul>
 <li><a class="reference internal" href="#run">Run</a></li>
-<li><a class="reference internal" href="#test">Test</a></li>
+<li><a class="reference internal" href="#test-and-lint">Test and lint</a></li>
 <li><a class="reference internal" href="#build">Build</a></li>
+<li><a class="reference internal" href="#document">Document</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#philosophy">Philosophy</a></li>
