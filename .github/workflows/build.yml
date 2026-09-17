@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
 
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout
@@ -33,7 +33,7 @@ jobs:
           python -m pip install --group build
 
       - name: Check version
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'push' && github.ref_type == 'tag'
         shell: python
         run: |
           import ast
@@ -74,7 +74,7 @@ jobs:
         run: python buildtools/build.py
 
       - name: Package release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'push' && github.ref_type == 'tag'
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}".Substring(1)
@@ -87,7 +87,7 @@ jobs:
           Write-Host "Created $zip"
 
       - name: Verify release ZIP
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'push' && github.ref_type == 'tag'
         shell: python
         run: |
           import os
@@ -101,13 +101,21 @@ jobs:
 
           print(f"Release: {zip_path}")
 
-      - name: Upload release artifact
-        if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
-        uses: actions/upload-artifact@v7
-        with:
-          name: KiABOM-${{ github.ref_name }}
-          path: dist/kiabom-*.zip
-          if-no-files-found: error
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = "${{ github.ref_name }}".Substring(1)
+          $zip = "dist/kiabom-$version.zip"
+
+          gh release create "${{ github.ref_name }}" `
+            "dist/kiabom.exe" `
+            "$zip" `
+            --title "KiABOM ${{ github.ref_name }}" `
+            --generate-notes `
+            --verify-tag
 
       - name: Upload manual build
         if: github.event_name == 'workflow_dispatch'
