@@ -583,7 +583,7 @@ class MouserAPI(SupplierAPI):
 
         price_tiers_dict = {}
         for price_tier in price_tiers_list:
-            price_tiers_dict[price_tier["Quantity"]] = float(price_tier["Price"][1:])
+            price_tiers_dict[int(price_tier["Quantity"])] = float(price_tier["Price"][1:])
 
         return price_tiers_dict
 
@@ -774,7 +774,7 @@ class DigiKeyAPI(SupplierAPI):
 
         price_tiers_dict = {}
         for price_tier in price_tiers:
-            price_tiers_dict[price_tier["break_quantity"]] = float(
+            price_tiers_dict[int(price_tier["break_quantity"])] = float(
                 price_tier["unit_price"]
             )
 
