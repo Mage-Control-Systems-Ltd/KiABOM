@@ -45,9 +45,9 @@ from currency_symbols import CurrencySymbols
 import kicad_netlist_reader
 from kicad_netlist_reader import comp, netlist
 from mouser import api, base
-import digikey
-from digikey.v4.productinformation import KeywordRequest
-from digikey.exceptions import DigikeyOauthException
+import kicost_digikey_api_v4 as digikey
+from kicost_digikey_api_v4.v4.productinformation import KeywordRequest
+from kicost_digikey_api_v4.exceptions import DigikeyOauthException
 
 ###### KiABOM API Config ######
 # These values get used if no config.yaml file is found
