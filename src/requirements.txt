@@ -1,6 +1,6 @@
 colorama == 0.4.6
 currency-symbols == 2.0.4
-git+https://github.com/hurricaneJoef/digikey-api/ # DigiKey API v4
+git+https://github.com/hurricaneJoef/digikey-api.git@e4418f4aeb1c49c1e9b6c11f07e0b14567a43099 # DigiKey API v4
 kicad-netlist-reader == 7.0.1
 mouser == 0.1.6
 openpyxl == 3.1.5
