@@ -275,6 +275,45 @@ def test_class_supplierapi():
 
     assert data
     assert test_mpn == data.mpn
+    
+def test_get_cheapest_part():
+    supplier = SupplierAPI(1, time = 1)
+    supplier.cache_path = CACHE_TEST_DIR
+
+    parts = [
+        PartsInfo(mpn="MPN1", price_tiers={1: 10.0, 10: 9.0}),
+        PartsInfo(mpn="MPN2", price_tiers={1: 11.0, 10: 7.5}),
+        PartsInfo(mpn="MPN3", price_tiers={1: 12.0, 10: 11.0})
+    ]
+
+    # Test that returns the cheapest part based on extended price
+    cheapest_part = supplier.get_cheapest_part("MPN", parts)
+    assert cheapest_part.mpn == "MPN1"
+
+    # Test that prefers the exact MPN match
+    cheapest_part = supplier.get_cheapest_part("MPN2", parts)
+    assert cheapest_part.mpn == "MPN2"
+
+    parts.append(PartsInfo(mpn="MPN4", price_tiers={1: 15, 10: 0.1}))
+
+    # Test that returns the cheapest part based on extended price even when a part has a very low price at a higher quantity
+    cheapest_part = supplier.get_cheapest_part("MPN", parts)
+    assert cheapest_part.mpn == "MPN4"
+
+    parts.append(PartsInfo(mpn="MPN2", price_tiers={1: 15, 10: 0.5}))
+
+    # Test that prefers the exact MPN match even when another part has a lower price at a higher quantity
+    cheapest_part = supplier.get_cheapest_part("MPN2", parts)
+    assert cheapest_part.mpn == "MPN2"
+    assert cheapest_part.price_tiers[10] == 0.5
+
+    # Test that a part without price tiers ranks last
+    no_price_parts = [
+        PartsInfo(mpn="NOPRICE", price_tiers={}),
+        PartsInfo(mpn="MPN1", price_tiers={1: 10.0, 10: 9.0}),
+    ]
+    cheapest_part = supplier.get_cheapest_part("MPN", no_price_parts)
+    assert cheapest_part.mpn == "MPN1"
 
 @pytest.mark.skipif(DISABLE_API is not None,reason="API keys required")
 def test_class_mouserapi():
