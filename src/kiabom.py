@@ -1831,6 +1831,16 @@ def read_config() -> dict:
 
     :return: Dictionary of YAML file
     """
+    default_config = {
+        "Mouser": {
+            "key": MOUSER_API_KEY,
+        },
+        "DigiKey": {
+            "client_id": DIGIKEY_CLIENT_ID,
+            "client_secret": DIGIKEY_CLIENT_SECRET,
+            "sandbox": DIGIKEY_CLIENT_SANDBOX,
+        },
+    }
     config_path = DIR_PATH / "config.yaml"
     try:
         with open(config_path, "r") as f:
@@ -1845,19 +1855,43 @@ def read_config() -> dict:
                     file=sys.stderr,
                 )
                 sys.exit(1)
+
+            if config is None:
+                config = {}
+            elif not isinstance(config, dict):
+                print(
+                    f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} config.yaml must contain a mapping with Mouser and DigiKey sections.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+
+            for supplier in default_config:
+                supplier_config = config.get(supplier)
+                if supplier_config is None:
+                    supplier_config = {}
+                elif not isinstance(supplier_config, dict):
+                    print(
+                        f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} config.yaml {supplier} section must be a mapping.",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+
+                for key, default_value in default_config[supplier].items():
+                    value = supplier_config.get(key)
+                    if value is None or value == "":
+                        supplier_config[key] = default_value
+                        if not QUIET:
+                            print(
+                                f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} {supplier} {key} not found in config.yaml, using default value."
+                            )
+
+                config[supplier] = supplier_config
     except FileNotFoundError:
         if not QUIET:
             print(
                 "No config.yaml file found, continuing with hardcoded API credentials."
             )
-        config = {
-            "Mouser": {"key": MOUSER_API_KEY},
-            "DigiKey": {
-                "client_id": DIGIKEY_CLIENT_ID,
-                "client_secret": DIGIKEY_CLIENT_SECRET,
-                "sandbox": DIGIKEY_CLIENT_SANDBOX,
-            },
-        }
+        config = default_config
     except IOError:
         print(
             f"{colorama.Fore.RED}ERROR:{colorama.Style.RESET_ALL} config.yaml could not be opened for reading. Use '--no-api' to skip config check.",

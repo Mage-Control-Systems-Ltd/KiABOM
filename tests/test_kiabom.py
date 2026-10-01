@@ -557,22 +557,56 @@ def test_download_datasheets():
     os.rmdir(test_datasheet_folder_path)
 
 def test_read_config():
-    # Testing for no config.yaml
     config_path = DIR_PATH / ".." / "src" / "config.yaml"
     rename_path = DIR_PATH / ".." / "src" / "aconfig.yaml"
     os.rename(str(config_path), str(rename_path))
 
-    assert read_config() == {
-            "Mouser" : {
-                "key": None
-                },
-            "DigiKey" : {
-                "client_id": None,
-                "client_secret": None,
-                "sandbox": None
-                },
-            }
+    default_config = {
+        "Mouser": {"key": MOUSER_API_KEY},
+        "DigiKey": {
+            "client_id": DIGIKEY_CLIENT_ID,
+            "client_secret": DIGIKEY_CLIENT_SECRET,
+            "sandbox": DIGIKEY_CLIENT_SANDBOX,
+        },
+    }
+    # Testing for no config.yaml
+    assert read_config() == default_config
+    
+    # Testing for an empty config.yaml
+    config_path.write_text("")
+    assert read_config() == default_config
 
+    # Testing for missing and empty keys
+    config_path.write_text(
+        "Mouser:\n  key: \nDigiKey:\n  client_id: configured-id\n"
+    )
+    assert read_config() == {
+        "Mouser": {"key": MOUSER_API_KEY},
+        "DigiKey": {
+            "client_id": "configured-id",
+            "client_secret": DIGIKEY_CLIENT_SECRET,
+            "sandbox": DIGIKEY_CLIENT_SANDBOX,
+        },
+    }
+
+    # Testing for empty supplier sections
+    config_path.write_text("Mouser:\nDigiKey:\n")
+    assert read_config() == default_config
+
+    # Testing for an invalid top-level structure
+    config_path.write_text("- invalid\n")
+    with pytest.raises(SystemExit) as exc_info:
+        read_config()
+    assert exc_info.value.code == 1
+
+    # Testing for an invalid supplier section
+    config_path.write_text("Mouser: invalid\n")
+    with pytest.raises(SystemExit) as exc_info:
+        read_config()
+    assert exc_info.value.code == 1
+
+    if config_path.exists():
+        os.remove(str(config_path))
     os.rename(str(rename_path), str(config_path))
 
 def test_main():
