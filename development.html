@@ -74,16 +74,16 @@
 </section>
 <section id="build">
 <h2>Build<a class="headerlink" href="#build" title="Link to this heading">¶</a></h2>
-<dl class="simple">
-<dt>You can also manually run the <code class="docutils literal notranslate"><span class="pre">build.yml</span></code> workflow on GitHub:</dt><dd><p><a class="reference external" href="https://github.com/Mage-Control-Systems-Ltd/KiABOM/actions/workflows/build.yml">https://github.com/Mage-Control-Systems-Ltd/KiABOM/actions/workflows/build.yml</a></p>
-</dd>
-</dl>
+<p>To build the executable, you can manually run the <code class="docutils literal notranslate"><span class="pre">build.yml</span></code> workflow on GitHub:</p>
+<blockquote>
+<div><p><a class="reference external" href="https://github.com/Mage-Control-Systems-Ltd/KiABOM/actions/workflows/build.yml">https://github.com/Mage-Control-Systems-Ltd/KiABOM/actions/workflows/build.yml</a></p>
+</div></blockquote>
 <p>To build locally, the extra packages required should be installed (not necessary if you have installed the <code class="docutils literal notranslate"><span class="pre">dev</span></code> group):</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install --group build</span>
 </pre></div>
 </div>
-<p>Running <code class="docutils literal notranslate"><span class="pre">buildtools/build.py</span></code> from the project root generates <code class="docutils literal notranslate"><span class="pre">kiabom.exe</span></code> in <code class="docutils literal notranslate"><span class="pre">/dist</span></code>.  You can also run pyinstaller to do the same thing:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pyinstaller src/kiabom.py -F --add-data LICENSE:. --icon images/kiabom-icon.ico</span>
+<p>Then run pyinstaller from the project root to generate <code class="docutils literal notranslate"><span class="pre">kiabom.exe</span></code> in <code class="docutils literal notranslate"><span class="pre">/dist</span></code>.:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -m PyInstaller --clean kiabom-pyinstaller.spec</span>
 </pre></div>
 </div>
 </section>
