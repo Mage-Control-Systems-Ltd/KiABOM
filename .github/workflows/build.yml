@@ -71,7 +71,7 @@ jobs:
               )
 
       - name: Build
-        run: python buildtools/build.py
+        run: python -m PyInstaller --clean kiabom-pyinstaller.spec
 
       - name: Package release
         if: github.event_name == 'push' && github.ref_type == 'tag'
