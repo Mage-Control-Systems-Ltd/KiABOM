@@ -38,7 +38,8 @@ All tests can be run from the root folder using:
 Build
 ------
 
-You can also manually run the ``build.yml`` workflow on GitHub:
+To build the executable, you can manually run the ``build.yml`` workflow on GitHub:
+
     https://github.com/Mage-Control-Systems-Ltd/KiABOM/actions/workflows/build.yml
 
 To build locally, the extra packages required should be installed (not necessary if you have installed the ``dev`` group):
@@ -47,11 +48,11 @@ To build locally, the extra packages required should be installed (not necessary
 
     pip install --group build
 
-Running ``buildtools/build.py`` from the project root generates ``kiabom.exe`` in ``/dist``.  You can also run pyinstaller to do the same thing:
+Then run pyinstaller from the project root to generate ``kiabom.exe`` in ``/dist``.:
 
 .. code-block:: console
 
-    pyinstaller src/kiabom.py -F --add-data LICENSE:. --icon images/kiabom-icon.ico
+    python -m PyInstaller --clean kiabom-pyinstaller.spec
 
 Document
 ----------

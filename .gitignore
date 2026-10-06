@@ -14,6 +14,7 @@ _build/
 build/
 dist/
 *.spec
+!kiabom-pyinstaller.spec
 
 # Private API keys
 src/config.yaml
