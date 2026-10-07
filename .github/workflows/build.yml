@@ -77,29 +77,74 @@ jobs:
         if: github.event_name == 'push' && github.ref_type == 'tag'
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
+
           $version = "${{ github.ref_name }}".Substring(1)
-          $zip = "dist/kiabom-$version.zip"
 
+          $windowsZip = "dist/KiABOM-$version-windows-x64.zip"
+          $windowsStage = "dist/package-windows"
+
+          # Clean staging directory
+          Remove-Item $windowsStage -Recurse -Force -ErrorAction SilentlyContinue
+
+          # Create staging directory
+          New-Item -ItemType Directory -Path $windowsStage | Out-Null
+
+          # Windows distribution
+          Copy-Item "dist/kiabom.exe" "$windowsStage/kiabom.exe"
+          Copy-Item "LICENSE" "$windowsStage/LICENSE"
+
+          # Create archive
           Compress-Archive `
-            -Path "dist/kiabom.exe", "LICENSE" `
-            -DestinationPath $zip
+            -Path "$windowsStage/*" `
+            -DestinationPath $windowsZip
 
-          Write-Host "Created $zip"
+          # Remove staging directory
+          Remove-Item $windowsStage -Recurse -Force
+
+          Write-Host "Created:"
+          Write-Host "  $windowsZip"
 
       - name: Verify release ZIP
         if: github.event_name == 'push' && github.ref_type == 'tag'
         shell: python
         run: |
           import os
+          import zipfile
           from pathlib import Path
 
           version = os.environ["GITHUB_REF_NAME"].removeprefix("v")
-          zip_path = Path("dist") / f"kiabom-{version}.zip"
+
+          zip_path = Path("dist") / f"KiABOM-{version}-windows-x64.zip"
+          expected_contents = {
+              "kiabom.exe",
+              "LICENSE",
+          }
 
           if not zip_path.exists():
-              raise RuntimeError(f"Expected release ZIP not found: {zip_path}")
+              raise RuntimeError(
+                  f"Expected release ZIP not found: {zip_path}"
+              )
 
-          print(f"Release: {zip_path}")
+          with zipfile.ZipFile(zip_path) as archive:
+              names = [
+                  name
+                  for name in archive.namelist()
+                  if not name.endswith("/")
+              ]
+
+          contents = set(names)
+
+          if contents != expected_contents:
+              raise RuntimeError(
+                  f"Unexpected contents in {zip_path}:\n"
+                  f"  Expected: {sorted(expected_contents)}\n"
+                  f"  Found:    {sorted(contents)}"
+              )
+
+          print("Verified Windows release:")
+          print(f"  {zip_path}")
+          print(f"  Contents: {sorted(contents)}")
 
       - name: Create GitHub Release
         if: github.event_name == 'push' && github.ref_type == 'tag'
@@ -130,15 +175,14 @@ jobs:
           $ErrorActionPreference = "Stop"
 
           $version = "${{ github.ref_name }}".Substring(1)
-          $zip = "dist/kiabom-$version.zip"
+
+          $windowsZip = "dist/KiABOM-$version-windows-x64.zip"
 
           Write-Host "Uploading release assets..."
-          Write-Host "EXE: $((Get-Item 'dist/kiabom.exe').Length) bytes"
-          Write-Host "ZIP: $((Get-Item $zip).Length) bytes"
+          Write-Host "Windows ZIP: $((Get-Item $windowsZip).Length) bytes"
 
           gh release upload "${{ github.ref_name }}" `
-            "dist/kiabom.exe" `
-            "$zip"
+            "$windowsZip"
 
           Write-Host "Release assets uploaded successfully."
 
