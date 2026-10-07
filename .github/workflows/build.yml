@@ -82,43 +82,30 @@ jobs:
           $version = "${{ github.ref_name }}".Substring(1)
 
           $windowsZip = "dist/KiABOM-$version-windows-x64.zip"
-          $pythonZip = "dist/KiABOM-$version-python.zip"
-
           $windowsStage = "dist/package-windows"
-          $pythonStage = "dist/package-python"
 
-          # Clean staging directories if they somehow already exist
-          Remove-Item $windowsStage, $pythonStage -Recurse -Force -ErrorAction SilentlyContinue
+          # Clean staging directory
+          Remove-Item $windowsStage -Recurse -Force -ErrorAction SilentlyContinue
 
-          # Create staging directories
-          New-Item -ItemType Directory -Path $windowsStage, $pythonStage | Out-Null
+          # Create staging directory
+          New-Item -ItemType Directory -Path $windowsStage | Out-Null
 
           # Windows distribution
           Copy-Item "dist/kiabom.exe" "$windowsStage/kiabom.exe"
           Copy-Item "LICENSE" "$windowsStage/LICENSE"
 
-          # Python distribution
-          Copy-Item "src/kiabom.py" "$pythonStage/kiabom.py"
-          Copy-Item "src/requirements.txt" "$pythonStage/requirements.txt"
-          Copy-Item "LICENSE" "$pythonStage/LICENSE"
-
-          # Create archives
+          # Create archive
           Compress-Archive `
             -Path "$windowsStage/*" `
             -DestinationPath $windowsZip
 
-          Compress-Archive `
-            -Path "$pythonStage/*" `
-            -DestinationPath $pythonZip
-
-          # Remove staging directories
-          Remove-Item $windowsStage, $pythonStage -Recurse -Force
+          # Remove staging directory
+          Remove-Item $windowsStage -Recurse -Force
 
           Write-Host "Created:"
           Write-Host "  $windowsZip"
-          Write-Host "  $pythonZip"
 
-      - name: Verify release ZIPs
+      - name: Verify release ZIP
         if: github.event_name == 'push' && github.ref_type == 'tag'
         shell: python
         run: |
@@ -128,49 +115,36 @@ jobs:
 
           version = os.environ["GITHUB_REF_NAME"].removeprefix("v")
 
-          archives = {
-              "windows": (
-                  Path("dist") / f"KiABOM-{version}-windows-x64.zip",
-                  {
-                      "kiabom.exe",
-                      "LICENSE",
-                  },
-              ),
-              "python": (
-                  Path("dist") / f"KiABOM-{version}-python.zip",
-                  {
-                      "kiabom.py",
-                      "requirements.txt",
-                      "LICENSE",
-                  },
-              ),
+          zip_path = Path("dist") / f"KiABOM-{version}-windows-x64.zip"
+          expected_contents = {
+              "kiabom.exe",
+              "LICENSE",
           }
 
-          for platform, (zip_path, expected_contents) in archives.items():
-              if not zip_path.exists():
-                  raise RuntimeError(
-                      f"Expected release ZIP not found: {zip_path}"
-                  )
+          if not zip_path.exists():
+              raise RuntimeError(
+                  f"Expected release ZIP not found: {zip_path}"
+              )
 
-              with zipfile.ZipFile(zip_path) as archive:
-                  names = [
-                      name
-                      for name in archive.namelist()
-                      if not name.endswith("/")
-                  ]
+          with zipfile.ZipFile(zip_path) as archive:
+              names = [
+                  name
+                  for name in archive.namelist()
+                  if not name.endswith("/")
+              ]
 
-              contents = set(names)
+          contents = set(names)
 
-              if contents != expected_contents:
-                  raise RuntimeError(
-                      f"Unexpected contents in {zip_path}:\n"
-                      f"  Expected: {sorted(expected_contents)}\n"
-                      f"  Found:    {sorted(contents)}"
-                  )
+          if contents != expected_contents:
+              raise RuntimeError(
+                  f"Unexpected contents in {zip_path}:\n"
+                  f"  Expected: {sorted(expected_contents)}\n"
+                  f"  Found:    {sorted(contents)}"
+              )
 
-              print(f"Verified {platform} release:")
-              print(f"  {zip_path}")
-              print(f"  Contents: {sorted(contents)}")
+          print("Verified Windows release:")
+          print(f"  {zip_path}")
+          print(f"  Contents: {sorted(contents)}")
 
       - name: Create GitHub Release
         if: github.event_name == 'push' && github.ref_type == 'tag'
@@ -203,16 +177,12 @@ jobs:
           $version = "${{ github.ref_name }}".Substring(1)
 
           $windowsZip = "dist/KiABOM-$version-windows-x64.zip"
-          $pythonZip = "dist/KiABOM-$version-python.zip"
 
           Write-Host "Uploading release assets..."
-
           Write-Host "Windows ZIP: $((Get-Item $windowsZip).Length) bytes"
-          Write-Host "Python ZIP:  $((Get-Item $pythonZip).Length) bytes"
 
           gh release upload "${{ github.ref_name }}" `
-            "$windowsZip" `
-            "$pythonZip"
+            "$windowsZip"
 
           Write-Host "Release assets uploaded successfully."
 
