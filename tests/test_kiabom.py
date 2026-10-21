@@ -3,6 +3,7 @@ from unittest.mock import mock_open, patch
 import pytest
 import os
 import openpyxl
+import requests
 from pathlib import Path
 import pickle
 
@@ -552,8 +553,39 @@ def test_download_datasheets():
     download_datasheets(net_obj.grouped, downloads_folder=test_datasheet_folder_path)
 
     assert os.path.isfile(test_datasheet_path) == True
+    with open(test_datasheet_path, "rb") as f:
+        assert f.read(5) == b"%PDF-"
 
     os.remove(test_datasheet_path)
+    os.rmdir(test_datasheet_folder_path)
+
+def test_download_datasheets_invalid():
+    test_project_path = DIR_PATH / "test-projects" / "test-project2" / "test-project2.xml"
+    test_datasheet_folder_path = DIR_PATH / "test-datasheets"
+
+    net_obj = KiCadNetlist(test_project_path, excludeBoard=False, excludeBOM=False, DNP=False)
+
+    # Check that a response that is not a PDF (e.g. an error page) is not saved
+    with patch("src.kiabom.requests.get") as m:
+        m.return_value.content = b"<html>Not Found</html>"
+        download_datasheets(net_obj.grouped, downloads_folder=test_datasheet_folder_path)
+
+    assert os.listdir(test_datasheet_folder_path) == []
+
+    # Check that an HTTP error status is not saved, even if the content looks like a PDF
+    with patch("src.kiabom.requests.get") as m:
+        m.return_value.content = b"%PDF-1.7"
+        m.return_value.raise_for_status.side_effect = requests.exceptions.HTTPError()
+        download_datasheets(net_obj.grouped, downloads_folder=test_datasheet_folder_path)
+
+    assert os.listdir(test_datasheet_folder_path) == []
+
+    # Check that a dead link is skipped
+    with patch("src.kiabom.requests.get", side_effect=requests.exceptions.ConnectionError()):
+        download_datasheets(net_obj.grouped, downloads_folder=test_datasheet_folder_path)
+
+    assert os.listdir(test_datasheet_folder_path) == []
+
     os.rmdir(test_datasheet_folder_path)
 
 def test_read_config():

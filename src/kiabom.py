@@ -1559,7 +1559,7 @@ def download_datasheets(
     downloads_folder: str | Path = "datasheets",
     timeout: int = 2,
 ):
-    """Download the datasheets from the 'Datasheets' symbol field
+    """Download the datasheets from the 'Datasheets' symbol field. Responses with an error status or that are not PDFs are skipped.
 
     :param grouped: A list containing lists of grouped parts
     :param downloads_folder: Downloads folder name
@@ -1614,12 +1614,21 @@ def download_datasheets(
     for path, url in datasheet_dict.items():
         try:
             r = requests.get(url, allow_redirects=True, timeout=timeout)
-        except requests.exceptions.ReadTimeout:
+            r.raise_for_status()
+        except requests.exceptions.RequestException as e:
             if not QUIET:
                 print(
-                    f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} URL '{url}' timed out - skipping."
+                    f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} Unable to download URL '{url}' ({type(e).__name__}) - skipping."
                 )
             continue
+
+        if b"%PDF-" not in r.content[:1024]:
+            if not QUIET:
+                print(
+                    f"{colorama.Fore.LIGHTYELLOW_EX}WARNING:{colorama.Style.RESET_ALL} URL '{url}' did not return a PDF - skipping."
+                )
+            continue
+
         with open(path, "wb") as f:
             f.write(r.content)
         full_filename = url.split("/")[-1]
