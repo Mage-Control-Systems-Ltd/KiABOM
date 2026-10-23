@@ -254,7 +254,7 @@ options:
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.csv --sum --info
 </pre></div>
 </div>
-<p>Datasheets can be downloaded by specifying <code class="docutils literal notranslate"><span class="pre">--download-datasheets</span></code>, which downloads the files located at the links in the ‘Datasheet’ symbol field in a ‘datasheets’ folder in the current directory. The symbols with the ‘Exclude From BOM’ and ‘Exclude From Board’ properties can also be used in the BOM with <code class="docutils literal notranslate"><span class="pre">--kefbom</span></code> and <code class="docutils literal notranslate"><span class="pre">--kefboard</span></code>.</p>
+<p>Datasheets can be downloaded by specifying <code class="docutils literal notranslate"><span class="pre">--download-datasheets</span></code>, which downloads the PDF files located at the links in the ‘Datasheet’ symbol field in a ‘datasheets’ folder in the current directory. Links that are invalid, dead, or do not return a PDF are skipped with a warning. The symbols with the ‘Exclude From BOM’ and ‘Exclude From Board’ properties can also be used in the BOM with <code class="docutils literal notranslate"><span class="pre">--kefbom</span></code> and <code class="docutils literal notranslate"><span class="pre">--kefboard</span></code>.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kiabom input.xml -o output.csv --download-datasheets --kefbom --kefboard
 </pre></div>
 </div>
