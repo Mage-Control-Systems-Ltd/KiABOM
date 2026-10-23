@@ -255,7 +255,7 @@ More information can be outputted than just the parts data like generator info a
 
     kiabom input.xml -o output.csv --sum --info
 
-Datasheets can be downloaded by specifying ``--download-datasheets``, which downloads the files located at the links in the 'Datasheet' symbol field in a 'datasheets' folder in the current directory. The symbols with the 'Exclude From BOM' and 'Exclude From Board' properties can also be used in the BOM with ``--kefbom`` and ``--kefboard``. 
+Datasheets can be downloaded by specifying ``--download-datasheets``, which downloads the PDF files located at the links in the 'Datasheet' symbol field in a 'datasheets' folder in the current directory. Links that are invalid, dead, or do not return a PDF are skipped with a warning. The symbols with the 'Exclude From BOM' and 'Exclude From Board' properties can also be used in the BOM with ``--kefbom`` and ``--kefboard``.
 
 .. code-block:: text
 
