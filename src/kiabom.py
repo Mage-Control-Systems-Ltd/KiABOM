@@ -357,17 +357,6 @@ class SupplierAPI:
         :return: List of parsed API results
         """
         raise NotImplementedError("Must implement in derived subclass")
-    
-    def get_cheapest_extended_price(self, part: PartsInfo) -> int | float:
-        """Get the cheapest extended price (qty * unit_price) across the part's price tiers.
-        
-        :param part: The part information
-        :return: The cheapest extended price
-        """
-        return min(
-            (qty * unit_price for qty, unit_price in part.price_tiers.items()),
-            default=float("inf")
-        )
         
     def get_cheapest_part(self, mpn, parts) -> PartsInfo:
         """Get the cheapest part from the list of parts based on the cheapest extended price.
@@ -377,8 +366,14 @@ class SupplierAPI:
         :param parts: The list of parts to search through
         :return: The cheapest part
         """
+        def get_cheapest_extended_price(part: PartsInfo) -> int | float:
+            return min(
+                (qty * unit_price for qty, unit_price in part.price_tiers.items()),
+                default=float("inf"),
+            )
+        
         # Sort the parts by cheapest extended price (qty * unit_price) to ensure the cheapest part is selected
-        parts = sorted(parts, key=self.get_cheapest_extended_price)
+        parts = sorted(parts, key=get_cheapest_extended_price)
         
         # Prefer the cheapest exact MPN match, otherwise fall back to the cheapest overall
         return next((part for part in parts if part.mpn == mpn), parts[0])
