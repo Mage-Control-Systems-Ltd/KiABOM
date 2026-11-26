@@ -457,7 +457,7 @@ Done to minimise cache.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="kiabom.SupplierAPI">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">SupplierAPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_ttl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1795636541</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.SupplierAPI" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">kiabom.</span></span><span class="sig-name descname"><span class="pre">SupplierAPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_ttl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1795709428</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.SupplierAPI" title="Link to this definition">¶</a></dt>
 <dd><p>Base SupplierAPI class to be used by all supported
 supplier APIs</p>
 <dl class="field-list simple">
@@ -541,6 +541,24 @@ as a file name.</p>
 <dt class="sig sig-object py" id="kiabom.SupplierAPI.check_rate_limit">
 <span class="sig-name descname"><span class="pre">check_rate_limit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#kiabom.SupplierAPI.check_rate_limit" title="Link to this definition">¶</a></dt>
 <dd><p>Check if the requests have reached the per minute rate limit and sleep the script if they have</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="kiabom.SupplierAPI.get_cheapest_part">
+<span class="sig-name descname"><span class="pre">get_cheapest_part</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mpn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#kiabom.PartsInfo" title="kiabom.PartsInfo"><span class="pre">PartsInfo</span></a></span></span><a class="headerlink" href="#kiabom.SupplierAPI.get_cheapest_part" title="Link to this definition">¶</a></dt>
+<dd><p>Get the cheapest part from the list of parts based on the cheapest extended price.
+If there is an exact MPN match, prefer that part over others.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mpn</strong> – The MPN to search for</p></li>
+<li><p><strong>parts</strong> – The list of parts to search through</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The cheapest part</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -944,6 +962,7 @@ requested currency.</p>
 <li><a class="reference internal" href="#kiabom.SupplierAPI.cache_part"><code class="docutils literal notranslate"><span class="pre">SupplierAPI.cache_part()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.SupplierAPI.cache_query"><code class="docutils literal notranslate"><span class="pre">SupplierAPI.cache_query()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.SupplierAPI.check_rate_limit"><code class="docutils literal notranslate"><span class="pre">SupplierAPI.check_rate_limit()</span></code></a></li>
+<li><a class="reference internal" href="#kiabom.SupplierAPI.get_cheapest_part"><code class="docutils literal notranslate"><span class="pre">SupplierAPI.get_cheapest_part()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.SupplierAPI.get_part"><code class="docutils literal notranslate"><span class="pre">SupplierAPI.get_part()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.SupplierAPI.parse"><code class="docutils literal notranslate"><span class="pre">SupplierAPI.parse()</span></code></a></li>
 <li><a class="reference internal" href="#kiabom.SupplierAPI.print_stats"><code class="docutils literal notranslate"><span class="pre">SupplierAPI.print_stats()</span></code></a></li>
