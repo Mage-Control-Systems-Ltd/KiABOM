@@ -357,6 +357,26 @@ class SupplierAPI:
         :return: List of parsed API results
         """
         raise NotImplementedError("Must implement in derived subclass")
+        
+    def get_cheapest_part(self, mpn, parts) -> PartsInfo:
+        """Get the cheapest part from the list of parts based on the cheapest extended price.
+        If there is an exact MPN match, prefer that part over others.
+
+        :param mpn: The MPN to search for
+        :param parts: The list of parts to search through
+        :return: The cheapest part
+        """
+        def get_cheapest_extended_price(part: PartsInfo) -> int | float:
+            return min(
+                (qty * unit_price for qty, unit_price in part.price_tiers.items()),
+                default=float("inf"),
+            )
+        
+        # Sort the parts by cheapest extended price (qty * unit_price) to ensure the cheapest part is selected
+        parts = sorted(parts, key=get_cheapest_extended_price)
+        
+        # Prefer the cheapest exact MPN match, otherwise fall back to the cheapest overall
+        return next((part for part in parts if part.mpn == mpn), parts[0])
 
     def get_part(self, mpn: str, ignore_mpns: list[str] | None) -> PartsInfo:
         """Get the specified part MPN for KiABOM. Calls the search and parser functions.
@@ -386,14 +406,7 @@ class SupplierAPI:
         self.check_rate_limit()
         parts = self.parse(parts)
 
-        # Use the first entry by default
-        found_part = parts[0]
-
-        # If there is an exact MPN match use that instead
-        for part in parts:
-            if part.mpn == mpn:
-                found_part = part
-                break
+        found_part = self.get_cheapest_part(mpn, parts)
 
         if self.cache_ttl >= 0:
             self.cache_part(mpn, found_part)
